@@ -63,7 +63,7 @@ export const userService = {
   },
 
   async findByVerificationToken(tokenHash: string): Promise<User | null> {
-    const rows = await sql`SELECT * FROM users WHERE verification_token = ${tokenHash} AND verification_token_expires_at > NOW()`;
+    const rows = await sql`SELECT * FROM users WHERE verification_token = ${tokenHash} AND verification_token_expires_at > NOW() AND is_verified = FALSE`;
     if (rows.length === 0) return null;
     return mapUser(rows[0] as Record<string, unknown>);
   },

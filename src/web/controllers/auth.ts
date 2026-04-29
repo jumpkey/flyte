@@ -8,12 +8,9 @@ import { eventService } from '../../services/event-service.js';
 import { createSession, destroySession, destroyUserSessions } from '../middleware/session.js';
 import type { SessionData } from '../middleware/session.js';
 import { config } from '../../config.js';
+import { getClientIp } from '../utils/get-client-ip.js';
 
 const logger = pino({ level: 'info' });
-
-function getIp(c: Context): string {
-  return c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1';
-}
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -27,10 +24,10 @@ export const authController = {
   },
 
   async login(c: Context): Promise<Response> {
-    const body = await c.req.parseBody();
+    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
     const email = ((body['email'] as string) ?? '').trim().toLowerCase();
     const password = (body['password'] as string) ?? '';
-    const ip = getIp(c);
+    const ip = getClientIp(c);
     const userAgent = c.req.header('user-agent') ?? null;
 
     const user = await userService.findByEmail(email);
@@ -80,8 +77,8 @@ export const authController = {
   },
 
   async register(c: Context): Promise<Response> {
-    const body = await c.req.parseBody();
-    const ip = getIp(c);
+    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
+    const ip = getClientIp(c);
     const email = ((body['email'] as string) ?? '').trim().toLowerCase();
     const displayName = ((body['displayName'] as string) ?? '').trim();
     const password = (body['password'] as string) ?? '';
@@ -143,7 +140,7 @@ export const authController = {
       sessionId: null,
       action: 'email_verified',
       resource: '/verify-email',
-      ipAddress: getIp(c),
+      ipAddress: getClientIp(c),
     });
 
     const session = c.get('session') as SessionData | undefined;
@@ -156,7 +153,7 @@ export const authController = {
   },
 
   async checkEmail(c: Context): Promise<Response> {
-    const body = await c.req.parseBody();
+    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
     const email = ((body['email'] as string) ?? '').trim().toLowerCase();
 
     if (!email) {
@@ -175,10 +172,11 @@ export const authController = {
   },
 
   async forgotPassword(c: Context): Promise<Response> {
-    const body = await c.req.parseBody();
+    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
     const email = ((body['email'] as string) ?? '').trim().toLowerCase();
 
-    const ip = getIp(c);
+    const start = Date.now();
+    const ip = getClientIp(c);
     const user = await userService.findByEmail(email);
     if (user && user.isVerified && !user.isLocked) {
       const { raw, hashed } = authService.generateToken();
@@ -196,6 +194,12 @@ export const authController = {
         resource: '/forgot-password',
         ipAddress: ip,
       });
+    }
+
+    const elapsed = Date.now() - start;
+    const minTime = 200 + Math.random() * 300;
+    if (elapsed < minTime) {
+      await new Promise(resolve => setTimeout(resolve, minTime - elapsed));
     }
 
     return renderView(c, 'forgot-password-sent', { title: 'Check Your Email' });
@@ -217,7 +221,7 @@ export const authController = {
   },
 
   async resetPassword(c: Context): Promise<Response> {
-    const body = await c.req.parseBody();
+    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
     const token = (body['token'] as string) ?? '';
     const password = (body['password'] as string) ?? '';
     const confirmPassword = (body['confirmPassword'] as string) ?? '';
@@ -249,7 +253,7 @@ export const authController = {
       sessionId: null,
       action: 'password_reset_completed',
       resource: '/reset-password',
-      ipAddress: getIp(c),
+      ipAddress: getClientIp(c),
     });
 
     const session = c.get('session') as SessionData | undefined;

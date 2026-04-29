@@ -3,6 +3,15 @@ import crypto from 'crypto';
 import { sql } from '../../services/db.js';
 import { config } from '../../config.js';
 
+// Purge expired sessions every 15 minutes
+setInterval(async () => {
+  try {
+    await sql`DELETE FROM sessions WHERE expire < NOW()`;
+  } catch {
+    // Silently ignore cleanup errors to avoid crashing the process
+  }
+}, 15 * 60 * 1000).unref();
+
 export interface SessionData {
   userId?: string;
   csrfToken?: string;

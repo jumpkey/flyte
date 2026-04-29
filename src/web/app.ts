@@ -18,9 +18,12 @@ type Variables = {
   sessionId: string | null;
   sessionCookie: string | undefined;
   user: User | undefined;
+  parsedBody: Record<string, string | File> | undefined;
 };
 
 const app = new Hono<{ Variables: Variables }>();
+
+app.use('/public/*', serveStatic({ root: './' }));
 
 app.use('*', secureHeaders({
   contentSecurityPolicy: {
@@ -56,7 +59,5 @@ app.get('/dashboard', authGuard, dashboardController.index);
 app.get('/profile', authGuard, profileController.editForm);
 app.post('/profile', authGuard, profileController.update);
 app.post('/logout', authGuard, authController.logout);
-
-app.use('/public/*', serveStatic({ root: './' }));
 
 export { app };

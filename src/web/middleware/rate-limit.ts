@@ -12,7 +12,8 @@ setInterval(() => {
 
 export function rateLimit(maxRequests: number, windowMs: number) {
   return createMiddleware(async (c, next) => {
-    const ip = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1';
+    const forwardedFor = c.req.header('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',').pop()!.trim() : (c.req.header('x-real-ip') ?? '127.0.0.1');
     const key = `${c.req.path}:${ip}`;
     const now = Date.now();
 

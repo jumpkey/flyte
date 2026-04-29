@@ -23,8 +23,9 @@ export const csrfMiddleware = createMiddleware(async (c, next) => {
 
   if (c.req.method === 'POST' && !CSRF_EXEMPT_PATHS.has(c.req.path)) {
     const body = await c.req.parseBody();
+    c.set('parsedBody', body);
     const token = body['_csrf'] as string | undefined;
-    if (!token || token !== session.csrfToken) {
+    if (!token || !session.csrfToken || Buffer.byteLength(token) !== Buffer.byteLength(session.csrfToken) || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(session.csrfToken))) {
       return c.text('Invalid CSRF token', 403);
     }
   }
