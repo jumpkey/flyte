@@ -1,6 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 import crypto from 'crypto';
 import type { SessionData } from './session.js';
+import { createSession } from './session.js';
 
 const CSRF_EXEMPT_PATHS = new Set(['/api/check-email']);
 
@@ -9,6 +10,15 @@ export const csrfMiddleware = createMiddleware(async (c, next) => {
 
   if (!session.csrfToken) {
     session.csrfToken = crypto.randomBytes(32).toString('hex');
+
+    // Persist a new session so the CSRF token survives across requests
+    // (needed for unauthenticated users who have no session cookie yet)
+    const existingSessionId = c.get('sessionId') as string | null;
+    if (!existingSessionId) {
+      const { signedSid, sid } = await createSession({ csrfToken: session.csrfToken });
+      c.set('sessionId', sid);
+      c.set('sessionCookie', signedSid);
+    }
   }
 
   if (c.req.method === 'POST' && !CSRF_EXEMPT_PATHS.has(c.req.path)) {
