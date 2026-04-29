@@ -30,8 +30,8 @@ export const authService = {
       from: config.smtp.from,
       to: email,
       subject: 'Verify your Flyte account',
-      html: `<p>Please verify your email address by clicking the link below:</p><p><a href="${url}">${url}</a></p><p>This link expires in 24 hours.</p>`,
-      text: `Please verify your email address: ${url}\n\nThis link expires in 24 hours.`,
+      html: `<p>Please verify your email address by clicking the link below:</p><p><a href="${url}">${url}</a></p><p>This link expires in ${config.verificationTokenTtlHours} hour${config.verificationTokenTtlHours !== 1 ? 's' : ''}.</p>`,
+      text: `Please verify your email address: ${url}\n\nThis link expires in ${config.verificationTokenTtlHours} hour${config.verificationTokenTtlHours !== 1 ? 's' : ''}.`,
     });
   },
 
