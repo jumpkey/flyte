@@ -1,0 +1,31 @@
+{
+  "name": "flyte",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && cp -r src/web/views dist/web/views",
+    "start": "node dist/index.js",
+    "migrate": "tsx scripts/migrate.ts",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "hono": "^4.6.3",
+    "nodemailer": "^8.0.7",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/ejs": "^3.1.5",
+    "@types/node": "^22.9.0",
+    "@types/nodemailer": "^6.4.16",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

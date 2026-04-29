@@ -1,0 +1,15 @@
+<div>
+  <h1>Dashboard</h1>
+  <% if (typeof user !== 'undefined' && user) { %>
+  <p>Welcome back, <strong><%= user.displayName %></strong>!</p>
+  <p>Email: <%= user.email %></p>
+  <p>Member since: <%= user.createdAt.toLocaleDateString() %></p>
+  <% if (user.lastLoginAt) { %>
+  <p>Last login: <%= user.lastLoginAt.toLocaleString() %></p>
+  <% } %>
+  <% } %>
+
+  <div style="margin-top: 2rem;">
+    <a href="/profile" role="button" class="outline">Edit Profile</a>
+  </div>
+</div>
