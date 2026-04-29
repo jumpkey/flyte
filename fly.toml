@@ -3,6 +3,9 @@ primary_region = "iad"
 
 [build]
 
+[deploy]
+  release_command = "node dist/scripts/migrate.js"
+
 [http_service]
   internal_port = 3000
   force_https = true

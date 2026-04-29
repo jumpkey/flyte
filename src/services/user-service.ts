@@ -1,4 +1,5 @@
 import { sql } from './db.js';
+import { config } from '../config.js';
 
 export interface User {
   id: string;
@@ -40,9 +41,10 @@ function mapUser(row: Record<string, unknown>): User {
 
 export const userService = {
   async createUser(email: string, displayName: string, passwordHash: string, verificationToken: string): Promise<User> {
+    const expiresAt = new Date(Date.now() + config.verificationTokenTtlHours * 60 * 60 * 1000);
     const rows = await sql`
       INSERT INTO users (email, display_name, password_hash, verification_token, verification_token_expires_at)
-      VALUES (${email}, ${displayName}, ${passwordHash}, ${verificationToken}, NOW() + INTERVAL '24 hours')
+      VALUES (${email}, ${displayName}, ${passwordHash}, ${verificationToken}, ${expiresAt})
       RETURNING *
     `;
     return mapUser(rows[0] as Record<string, unknown>);
