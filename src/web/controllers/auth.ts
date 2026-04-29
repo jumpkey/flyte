@@ -81,6 +81,7 @@ export const authController = {
 
   async register(c: Context): Promise<Response> {
     const body = await c.req.parseBody();
+    const ip = getIp(c);
     const email = ((body['email'] as string) ?? '').trim().toLowerCase();
     const displayName = ((body['displayName'] as string) ?? '').trim();
     const password = (body['password'] as string) ?? '';
@@ -104,13 +105,21 @@ export const authController = {
     const passwordHash = await authService.hashPassword(password);
     const { raw, hashed } = authService.generateToken();
 
-    await userService.createUser(email, displayName, passwordHash, hashed);
+    const newUser = await userService.createUser(email, displayName, passwordHash, hashed);
 
     try {
       await authService.sendVerificationEmail(email, raw);
     } catch (err) {
       logger.error({ err }, 'Failed to send verification email');
     }
+
+    await eventService.logAction({
+      userId: newUser.id,
+      sessionId: null,
+      action: 'registration',
+      resource: '/register',
+      ipAddress: ip,
+    });
 
     return renderView(c, 'verify-email-sent', { title: 'Check Your Email', email });
   },
@@ -128,6 +137,14 @@ export const authController = {
     }
 
     await userService.verifyUser(user.id);
+
+    await eventService.logAction({
+      userId: user.id,
+      sessionId: null,
+      action: 'email_verified',
+      resource: '/verify-email',
+      ipAddress: getIp(c),
+    });
 
     const session = c.get('session') as SessionData | undefined;
     const { signedSid, sid } = await createSession({ userId: user.id, csrfToken: session?.csrfToken }, user.id);
@@ -161,8 +178,9 @@ export const authController = {
     const body = await c.req.parseBody();
     const email = ((body['email'] as string) ?? '').trim().toLowerCase();
 
+    const ip = getIp(c);
     const user = await userService.findByEmail(email);
-    if (user && user.isVerified) {
+    if (user && user.isVerified && !user.isLocked) {
       const { raw, hashed } = authService.generateToken();
       const expiresAt = new Date(Date.now() + config.passwordResetTokenTtlHours * 60 * 60 * 1000);
       await userService.setPasswordResetToken(user.id, hashed, expiresAt);
@@ -171,6 +189,13 @@ export const authController = {
       } catch (err) {
         logger.error({ err }, 'Failed to send password reset email');
       }
+      await eventService.logAction({
+        userId: user.id,
+        sessionId: c.get('sessionId') as string | null,
+        action: 'password_reset_requested',
+        resource: '/forgot-password',
+        ipAddress: ip,
+      });
     }
 
     return renderView(c, 'forgot-password-sent', { title: 'Check Your Email' });
@@ -219,6 +244,14 @@ export const authController = {
     await userService.resetPassword(user.id, newPasswordHash);
     await destroyUserSessions(user.id);
 
+    await eventService.logAction({
+      userId: user.id,
+      sessionId: null,
+      action: 'password_reset_completed',
+      resource: '/reset-password',
+      ipAddress: getIp(c),
+    });
+
     const session = c.get('session') as SessionData | undefined;
     const newSession: SessionData = { csrfToken: session?.csrfToken, flashMessage: 'Password reset successfully. Please sign in.' };
     const { signedSid, sid } = await createSession(newSession);
@@ -236,7 +269,8 @@ export const authController = {
     }
     c.set('session', {});
     c.set('sessionId', null);
-    c.header('Set-Cookie', 'sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+    const securePart = config.isProduction ? '; Secure' : '';
+    c.header('Set-Cookie', `sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${securePart}`);
     return c.redirect('/');
   },
 };

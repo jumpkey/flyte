@@ -2,9 +2,7 @@ import 'dotenv/config';
 import postgres from 'postgres';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const sql = postgres(process.env.DATABASE_URL ?? 'postgres://flyte:flyte@localhost:5432/flyte', {
   onnotice: () => {}, // suppress NOTICE messages
 });
@@ -18,7 +16,7 @@ async function migrate() {
     )
   `);
 
-  const migrationsDir = path.join(__dirname, '../db/migrations');
+  const migrationsDir = path.join(process.cwd(), 'db/migrations');
   const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
 
   // Get already-applied migrations

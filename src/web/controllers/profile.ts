@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import { renderView } from '../render.js';
 import { userService } from '../../services/user-service.js';
 import { authService } from '../../services/auth-service.js';
+import { eventService } from '../../services/event-service.js';
 import type { User } from '../../services/user-service.js';
 
 export const profileController = {
@@ -57,6 +58,15 @@ export const profileController = {
       await userService.updateProfile(user.id, updates);
       const updatedUser = await userService.findById(user.id);
       if (updatedUser) c.set('user', updatedUser);
+
+      const ip = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1';
+      await eventService.logAction({
+        userId: user.id,
+        sessionId: c.get('sessionId') as string | null,
+        action: 'profile_update',
+        resource: '/profile',
+        ipAddress: ip,
+      });
     }
 
     return c.html('<div style="color: green;">Profile updated successfully</div>');

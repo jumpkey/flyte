@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && cp -r src/web/views dist/web/views",
+    "build": "tsc && tsc -p tsconfig.scripts.json && cp -r src/web/views dist/web/views",
     "start": "node dist/index.js",
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed.ts"
@@ -17,7 +17,6 @@
     "hono": "^4.6.3",
     "nodemailer": "^8.0.7",
     "pino": "^9.5.0",
-    "pino-pretty": "^11.3.0",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
@@ -25,6 +24,7 @@
     "@types/ejs": "^3.1.5",
     "@types/node": "^22.9.0",
     "@types/nodemailer": "^6.4.16",
+    "pino-pretty": "^11.3.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
