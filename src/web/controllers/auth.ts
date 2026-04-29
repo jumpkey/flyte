@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import crypto from 'crypto';
+import pino from 'pino';
 import { renderView } from '../render.js';
 import { userService } from '../../services/user-service.js';
 import { authService } from '../../services/auth-service.js';
@@ -7,6 +8,8 @@ import { eventService } from '../../services/event-service.js';
 import { createSession, destroySession, destroyUserSessions } from '../middleware/session.js';
 import type { SessionData } from '../middleware/session.js';
 import { config } from '../../config.js';
+
+const logger = pino({ level: 'info' });
 
 function getIp(c: Context): string {
   return c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1';
@@ -106,7 +109,7 @@ export const authController = {
     try {
       await authService.sendVerificationEmail(email, raw);
     } catch (err) {
-      console.error('Failed to send verification email:', err);
+      logger.error({ err }, 'Failed to send verification email');
     }
 
     return renderView(c, 'verify-email-sent', { title: 'Check Your Email', email });
@@ -166,7 +169,7 @@ export const authController = {
       try {
         await authService.sendPasswordResetEmail(email, raw);
       } catch (err) {
-        console.error('Failed to send password reset email:', err);
+        logger.error({ err }, 'Failed to send password reset email');
       }
     }
 

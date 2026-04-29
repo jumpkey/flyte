@@ -77,6 +77,8 @@ export const userService = {
   },
 
   async updateProfile(id: string, fields: { displayName?: string; passwordHash?: string }): Promise<void> {
+    if (fields.displayName === undefined && fields.passwordHash === undefined) return;
+
     if (fields.displayName !== undefined && fields.passwordHash !== undefined) {
       await sql`UPDATE users SET display_name = ${fields.displayName}, password_hash = ${fields.passwordHash} WHERE id = ${id}`;
     } else if (fields.displayName !== undefined) {
