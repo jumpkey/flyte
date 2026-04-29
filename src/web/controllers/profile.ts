@@ -4,6 +4,7 @@ import { userService } from '../../services/user-service.js';
 import { authService } from '../../services/auth-service.js';
 import { eventService } from '../../services/event-service.js';
 import type { User } from '../../services/user-service.js';
+import { getClientIp } from '../utils/get-client-ip.js';
 
 export const profileController = {
   async editForm(c: Context): Promise<Response> {
@@ -11,7 +12,7 @@ export const profileController = {
   },
 
   async update(c: Context): Promise<Response> {
-    const body = await c.req.parseBody();
+    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
     const displayName = ((body['displayName'] as string) ?? '').trim();
     const currentPassword = (body['currentPassword'] as string) ?? '';
     const newPassword = (body['newPassword'] as string) ?? '';
@@ -59,7 +60,7 @@ export const profileController = {
       const updatedUser = await userService.findById(user.id);
       if (updatedUser) c.set('user', updatedUser);
 
-      const ip = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1';
+      const ip = getClientIp(c);
       await eventService.logAction({
         userId: user.id,
         sessionId: c.get('sessionId') as string | null,
