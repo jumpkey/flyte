@@ -15,7 +15,7 @@ async function seed() {
   await sql`
     INSERT INTO users (email, display_name, password_hash, is_verified, is_admin)
     VALUES (${adminEmail}, 'Admin', ${passwordHash}, TRUE, TRUE)
-    ON CONFLICT DO NOTHING
+    ON CONFLICT (LOWER(email)) DO NOTHING
   `;
 
   await sql`

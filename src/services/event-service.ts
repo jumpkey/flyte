@@ -23,9 +23,9 @@ export const eventService = {
     metadata?: Record<string, unknown> | null;
     ipAddress: string;
   }): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await sql`
       INSERT INTO user_action_events (user_id, session_id, action, resource, metadata, ip_address)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
       VALUES (${params.userId}, ${params.sessionId ?? null}, ${params.action}, ${params.resource ?? null}, ${params.metadata ? sql.json(params.metadata as any) : null}, ${params.ipAddress})
     `;
   },
