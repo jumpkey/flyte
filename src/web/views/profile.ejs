@@ -1,0 +1,38 @@
+<div>
+  <h1>Edit Profile</h1>
+
+  <div id="profile-feedback"></div>
+
+  <form hx-post="/profile" hx-target="#profile-feedback" hx-swap="innerHTML">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <fieldset>
+      <legend>Account Info</legend>
+
+      <label for="email">Email (read-only)</label>
+      <input type="email" id="email" value="<%= typeof user !== 'undefined' && user ? user.email : '' %>" disabled>
+
+      <label for="displayName">Display Name</label>
+      <input type="text" id="displayName" name="displayName"
+        value="<%= typeof user !== 'undefined' && user ? user.displayName : '' %>"
+        required minlength="2">
+    </fieldset>
+
+    <fieldset>
+      <legend>Change Password (optional)</legend>
+
+      <label for="currentPassword">Current Password</label>
+      <input type="password" id="currentPassword" name="currentPassword" autocomplete="current-password">
+
+      <label for="newPassword">New Password</label>
+      <input type="password" id="newPassword" name="newPassword" autocomplete="new-password" minlength="8">
+
+      <label for="confirmPassword">Confirm New Password</label>
+      <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" minlength="8">
+    </fieldset>
+
+    <button type="submit">Save Changes</button>
+  </form>
+
+  <p style="margin-top: 1rem;"><a href="/dashboard">&larr; Back to Dashboard</a></p>
+</div>
