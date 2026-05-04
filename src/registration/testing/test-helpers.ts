@@ -30,15 +30,15 @@ export async function createTestEvent(overrides: {
     confirmedCount = 0,
   } = overrides;
 
-  await testSql.unsafe(`
+  await testSql`
     INSERT INTO events (event_id, name, event_date, total_capacity, confirmed_count, available_slots, registration_fee_cents)
-    VALUES ('${eventId}', '${name}', now() + interval '30 days', ${totalCapacity}, ${confirmedCount}, ${availableSlots}, ${registrationFeeCents})
+    VALUES (${eventId}, ${name}, now() + interval '30 days', ${totalCapacity}, ${confirmedCount}, ${availableSlots}, ${registrationFeeCents})
     ON CONFLICT (event_id) DO UPDATE SET
       total_capacity = EXCLUDED.total_capacity,
       confirmed_count = EXCLUDED.confirmed_count,
       available_slots = EXCLUDED.available_slots,
       registration_fee_cents = EXCLUDED.registration_fee_cents
-  `);
+  `;
 
   return eventId;
 }
