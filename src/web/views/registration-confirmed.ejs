@@ -1,0 +1,28 @@
+<div>
+  <h1>Registration Confirmed! 🎉</h1>
+
+  <% if (event) { %>
+  <h2><%= event.name %></h2>
+  <p><strong>Date:</strong> <%= new Date(event.event_date).toLocaleDateString() %></p>
+  <% if (event.location) { %>
+  <p><strong>Location:</strong> <%= event.location %></p>
+  <% } %>
+  <% } %>
+
+  <hr>
+
+  <h3>Registration Details</h3>
+  <ul>
+    <li><strong>Registration ID:</strong> <%= registration.registrationId %></li>
+    <li><strong>Name:</strong> <%= registration.firstName %> <%= registration.lastName %></li>
+    <li><strong>Email:</strong> <%= registration.email %></li>
+    <li><strong>Amount Charged:</strong> $<%= (registration.grossAmountCents / 100).toFixed(2) %></li>
+    <li><strong>Status:</strong> <%= registration.status %></li>
+  </ul>
+
+  <p>A confirmation email has been sent to <strong><%= registration.email %></strong>.</p>
+
+  <p>If you need to cancel, please contact us with your Registration ID: <strong><%= registration.registrationId %></strong>. Full refunds are available subject to our cancellation policy.</p>
+
+  <a href="/" role="button" class="outline">Return Home</a>
+</div>

@@ -1,0 +1,1 @@
+*/5 * * * * node /app/dist/registration/reconciliation-runner.js

@@ -24,4 +24,12 @@ export const config = {
   seedAdminEmail: process.env.SEED_ADMIN_EMAIL ?? 'admin@flyte.local',
   seedAdminPassword: process.env.SEED_ADMIN_PASSWORD ?? 'changeme123',
   isProduction: process.env.NODE_ENV === 'production',
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY ?? '',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? '',
+    apiTimeoutMs: parseInt(process.env.STRIPE_API_TIMEOUT_MS ?? '10000', 10),
+  },
+  registrationTtlMinutes: parseInt(process.env.REGISTRATION_TTL_MINUTES ?? '30', 10),
+  captureMaxRetries: parseInt(process.env.CAPTURE_MAX_RETRIES ?? '5', 10),
 };

@@ -1,0 +1,170 @@
+<div>
+  <h1>Register: <%= event.name %></h1>
+
+  <p>
+    <strong>Date:</strong> <%= new Date(event.event_date).toLocaleDateString() %><br>
+    <% if (event.location) { %><strong>Location:</strong> <%= event.location %><br><% } %>
+    <strong>Spots Available:</strong> <%= event.availability.availableSlots %><br>
+    <strong>Registration Fee:</strong> $<%= (event.registration_fee_cents / 100).toFixed(2) %>
+  </p>
+
+  <div id="registration-step-1">
+    <h2>Your Information</h2>
+    <form id="participant-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div>
+        <label for="firstName">First Name</label>
+        <input type="text" id="firstName" name="firstName" required>
+      </div>
+      <div>
+        <label for="lastName">Last Name</label>
+        <input type="text" id="lastName" name="lastName" required>
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div>
+        <label for="phone">Phone (optional)</label>
+        <input type="tel" id="phone" name="phone">
+      </div>
+      <button type="submit" id="continue-btn">Continue to Payment</button>
+    </form>
+  </div>
+
+  <div id="registration-step-2" style="display:none;">
+    <h2>Payment</h2>
+    <div id="payment-element-container"></div>
+    <div id="payment-error" style="color:red; display:none;"></div>
+    <button id="pay-btn" disabled>Pay $<%= (event.registration_fee_cents / 100).toFixed(2) %></button>
+    <button id="back-btn" type="button">Back</button>
+  </div>
+
+  <div id="registration-loading" style="display:none;">
+    <p>Processing your registration...</p>
+  </div>
+</div>
+
+<div data-stripe-key="<%= stripePublishableKey %>"></div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+(function() {
+  const stripeKey = document.querySelector('[data-stripe-key]')?.getAttribute('data-stripe-key');
+  if (!stripeKey) { console.warn('No Stripe publishable key found'); return; }
+
+  const stripe = Stripe(stripeKey);
+  let elements;
+  let clientSecret;
+  let paymentIntentId;
+
+  const step1 = document.getElementById('registration-step-1');
+  const step2 = document.getElementById('registration-step-2');
+  const loadingDiv = document.getElementById('registration-loading');
+  const errorDiv = document.getElementById('payment-error');
+  const payBtn = document.getElementById('pay-btn');
+  const backBtn = document.getElementById('back-btn');
+  const participantForm = document.getElementById('participant-form');
+
+  participantForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const continueBtn = document.getElementById('continue-btn');
+    continueBtn.disabled = true;
+    continueBtn.textContent = 'Loading...';
+
+    const formData = {
+      firstName: document.getElementById('firstName').value,
+      lastName: document.getElementById('lastName').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value || undefined,
+    };
+
+    try {
+      const resp = await fetch(window.location.pathname, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('[name="_csrf"]').value },
+        body: JSON.stringify(formData),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        showError(data.error || 'Failed to initiate registration');
+        continueBtn.disabled = false;
+        continueBtn.textContent = 'Continue to Payment';
+        return;
+      }
+
+      clientSecret = data.clientSecret;
+      paymentIntentId = data.paymentIntentId;
+
+      elements = stripe.elements({ clientSecret });
+      const paymentElement = elements.create('payment');
+      paymentElement.mount('#payment-element-container');
+      paymentElement.on('ready', () => { payBtn.disabled = false; });
+
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+    } catch (err) {
+      showError('An error occurred. Please try again.');
+      continueBtn.disabled = false;
+      continueBtn.textContent = 'Continue to Payment';
+    }
+  });
+
+  backBtn.addEventListener('click', function() {
+    step2.style.display = 'none';
+    step1.style.display = 'block';
+    document.getElementById('continue-btn').disabled = false;
+    document.getElementById('continue-btn').textContent = 'Continue to Payment';
+  });
+
+  payBtn.addEventListener('click', async function() {
+    payBtn.disabled = true;
+    payBtn.textContent = 'Processing...';
+    errorDiv.style.display = 'none';
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {},
+      redirect: 'if_required',
+    });
+
+    if (error) {
+      showError(error.message || 'Payment failed');
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pay';
+      return;
+    }
+
+    step2.style.display = 'none';
+    loadingDiv.style.display = 'block';
+
+    try {
+      const confirmResp = await fetch('/registration/confirm/' + paymentIntentId, {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': document.querySelector('[name="_csrf"]').value },
+      });
+
+      if (confirmResp.redirected) {
+        window.location.href = confirmResp.url;
+      } else {
+        const html = await confirmResp.text();
+        document.open();
+        document.write(html);
+        document.close();
+      }
+    } catch (err) {
+      showError('Failed to confirm registration. Please contact support.');
+      loadingDiv.style.display = 'none';
+      step2.style.display = 'block';
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pay';
+    }
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+  }
+})();
+</script>
