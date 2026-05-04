@@ -147,11 +147,27 @@
 
       if (confirmResp.redirected) {
         window.location.href = confirmResp.url;
+      } else if (confirmResp.ok) {
+        // Follow the redirect from the JSON response if available
+        const contentType = confirmResp.headers.get('content-type') ?? '';
+        if (contentType.includes('application/json')) {
+          const data = await confirmResp.json();
+          if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+            return;
+          }
+        }
+        // Fall back to reloading (server-rendered error page)
+        window.location.reload();
       } else {
-        const html = await confirmResp.text();
-        document.open();
-        document.write(html);
-        document.close();
+        const status = confirmResp.status;
+        showError(status >= 500
+          ? 'Something went wrong finalizing your registration. Please contact support.'
+          : 'Payment confirmation failed. Please contact support if you were charged.');
+        loadingDiv.style.display = 'none';
+        step2.style.display = 'block';
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay $<%= (event.registration_fee_cents / 100).toFixed(2) %>';
       }
     } catch (err) {
       showError('Failed to confirm registration. Please contact support.');
