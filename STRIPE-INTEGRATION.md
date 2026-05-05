@@ -114,7 +114,7 @@ npx tsx src/registration/testing/run-all-tests.ts
 ## Rate Limiting
 
 Registration endpoints (`POST /events/:id/register`, `POST /registration/confirm/:piId`,
-`POST /events/:id/waitlist`) are rate-limited to **10 requests per 60 seconds per IP**.
+`POST /events/:id/waitlist`) are rate-limited to **60 requests per 60 seconds per IP**.
 
 When the limit is exceeded, the middleware retries with random backoff (500ms–2s) up to
 3 times before returning HTTP 429. This absorbs brief legitimate traffic spikes without
