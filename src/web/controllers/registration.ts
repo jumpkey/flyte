@@ -11,6 +11,8 @@ import { config } from '../../config.js';
 const eventAvailabilityService = new EventAvailabilityService();
 const waitlistService = new WaitlistService();
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const NAME_MAX = 100;
 const EMAIL_MAX = 254;   // RFC 5321 practical max
 const PHONE_MAX = 32;
@@ -65,7 +67,7 @@ async function getRegistrationService(): Promise<RegistrationService> {
 export const registrationController = {
   async showRegistrationForm(c: Context): Promise<Response> {
     const eventId = c.req.param('eventId');
-    if (!eventId) return c.text('Event not found', 404);
+    if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const availability = await eventAvailabilityService.getAvailability(eventId);
 
     if (!availability) {
@@ -92,7 +94,7 @@ export const registrationController = {
 
   async initiateRegistration(c: Context): Promise<Response> {
     const eventId = c.req.param('eventId');
-    if (!eventId) return c.json({ error: 'event_not_found' }, 404);
+    if (!eventId || !UUID_RE.test(eventId)) return c.json({ error: 'event_not_found' }, 404);
     const body = await c.req.json().catch(() => null);
 
     if (!body) return c.json({ error: 'invalid_request' }, 400);
@@ -135,7 +137,7 @@ export const registrationController = {
 
   async confirmRegistration(c: Context): Promise<Response> {
     const paymentIntentId = c.req.param('paymentIntentId');
-    if (!paymentIntentId) return renderView(c, 'registration-payment-failed', { title: 'Error', message: 'Invalid request' });
+    if (!paymentIntentId || !paymentIntentId.startsWith('pi_')) return renderView(c, 'registration-payment-failed', { title: 'Error', message: 'Invalid request' });
 
     let svc: RegistrationService;
     try { svc = await getRegistrationService(); }
@@ -159,7 +161,7 @@ export const registrationController = {
 
   async showConfirmed(c: Context): Promise<Response> {
     const registrationId = c.req.param('registrationId');
-    if (!registrationId) return c.text('Registration not found', 404);
+    if (!registrationId || !UUID_RE.test(registrationId)) return c.text('Registration not found', 404);
 
     let svc: RegistrationService;
     try { svc = await getRegistrationService(); }
@@ -181,7 +183,7 @@ export const registrationController = {
 
   async showWaitlistForm(c: Context): Promise<Response> {
     const eventId = c.req.param('eventId');
-    if (!eventId) return c.text('Event not found', 404);
+    if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const reason = c.req.query('reason');
 
     const eventRows = await sql<{name: string}[]>`SELECT name FROM events WHERE event_id = ${eventId}::UUID`;
@@ -196,7 +198,7 @@ export const registrationController = {
 
   async addToWaitlist(c: Context): Promise<Response> {
     const eventId = c.req.param('eventId');
-    if (!eventId) return c.text('Event not found', 404);
+    if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? {};
 
     const cleaned = validateRegistrationFields({

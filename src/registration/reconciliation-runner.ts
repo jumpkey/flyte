@@ -13,35 +13,36 @@ async function main(): Promise<void> {
 
   const ttlMinutes        = parseInt(process.env.REGISTRATION_TTL_MINUTES ?? '30', 10);
   const captureMaxRetries = parseInt(process.env.CAPTURE_MAX_RETRIES ?? '5', 10);
-  const stripeTimeout     = parseInt(process.env.STRIPE_API_TIMEOUT_MS ?? '10000', 10);
 
   console.log(`[reconciliation] sweep starting at ${new Date().toISOString()}`);
 
-  const { default: Stripe } = await import('stripe');
+  const { getStripe } = await import('./stripe-factory.js');
   const { ReconciliationService } = await import('./services/ReconciliationService.js');
   const { RegistrationService }   = await import('./services/RegistrationService.js');
   const { NotificationService }   = await import('./services/NotificationService.js');
+  const { sql }                   = await import('../services/db.js');
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2026-04-22.dahlia' as const,
-    timeout: stripeTimeout,
-  });
+  const stripe = await getStripe();
 
   const notificationService  = new NotificationService();
-  const registrationService  = new RegistrationService(stripe as any, notificationService);
+  const registrationService  = new RegistrationService(stripe, notificationService);
   const reconciliationService = new ReconciliationService(
-    stripe as any,
+    stripe,
     registrationService,
     notificationService,
     { captureMaxRetries }
   );
 
-  const result = await reconciliationService.reconcilePendingRegistrations(ttlMinutes);
+  try {
+    const result = await reconciliationService.reconcilePendingRegistrations(ttlMinutes);
 
-  console.log(`[reconciliation] sweep complete:`, JSON.stringify(result, null, 2));
+    console.log(`[reconciliation] sweep complete:`, JSON.stringify(result, null, 2));
 
-  if (result.errorCount > 0) {
-    console.warn(`[reconciliation] ${result.errorCount} errors encountered during sweep`);
+    if (result.errorCount > 0) {
+      console.warn(`[reconciliation] ${result.errorCount} errors encountered during sweep`);
+    }
+  } finally {
+    await sql.end();
   }
 }
 

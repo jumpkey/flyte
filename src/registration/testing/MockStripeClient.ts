@@ -25,12 +25,16 @@ export class MockStripeClient {
   options: MockStripeOptions;
   calls: { method: string; args: unknown[] }[] = [];
 
+  // Idempotency key cache — mirrors real Stripe behaviour: a second call with
+  // the same idempotency key returns the exact same PaymentIntent object.
+  private _idempotencyCache = new Map<string, Record<string, unknown>>();
+
   constructor(options: MockStripeOptions = {}) {
     this.options = options;
   }
 
   paymentIntents = {
-    create: async (params: Record<string, unknown>, _reqOptions?: unknown) => {
+    create: async (params: Record<string, unknown>, reqOptions?: Record<string, unknown>) => {
       this.calls.push({ method: 'paymentIntents.create', args: [params] });
 
       if (params['capture_method'] !== 'manual') {
@@ -51,8 +55,16 @@ export class MockStripeClient {
       if (this.options.createShouldError) {
         throw Object.assign(new Error('Stripe API error (mock)'), { type: 'api_error' });
       }
+
+      // Honour idempotency keys exactly as the real Stripe API does: repeated
+      // calls with the same key return the identical PaymentIntent object.
+      const idempotencyKey = reqOptions?.['idempotencyKey'] as string | undefined;
+      if (idempotencyKey && this._idempotencyCache.has(idempotencyKey)) {
+        return this._idempotencyCache.get(idempotencyKey)!;
+      }
+
       const id = `pi_mock_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
-      return {
+      const intent = {
         id,
         client_secret:  `${id}_secret_mock`,
         status:         'requires_payment_method' as StripePaymentIntentStatus,
@@ -60,6 +72,12 @@ export class MockStripeClient {
         currency:       params['currency'],
         capture_method: 'manual',
       };
+
+      if (idempotencyKey) {
+        this._idempotencyCache.set(idempotencyKey, intent);
+      }
+
+      return intent;
     },
 
     retrieve: async (id: string) => {
@@ -138,5 +156,5 @@ export class MockStripeClient {
     }
   }
 
-  reset(): void { this.calls = []; }
+  reset(): void { this.calls = []; this._idempotencyCache.clear(); }
 }

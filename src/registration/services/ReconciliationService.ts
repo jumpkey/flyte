@@ -79,6 +79,14 @@ export class ReconciliationService implements IReconciliationService {
 
     for (const candidate of candidates) {
       try {
+        // Capture recovery rows must be processed OUTSIDE the row-lock
+        // transaction: handlePaymentAuthorized calls sp_acquire_slot_and_stage_capture
+        // which takes its own FOR UPDATE lock on the same registration row.
+        // If we held the lock inside sql.begin() while awaiting recovery, we'd
+        // deadlock because the inner SP would wait on our lock forever.
+        let recoverPiId: string | null = null;
+        let recoverAmount = 0;
+
         await sql.begin(async (tx) => {
           const locked = await tx<Array<{
             registration_id: string;
@@ -106,10 +114,12 @@ export class ReconciliationService implements IReconciliationService {
             }
 
             if (piStatus === 'requires_capture') {
-              // Authorization landed but our webhook never finalized; recover.
-              // handlePaymentAuthorized opens its own transactions, so commit
-              // ours first to release the row lock.
-              return await this.recoverAuthorized(tx, row.payment_intent_id, row.gross_amount_cents, row.registration_id, result);
+              // Schedule recovery outside this transaction. Set flag and
+              // return immediately so the transaction commits and releases
+              // the row lock before handlePaymentAuthorized tries to re-lock.
+              recoverPiId = row.payment_intent_id;
+              recoverAmount = row.gross_amount_cents;
+              return;
             }
 
             if (piStatus === 'succeeded') {
@@ -136,6 +146,12 @@ export class ReconciliationService implements IReconciliationService {
             result.expiredRegistrationIds.push(row.registration_id);
           }
         });
+
+        // Now the transaction is committed and the row lock is released.
+        // Safe to call handlePaymentAuthorized which takes its own locks.
+        if (recoverPiId) {
+          await this.recoverAuthorized(recoverPiId, recoverAmount, result);
+        }
       } catch (err) {
         console.error('[ReconciliationService] Error in scan 1:', err);
         result.errorCount++;
@@ -143,17 +159,12 @@ export class ReconciliationService implements IReconciliationService {
     }
   }
 
-  // Helper for the requires_capture recovery path. Runs OUTSIDE the row-lock
-  // transaction because handlePaymentAuthorized takes its own locks via
-  // sp_acquire_slot_and_stage_capture. The row lock from scan 1 has already
-  // been released when this is called by virtue of returning from the begin().
-  // Note: this is invoked as `return await this.recoverAuthorized(...)` from
-  // inside the begin() callback — we abandon our lock and let the SP retake it.
+  // Helper for the requires_capture recovery path. Called AFTER the per-row
+  // transaction has committed (and its row lock released) to avoid deadlocking
+  // with sp_acquire_slot_and_stage_capture's own FOR UPDATE lock.
   private async recoverAuthorized(
-    _tx: unknown,
     paymentIntentId: string,
     grossAmountCents: number,
-    registrationId: string,
     result: ReconciliationResult
   ): Promise<void> {
     const res = await this.registrationService.handlePaymentAuthorized(paymentIntentId, grossAmountCents);
@@ -162,7 +173,6 @@ export class ReconciliationService implements IReconciliationService {
     } else {
       result.errorCount++;
     }
-    void registrationId;
   }
 
   // SCAN 2: PENDING_CAPTURE registrations needing a capture retry.

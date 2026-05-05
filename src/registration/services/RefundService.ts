@@ -170,7 +170,14 @@ export class RefundService implements IRefundService {
       }
     }
 
-    await sql`UPDATE events SET status = 'CANCELLED', updated_at = now() WHERE event_id = ${request.eventId}::UUID`;
+    if (totalFailed === 0) {
+      await sql`UPDATE events SET status = 'CANCELLED', updated_at = now() WHERE event_id = ${request.eventId}::UUID`;
+    } else {
+      console.warn(
+        `[RefundService] ${totalFailed}/${registrations.length} refunds failed for event ${request.eventId}; ` +
+        `event status NOT changed to CANCELLED`
+      );
+    }
 
     return {
       eventId: request.eventId,

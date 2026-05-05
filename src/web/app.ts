@@ -70,10 +70,10 @@ app.post('/logout', authGuard, authController.logout);
 // Registration routes — rate limit POSTs that create Stripe PaymentIntents,
 // confirm payments, or insert waitlist rows to prevent abuse.
 app.get('/events/:eventId/register', registrationController.showRegistrationForm);
-app.post('/events/:eventId/register', rateLimit(10, 60000), registrationController.initiateRegistration);
-app.post('/registration/confirm/:paymentIntentId', rateLimit(10, 60000), registrationController.confirmRegistration);
+app.post('/events/:eventId/register', rateLimit(60, 60000), registrationController.initiateRegistration);
+app.post('/registration/confirm/:paymentIntentId', rateLimit(60, 60000), registrationController.confirmRegistration);
 app.get('/registration/:registrationId/confirmed', registrationController.showConfirmed);
 app.get('/events/:eventId/waitlist', registrationController.showWaitlistForm);
-app.post('/events/:eventId/waitlist', rateLimit(10, 60000), registrationController.addToWaitlist);
+app.post('/events/:eventId/waitlist', rateLimit(60, 60000), registrationController.addToWaitlist);
 
 export { app };

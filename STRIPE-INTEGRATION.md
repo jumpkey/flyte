@@ -60,6 +60,18 @@ REGISTRATION_TTL_MINUTES=30            # Expiry time for PENDING_PAYMENT registr
 CAPTURE_MAX_RETRIES=5                  # Max capture retry attempts before restoring slot
 ```
 
+### Optional: Stripe Simulator Override
+
+For load testing and integration tests, redirect all Stripe API calls to a local simulator:
+
+```
+STRIPE_SIMULATOR_HOST=localhost        # Simulator hostname
+STRIPE_SIMULATOR_PORT=12111            # Simulator port (default: Stripe default)
+STRIPE_SIMULATOR_PROTOCOL=http         # Protocol (default: https)
+```
+
+Both the main app and the reconciliation runner honour these variables via `stripe-factory.ts`.
+
 ## Webhook Setup
 
 The webhook endpoint is: `POST /webhooks/stripe`
@@ -78,7 +90,7 @@ The `ReconciliationService` performs three sweeps:
 2. **Retry PENDING_CAPTURE**: Uses exponential backoff. After `CAPTURE_MAX_RETRIES`, the slot is restored.
 3. **Re-send unsent confirmation emails**: For CONFIRMED registrations missing `confirmation_email_sent_at`.
 
-The reconciliation runner (`src/registration/reconciliation-runner.ts`) is scheduled via supercronic every 5 minutes in production.
+The reconciliation runner (`src/registration/reconciliation-runner.ts`) is scheduled via supercronic every 5 minutes in production. It uses `stripe-factory.ts` for Stripe client construction (honouring simulator overrides) and cleanly closes the database connection pool on exit.
 
 ## How to Run Tests
 
@@ -98,6 +110,15 @@ Run all tests:
 ```bash
 npx tsx src/registration/testing/run-all-tests.ts
 ```
+
+## Rate Limiting
+
+Registration endpoints (`POST /events/:id/register`, `POST /registration/confirm/:piId`,
+`POST /events/:id/waitlist`) are rate-limited to **60 requests per 60 seconds per IP**.
+
+When the limit is exceeded, the middleware retries with random backoff (500ms–2s) up to
+3 times before returning HTTP 429. This absorbs brief legitimate traffic spikes without
+surfacing errors to the customer. Only sustained abuse triggers a hard rejection.
 
 ## Manual Verification Steps
 

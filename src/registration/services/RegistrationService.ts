@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { sql } from '../../services/db.js';
 import type { StripeClient, IRegistrationService, INotificationService } from '../interfaces.js';
 import type {
@@ -67,7 +67,7 @@ export class RegistrationService implements IRegistrationService {
           metadata: { eventId: formData.eventId, email: formData.email },
           automatic_payment_methods: { enabled: true },
         },
-        { idempotencyKey: `pi-create-${crypto.randomUUID()}` }
+        { idempotencyKey: `pi-create-${formData.eventId}-${crypto.createHash('sha256').update(formData.email.toLowerCase()).digest('hex').slice(0, 16)}` }
       );
     } catch (err: unknown) {
       const e = err as Record<string, unknown>;
