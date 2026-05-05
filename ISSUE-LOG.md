@@ -5,6 +5,15 @@ affect core functionality; they are documented here for later consideration.
 
 Items marked ~~strikethrough~~ have been resolved and are kept for historical reference.
 
+## Richness of functionality
+
+- **Registration Information** needs to capture richer end-user information: name (first, last), mobile phone number, street address, city, state, zip, along with event-specific selection attributes that are not yet defined. TBD, deferred.
+- **Payment Processing Logging** should capture (serial) interactions with Stripe with correlating key back to registration record or end-user identifier (email address) to help reconcile processing errors. This should log all of the unique identifiers along with the payment processing operation, and its success/failure, time it took place. Deferred.
+- **Lazy creation of site registration** End users are not required to register with the site (set a password) but this is desirable, so it should be mentioned on the registration page (and allow the user to set a password) thus creating a new site registration/authentication record at the same time as registration. A site registration record should be silently created with a flag set for the user to reset the password if they want to follow-up register from the confirmation email. Deferred.
+- **Home page** Site needs a basic home page both logged in, and not logged in. Deferred.
+- **Portal Page** Site needs an end-user landing page after login that shows the list of registered events, with a link to edit the event information or cancel and request a refund (requirements TBD). Deferred.
+- **Admin Page** Site needs administrative portal page, along with detail pages with realtime reporting queries against the database tables, some graphs tracking site activity at a high level (completed registrations / h, registration link hits, failed registrations, page hits (logging needs to be improved to capture entries for the non-login page hits). Deferred.
+
 ---
 ## Development Process
 
