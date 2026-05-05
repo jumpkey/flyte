@@ -1,0 +1,53 @@
+###############################################################################
+# docker-compose.load-test.yml
+#
+# Overlay for docker-compose.yml that adds the Stripe simulator and wires the
+# Flyte application to use it instead of api.stripe.com.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.load-test.yml up -d
+#
+# The app service is extended with the STRIPE_SIMULATOR_* environment variables
+# so that stripe-factory.ts redirects all Stripe SDK calls to the simulator.
+# The STRIPE_SECRET_KEY is set to a dummy test value so the app starts without
+# complaining that the key is missing, but since all API calls go to the local
+# simulator, no real Stripe credentials are required.
+###############################################################################
+
+version: '3.8'
+
+services:
+  # ── Stripe API Simulator ──────────────────────────────────────────────────
+  stripe-simulator:
+    build:
+      context: ./load_testing
+      dockerfile: Dockerfile.simulator
+    image: flyte-stripe-simulator:latest
+    ports:
+      - "12111:12111"
+    environment:
+      # Artificial delays / fault injection — override as needed
+      STRIPE_SIM_CREATE_DELAY_MS: "0"
+      STRIPE_SIM_CAPTURE_DELAY_MS: "0"
+      STRIPE_SIM_CAPTURE_FAIL_RATE: "0.0"
+      STRIPE_SIM_CAPTURE_TRANSIENT_RATE: "0.0"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:12111/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Override app environment to use the simulator ─────────────────────────
+  app:
+    environment:
+      # Tell stripe-factory.ts to point at the local simulator
+      STRIPE_SIMULATOR_HOST: "stripe-simulator"
+      STRIPE_SIMULATOR_PORT: "12111"
+      STRIPE_SIMULATOR_PROTOCOL: "http"
+      # A dummy key is sufficient — the simulator doesn't validate it
+      STRIPE_SECRET_KEY: "sk_test_loadtest_simulator"
+      STRIPE_PUBLISHABLE_KEY: "pk_test_loadtest_simulator"
+      STRIPE_WEBHOOK_SECRET: "whsec_loadtest_simulator"
+    depends_on:
+      stripe-simulator:
+        condition: service_healthy
