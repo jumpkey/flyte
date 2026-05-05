@@ -11,6 +11,41 @@ import { config } from '../../config.js';
 const eventAvailabilityService = new EventAvailabilityService();
 const waitlistService = new WaitlistService();
 
+const NAME_MAX = 100;
+const EMAIL_MAX = 254;   // RFC 5321 practical max
+const PHONE_MAX = 32;
+
+type ValidatedFields =
+  | { ok: true; email: string; firstName: string; lastName: string; phone: string | undefined }
+  | { ok: false; field: string; reason: string };
+
+// Validates presence, type, and length for registration/waitlist fields.
+// Email format is intentionally not regex-validated — the client form
+// re-enters the email twice for confirmation.
+function validateRegistrationFields(input: unknown): ValidatedFields {
+  if (!input || typeof input !== 'object') return { ok: false, field: 'body', reason: 'missing' };
+  const o = input as Record<string, unknown>;
+  const check = (field: string, max: number, required: boolean): { ok: true; value: string | undefined } | { ok: false; reason: string } => {
+    const v = o[field];
+    if (v === undefined || v === null || v === '') {
+      return required ? { ok: false, reason: 'missing' } : { ok: true, value: undefined };
+    }
+    if (typeof v !== 'string') return { ok: false, reason: 'must be a string' };
+    const trimmed = v.trim();
+    if (required && trimmed.length === 0) return { ok: false, reason: 'missing' };
+    if (trimmed.length > max) return { ok: false, reason: `exceeds max length ${max}` };
+    return { ok: true, value: trimmed };
+  };
+  const email     = check('email',     EMAIL_MAX, true);  if (!email.ok)     return { ok: false, field: 'email',     reason: email.reason };
+  const firstName = check('firstName', NAME_MAX,  true);  if (!firstName.ok) return { ok: false, field: 'firstName', reason: firstName.reason };
+  const lastName  = check('lastName',  NAME_MAX,  true);  if (!lastName.ok)  return { ok: false, field: 'lastName',  reason: lastName.reason };
+  const phone     = check('phone',     PHONE_MAX, false); if (!phone.ok)     return { ok: false, field: 'phone',     reason: phone.reason };
+  // email must contain '@' as a structural sanity check (defense-in-depth
+  // against the client form sending obvious garbage); not a format validator.
+  if (!email.value!.includes('@')) return { ok: false, field: 'email', reason: 'must contain @' };
+  return { ok: true, email: email.value!, firstName: firstName.value!, lastName: lastName.value!, phone: phone.value };
+}
+
 let _registrationService: RegistrationService | null = null;
 let _notificationService: NotificationService | null = null;
 
@@ -62,6 +97,11 @@ export const registrationController = {
 
     if (!body) return c.json({ error: 'invalid_request' }, 400);
 
+    // Field validation: presence + length bounds. Format validation (e.g.
+    // email regex) is handled client-side via two-field re-entry per spec.
+    const cleaned = validateRegistrationFields(body);
+    if (!cleaned.ok) return c.json({ error: 'invalid_request', field: cleaned.field, reason: cleaned.reason }, 400);
+
     const eventRows = await sql<{registration_fee_cents: number}[]>`
       SELECT registration_fee_cents FROM events WHERE event_id = ${eventId}::UUID
     `;
@@ -75,10 +115,10 @@ export const registrationController = {
 
     const result = await svc.initiateRegistration({
       eventId,
-      email: body.email,
-      firstName: body.firstName,
-      lastName: body.lastName,
-      phone: body.phone,
+      email: cleaned.email,
+      firstName: cleaned.firstName,
+      lastName: cleaned.lastName,
+      phone: cleaned.phone,
       attributes: body.attributes ?? {},
       grossAmountCents,
     });
@@ -159,12 +199,20 @@ export const registrationController = {
     if (!eventId) return c.text('Event not found', 404);
     const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? {};
 
+    const cleaned = validateRegistrationFields({
+      email: body['email'],
+      firstName: body['firstName'],
+      lastName: body['lastName'],
+      phone: body['phone'],
+    });
+    if (!cleaned.ok) return c.text(`Invalid ${cleaned.field}: ${cleaned.reason}`, 400);
+
     const entry = await waitlistService.addToWaitlist({
       eventId,
-      email: body['email'] as string,
-      firstName: body['firstName'] as string,
-      lastName: body['lastName'] as string,
-      phone: body['phone'] as string | undefined,
+      email: cleaned.email,
+      firstName: cleaned.firstName,
+      lastName: cleaned.lastName,
+      phone: cleaned.phone,
     });
 
     const position = await waitlistService.getWaitlistPosition(eventId, entry.email);

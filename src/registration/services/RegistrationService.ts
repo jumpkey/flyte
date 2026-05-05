@@ -117,8 +117,12 @@ export class RegistrationService implements IRegistrationService {
     const rows = await sql<Array<{gross_amount_cents: number}>>`
       SELECT gross_amount_cents FROM registrations WHERE payment_intent_id = ${paymentIntentId}
     `;
-    const grossAmountCents = rows.length > 0 ? rows[0].gross_amount_cents : 0;
-    return this.handlePaymentAuthorized(paymentIntentId, grossAmountCents);
+    if (rows.length === 0) {
+      // No registration row for this PI — never default to 0; that would
+      // produce a confirmed registration with net_amount_cents = 0.
+      return { outcome: 'NOT_FOUND' };
+    }
+    return this.handlePaymentAuthorized(paymentIntentId, rows[0].gross_amount_cents);
   }
 
   async confirmRegistrationFromClient(
@@ -138,9 +142,13 @@ export class RegistrationService implements IRegistrationService {
     const rows = await sql<Array<{gross_amount_cents: number}>>`
       SELECT gross_amount_cents FROM registrations WHERE payment_intent_id = ${paymentIntentId}
     `;
-    const amount = rows.length > 0 ? rows[0].gross_amount_cents : (pi.latest_charge?.amount_captured ?? 0);
+    if (rows.length === 0) {
+      // pi.latest_charge.amount_captured is null in requires_capture state, so
+      // there is no safe fallback. Treat as missing — caller will surface error.
+      return { outcome: 'NOT_FOUND' };
+    }
 
-    return this.handlePaymentAuthorized(paymentIntentId, amount);
+    return this.handlePaymentAuthorized(paymentIntentId, rows[0].gross_amount_cents);
   }
 
   async handlePaymentAuthorized(
@@ -219,6 +227,9 @@ export class RegistrationService implements IRegistrationService {
         return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Capture failed transiently; will retry' };
       } else {
         await sql`SELECT * FROM sp_restore_slot_on_capture_failure(${paymentIntentId})`;
+        // Release the customer's card authorization. Without this the PI
+        // remains in requires_capture and Stripe holds funds for ~7 days.
+        try { await this.stripe.paymentIntents.cancel(paymentIntentId); } catch (_) { /* best effort */ }
         return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Capture permanently failed' };
       }
     }

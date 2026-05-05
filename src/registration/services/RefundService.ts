@@ -49,7 +49,13 @@ export class RefundService implements IRefundService {
     const eventName = eventRows.length > 0 ? eventRows[0].name : 'Event';
 
     if (request.refundType === 'FULL') {
-      if (reg.refundedAmountCents >= reg.grossAmountCents) {
+      // Stripe refunds the captured (net) amount when no `amount` is passed.
+      // Track the same value in our DB so refunded_amount_cents reflects the
+      // actual refund (avoids overstating the refund vs. the captured charge,
+      // which would corrupt subsequent partial-refund accounting).
+      const refundAmount = reg.netAmountCents ?? reg.grossAmountCents;
+
+      if (reg.refundedAmountCents >= refundAmount) {
         return { outcome: 'ALREADY_REFUNDED', registrationId: reg.registrationId };
       }
 
@@ -65,7 +71,7 @@ export class RefundService implements IRefundService {
         SELECT * FROM sp_cancel_registration(
           ${reg.registrationId}::UUID,
           ${refundId},
-          ${reg.grossAmountCents},
+          ${refundAmount},
           ${request.reason},
           TRUE
         )
@@ -75,14 +81,16 @@ export class RefundService implements IRefundService {
       }
 
       try {
-        await this.notificationService.sendRefundConfirmation(reg, reg.grossAmountCents, eventName);
+        await this.notificationService.sendRefundConfirmation(reg, refundAmount, eventName);
       } catch (_) { /* best effort */ }
 
-      return { outcome: 'REFUND_ISSUED', registrationId: reg.registrationId, stripeRefundId: refundId, refundedAmountCents: reg.grossAmountCents };
+      return { outcome: 'REFUND_ISSUED', registrationId: reg.registrationId, stripeRefundId: refundId, refundedAmountCents: refundAmount };
     } else {
       const partialAmount = request.partialAmountCents;
       if (!partialAmount || partialAmount <= 0) return { outcome: 'INVALID_STATE' };
-      const remaining = reg.grossAmountCents - reg.refundedAmountCents;
+      // Refundable balance is bounded by what was actually captured.
+      const captured = reg.netAmountCents ?? reg.grossAmountCents;
+      const remaining = captured - reg.refundedAmountCents;
       if (partialAmount > remaining) return { outcome: 'AMOUNT_EXCEEDS_BALANCE' };
 
       let refundId: string;
@@ -128,6 +136,8 @@ export class RefundService implements IRefundService {
         continue;
       }
 
+      const refundAmount = reg.netAmountCents ?? reg.grossAmountCents;
+
       let refundId: string;
       try {
         const refund = await this.stripe.refunds.create({ payment_intent: reg.paymentIntentId });
@@ -142,7 +152,7 @@ export class RefundService implements IRefundService {
         SELECT * FROM sp_cancel_registration(
           ${reg.registrationId}::UUID,
           ${refundId},
-          ${reg.grossAmountCents},
+          ${refundAmount},
           ${request.reason},
           FALSE
         )
@@ -152,7 +162,7 @@ export class RefundService implements IRefundService {
         results.push({ registrationId: reg.registrationId, result: { outcome: 'REFUND_ISSUED', stripeRefundId: refundId } });
         totalSucceeded++;
         try {
-          await this.notificationService.sendRefundConfirmation(reg, reg.grossAmountCents, eventName);
+          await this.notificationService.sendRefundConfirmation(reg, refundAmount, eventName);
         } catch (_) { /* best effort */ }
       } else {
         results.push({ registrationId: reg.registrationId, result: { outcome: 'INTERNAL_ERROR' } });
