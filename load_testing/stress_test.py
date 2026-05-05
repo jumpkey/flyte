@@ -448,13 +448,19 @@ async def run_load_test(
     lock = asyncio.Lock()
 
     connector = aiohttp.TCPConnector(limit=concurrency + 10, limit_per_host=concurrency + 10)
-    cookie_jar = aiohttp.CookieJar(unsafe=True)
 
-    async with aiohttp.ClientSession(connector=connector, cookie_jar=cookie_jar) as session:
-        workers = [
+    # Each worker gets its own session and cookie jar so session cookies
+    # (e.g. CSRF tokens) don't collide across concurrent workers.
+    sessions: list[aiohttp.ClientSession] = []
+    workers: list[RegistrationWorker] = []
+    for i in range(concurrency):
+        jar = aiohttp.CookieJar(unsafe=True)
+        sess = aiohttp.ClientSession(connector=connector, connector_owner=False, cookie_jar=jar)
+        sessions.append(sess)
+        workers.append(
             RegistrationWorker(
                 worker_id=i,
-                session=session,
+                session=sess,
                 base_url=base_url,
                 event_id=event_id,
                 phase=phase,
@@ -462,9 +468,9 @@ async def run_load_test(
                 rate_limit_bypass=rate_limit_bypass,
                 simulator_url=simulator_url,
             )
-            for i in range(concurrency)
-        ]
+        )
 
+    try:
         async def do_attempt(worker: RegistrationWorker, attempt_num: int) -> None:
             async with sem:
                 results = await worker.run_one(attempt_num)
@@ -497,6 +503,10 @@ async def run_load_test(
                 await coro
                 done_count += 1
                 progress.update(prog_task, completed=done_count)
+    finally:
+        for sess in sessions:
+            await sess.close()
+        connector.close()
 
     stats.end_time = time.monotonic()
 

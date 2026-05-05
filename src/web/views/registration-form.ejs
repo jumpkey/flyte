@@ -148,16 +148,9 @@
       if (confirmResp.redirected) {
         window.location.href = confirmResp.url;
       } else if (confirmResp.ok) {
-        // Follow the redirect from the JSON response if available
-        const contentType = confirmResp.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-          const data = await confirmResp.json();
-          if (data.redirectUrl) {
-            window.location.href = data.redirectUrl;
-            return;
-          }
-        }
-        // Fall back to reloading (server-rendered error page)
+        // Controller returns redirects (302) for success/waitlist and renders
+        // HTML views for pending/error states. fetch follows redirects
+        // transparently, so a 200 here means we received a rendered page.
         window.location.reload();
       } else {
         const status = confirmResp.status;

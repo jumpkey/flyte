@@ -16,6 +16,8 @@ const TEST_FILES = [
   'increment-10.test.ts',
   'increment-11.test.ts',
   'increment-13.test.ts',
+  'increment-14-webhook-http.test.ts',
+  'increment-15-concurrent.test.ts',
   'review-fixes.test.ts',
 ];
 

@@ -30,10 +30,8 @@ export const webhookController = {
 
     let event: Record<string, unknown>;
     try {
-      if (!config.stripe.secretKey) throw new Error('STRIPE_SECRET_KEY not configured');
       if (!config.stripe.webhookSecret) throw new Error('STRIPE_WEBHOOK_SECRET not configured');
-      const { default: Stripe } = await import('stripe');
-      const stripe = new Stripe(config.stripe.secretKey, { apiVersion: '2026-04-22.dahlia' as const });
+      const stripe = await getStripe();
       event = stripe.webhooks.constructEvent(bodyBuffer, sig, config.stripe.webhookSecret) as unknown as Record<string, unknown>;
     } catch (err) {
       console.error('[webhook] signature verification failed:', err);
