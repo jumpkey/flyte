@@ -168,9 +168,12 @@ DECLARE
     v_reg               registrations%ROWTYPE;
     v_available         INTEGER;
 BEGIN
+    -- Lock the registration row so concurrent webhook + client-confirm calls
+    -- serialize through the status check that follows.
     SELECT * INTO v_reg
     FROM registrations
-    WHERE registrations.payment_intent_id = p_payment_intent_id;
+    WHERE registrations.payment_intent_id = p_payment_intent_id
+    FOR UPDATE;
 
     IF NOT FOUND THEN
         RETURN QUERY SELECT 'NOT_FOUND'::TEXT,
@@ -245,7 +248,8 @@ DECLARE
 BEGIN
     SELECT * INTO v_reg
     FROM registrations
-    WHERE registrations.payment_intent_id = p_payment_intent_id;
+    WHERE registrations.payment_intent_id = p_payment_intent_id
+    FOR UPDATE;
 
     IF NOT FOUND THEN
         RETURN QUERY SELECT 'NOT_FOUND'::TEXT,
@@ -288,7 +292,8 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_reg registrations%ROWTYPE;
+    v_reg       registrations%ROWTYPE;
+    v_confirmed INTEGER;
 BEGIN
     SELECT * INTO v_reg
     FROM registrations
@@ -302,6 +307,20 @@ BEGIN
 
     IF v_reg.status != 'PENDING_CAPTURE' THEN
         RETURN QUERY SELECT 'INVALID_STATE'::TEXT;
+        RETURN;
+    END IF;
+
+    -- Lock the event row and verify the slot accounting is consistent with this
+    -- registration before decrementing. The capacity_invariant CHECK constraint
+    -- would catch a corrupt decrement, but raising INVARIANT_VIOLATION here gives
+    -- the caller a useful result code instead of an unexpected SQL error.
+    SELECT confirmed_count INTO v_confirmed
+    FROM events
+    WHERE event_id = v_reg.event_id
+    FOR UPDATE;
+
+    IF v_confirmed <= 0 THEN
+        RETURN QUERY SELECT 'INVARIANT_VIOLATION'::TEXT;
         RETURN;
     END IF;
 
@@ -349,7 +368,8 @@ DECLARE
 BEGIN
     SELECT * INTO v_reg
     FROM registrations
-    WHERE registrations.payment_intent_id = p_payment_intent_id;
+    WHERE registrations.payment_intent_id = p_payment_intent_id
+    FOR UPDATE;
 
     IF NOT FOUND THEN
         RETURN QUERY SELECT 'NOT_FOUND'::TEXT, NULL::UUID;
