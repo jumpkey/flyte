@@ -6,6 +6,10 @@ affect core functionality; they are documented here for later consideration.
 Items marked ~~strikethrough~~ have been resolved and are kept for historical reference.
 
 ---
+## Development Process
+
+- **README.md** needs to be reviewed to be copacetic with new functionality (registration for and event, stripe payment processing, test suite, simulated load). This is deferred until the new release is fully deployed and stabilized. 
+- **Full Documentation Review** A complete sweep through all documentation and code needs to happen to validate that all documentation is copacetic with the current implementation. Deferred until release stablises.
 
 ## Code Quality
 
