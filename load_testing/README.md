@@ -11,7 +11,9 @@ and without incurring API rate limits or costs.
 
 ```
 load_testing/
-├── README.md                  ← this file
+├── README.md                  ← this file (quick-start and options reference)
+├── DEPLOY.md                  ← step-by-step deployment guide (local, Docker, Fly.io)
+├── TECHNICAL_REFERENCE.md     ← deep-dive into architecture and design decisions
 ├── requirements.txt           ← Python dependencies (aiohttp, fastapi, rich, click…)
 ├── stress_test.py             ← main load-test program
 ├── stripe_simulator.py        ← FastAPI Stripe API stub
@@ -20,6 +22,11 @@ load_testing/
 └── .env.load-test             ← environment variable template
 ../docker-compose.load-test.yml ← Compose overlay that wires in the simulator
 ```
+
+See **[DEPLOY.md](DEPLOY.md)** for the complete deployment playbook (local
+dev, Docker Compose, and live Fly.io).  See
+**[TECHNICAL_REFERENCE.md](TECHNICAL_REFERENCE.md)** for architecture
+diagrams, component internals, and design rationale.
 
 The `stripe-factory.ts` module in the application was extended to read three
 optional environment variables (`STRIPE_SIMULATOR_HOST`, `STRIPE_SIMULATOR_PORT`,
