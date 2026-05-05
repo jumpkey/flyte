@@ -1,0 +1,32 @@
+<div>
+  <h1>Join Waitlist: <%= event.name %></h1>
+
+  <% if (typeof reason !== 'undefined' && reason === 'full') { %>
+  <div class="flash-message">
+    Sorry, this event is now full. You can join the waitlist and we'll contact you if a spot opens up.
+  </div>
+  <% } %>
+
+  <p>No spots are currently available. Join the waitlist and we'll contact you if a spot opens up. No payment is required at this time.</p>
+
+  <form method="POST" action="/events/<%= event.eventId %>/waitlist">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div>
+      <label for="firstName">First Name</label>
+      <input type="text" id="firstName" name="firstName" required>
+    </div>
+    <div>
+      <label for="lastName">Last Name</label>
+      <input type="text" id="lastName" name="lastName" required>
+    </div>
+    <div>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+    </div>
+    <div>
+      <label for="phone">Phone (optional)</label>
+      <input type="tel" id="phone" name="phone">
+    </div>
+    <button type="submit">Join Waitlist</button>
+  </form>
+</div>

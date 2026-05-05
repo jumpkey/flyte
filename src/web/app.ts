@@ -8,6 +8,8 @@ import { homeController } from './controllers/home.js';
 import { authController } from './controllers/auth.js';
 import { dashboardController } from './controllers/dashboard.js';
 import { profileController } from './controllers/profile.js';
+import { registrationController } from './controllers/registration.js';
+import { webhookController } from './controllers/webhook.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import type { SessionData } from './middleware/session.js';
@@ -25,16 +27,21 @@ const app = new Hono<{ Variables: Variables }>();
 
 app.use('/public/*', serveStatic({ root: './' }));
 
+// Webhook route MUST be registered before session/csrf middleware
+// so it receives the raw unparsed body
+app.post('/webhooks/stripe', webhookController.handleStripeWebhook);
+
 app.use('*', secureHeaders({
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", 'https://unpkg.com'],
+    scriptSrc: ["'self'", 'https://unpkg.com', 'https://js.stripe.com'],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
-    imgSrc: ["'self'", 'data:'],
-    connectSrc: ["'self'"],
+    imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
+    connectSrc: ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://hooks.stripe.com'],
     fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
     formAction: ["'self'"],
     frameAncestors: ["'none'"],
+    frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
     baseUri: ["'self'"],
   },
   crossOriginEmbedderPolicy: false,
@@ -59,5 +66,14 @@ app.get('/dashboard', authGuard, dashboardController.index);
 app.get('/profile', authGuard, profileController.editForm);
 app.post('/profile', authGuard, profileController.update);
 app.post('/logout', authGuard, authController.logout);
+
+// Registration routes — rate limit POSTs that create Stripe PaymentIntents,
+// confirm payments, or insert waitlist rows to prevent abuse.
+app.get('/events/:eventId/register', registrationController.showRegistrationForm);
+app.post('/events/:eventId/register', rateLimit(60, 60000), registrationController.initiateRegistration);
+app.post('/registration/confirm/:paymentIntentId', rateLimit(60, 60000), registrationController.confirmRegistration);
+app.get('/registration/:registrationId/confirmed', registrationController.showConfirmed);
+app.get('/events/:eventId/waitlist', registrationController.showWaitlistForm);
+app.post('/events/:eventId/waitlist', rateLimit(60, 60000), registrationController.addToWaitlist);
 
 export { app };
