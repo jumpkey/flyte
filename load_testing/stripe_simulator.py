@@ -60,7 +60,7 @@ def _pi_id() -> str:
 def _re_id() -> str:
     return f"re_sim_{uuid4().hex[:16]}"
 
-def _error(code: str, message: str, http_status: int = 402) -> JSONResponse:
+def _error(code: str, message: str, http_status: int = 400) -> JSONResponse:
     return JSONResponse(
         status_code=http_status,
         content={

@@ -21,7 +21,10 @@ export async function getStripe(): Promise<StripeClient> {
   const extraOpts: Record<string, unknown> = {};
   if (simHost) {
     extraOpts['host'] = simHost;
-    if (simPort) extraOpts['port'] = parseInt(simPort, 10);
+    if (simPort) {
+      const port = parseInt(simPort, 10);
+      if (port >= 1 && port <= 65535) extraOpts['port'] = port;
+    }
     if (simProtocol) extraOpts['protocol'] = simProtocol;
   }
 

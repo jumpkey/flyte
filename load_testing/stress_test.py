@@ -123,8 +123,8 @@ class RunStats:
         latencies = sorted(r.latency_ms for r in self.phase_results(phase))
         if not latencies:
             return 0.0
-        idx = int(len(latencies) * p / 100)
-        return latencies[min(idx, len(latencies) - 1)]
+        idx = int((len(latencies) - 1) * p / 100)
+        return latencies[idx]
 
     def status_distribution(self, phase: str) -> dict[int, int]:
         dist: dict[int, int] = {}
@@ -555,10 +555,10 @@ def _build_summary(stats: RunStats, phase: str) -> dict[str, Any]:
             "total_requests": len(rs),
             "throughput_rps": round(stats.throughput(p), 2),
             "latency_ms": {
-                "p50": round(latencies[int(len(latencies) * 0.50)], 2) if latencies else 0,
-                "p90": round(latencies[int(len(latencies) * 0.90)], 2) if latencies else 0,
-                "p95": round(latencies[int(len(latencies) * 0.95)], 2) if latencies else 0,
-                "p99": round(latencies[int(len(latencies) * 0.99)], 2) if latencies else 0,
+                "p50": round(latencies[int((len(latencies) - 1) * 0.50)], 2) if latencies else 0,
+                "p90": round(latencies[int((len(latencies) - 1) * 0.90)], 2) if latencies else 0,
+                "p95": round(latencies[int((len(latencies) - 1) * 0.95)], 2) if latencies else 0,
+                "p99": round(latencies[int((len(latencies) - 1) * 0.99)], 2) if latencies else 0,
                 "max": round(max(latencies), 2) if latencies else 0,
                 "min": round(min(latencies), 2) if latencies else 0,
             },
@@ -593,10 +593,10 @@ def print_report(stats: RunStats, phase: str) -> None:
         lat_table.add_column("Value", justify="right")
         lat_table.add_row("Requests", str(len(rs)))
         lat_table.add_row("Throughput", f"{stats.throughput(p):.1f} req/s")
-        lat_table.add_row("p50", f"{latencies[int(len(latencies)*0.50)]:.1f} ms" if latencies else "—")
-        lat_table.add_row("p90", f"{latencies[int(len(latencies)*0.90)]:.1f} ms" if latencies else "—")
-        lat_table.add_row("p95", f"{latencies[int(len(latencies)*0.95)]:.1f} ms" if latencies else "—")
-        lat_table.add_row("p99", f"{latencies[int(len(latencies)*0.99)]:.1f} ms" if latencies else "—")
+        lat_table.add_row("p50", f"{latencies[int((len(latencies) - 1) * 0.50)]:.1f} ms" if latencies else "—")
+        lat_table.add_row("p90", f"{latencies[int((len(latencies) - 1) * 0.90)]:.1f} ms" if latencies else "—")
+        lat_table.add_row("p95", f"{latencies[int((len(latencies) - 1) * 0.95)]:.1f} ms" if latencies else "—")
+        lat_table.add_row("p99", f"{latencies[int((len(latencies) - 1) * 0.99)]:.1f} ms" if latencies else "—")
         lat_table.add_row("max", f"{max(latencies):.1f} ms" if latencies else "—")
         console.print(lat_table)
 
