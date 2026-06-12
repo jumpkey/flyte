@@ -22,7 +22,7 @@ export const config = {
   verificationTokenTtlHours: parseInt(process.env.VERIFICATION_TOKEN_TTL_HOURS ?? '24', 10),
   passwordResetTokenTtlHours: parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_HOURS ?? '1', 10),
   seedAdminEmail: process.env.SEED_ADMIN_EMAIL ?? 'admin@flyte.local',
-  seedAdminPassword: process.env.SEED_ADMIN_PASSWORD ?? 'changeme123',
+  seedAdminPassword: process.env.SEED_ADMIN_PASSWORD ?? '',
   isProduction: process.env.NODE_ENV === 'production',
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY ?? '',
