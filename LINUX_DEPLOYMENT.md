@@ -218,14 +218,13 @@ This applies every file in `db/migrations/` in order and records applied migrati
 ### 5b. (Optional) Seed the admin user
 
 ```bash
-sudo -u flyte bash -c "cd /home/flyte/app && npm run seed"
+sudo -u flyte bash -c "cd /home/flyte/app && SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD='s3cure!' npm run seed"
 ```
 
-This creates `admin@flyte.local` / `changeme123`. **Change the password immediately** after first login, or override the defaults before seeding:
-
-```bash
-sudo -u flyte bash -c "cd /home/flyte/app && SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD=s3cure! npm run seed"
-```
+`SEED_ADMIN_PASSWORD` is **required** when `NODE_ENV=production` — the seeder
+refuses to run without it (the `changeme123` fallback is development-only).
+The seeder is insert-only: if the admin user already exists it is left
+untouched, so re-running it never resets a changed password.
 
 ---
 

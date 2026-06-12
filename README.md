@@ -86,7 +86,8 @@ createdb flyte
 npm run migrate
 
 # 5. (Optional) Seed the admin user
-npm run seed        # creates admin@flyte.local / changeme123
+npm run seed        # dev default: admin@flyte.local / changeme123
+                    # production requires SEED_ADMIN_PASSWORD (see DEPLOYMENT-CHECKLIST.md)
 
 # 6. Start the dev server with hot-reload
 npm run dev         # listens on http://localhost:3000

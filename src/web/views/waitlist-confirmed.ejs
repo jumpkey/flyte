@@ -1,0 +1,13 @@
+<div>
+  <h1>You're on the Waitlist!</h1>
+
+  <p>You have been added to the waitlist for <strong><%= eventName %></strong>.</p>
+
+  <% if (typeof position !== 'undefined' && position !== null) { %>
+  <p>Your current position: <strong>#<%= position %></strong></p>
+  <% } %>
+
+  <p>We will contact you at <strong><%= entry.email %></strong> if a spot becomes available. No payment is required at this time.</p>
+
+  <a href="/" role="button" class="outline">Return Home</a>
+</div>
