@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1230" viewBox="0 0 1280 1230">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="1230" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/events</text>
+<rect x="0" y="36" width="1280" height="56" fill="#1F3A5F"/>
+<text x="40" y="72" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="96" cy="58" r="4" fill="#E8590C"/>
+<text x="140" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">Events</text>
+<rect x="140" y="82" width="46" height="3" fill="#E8590C" rx="1.5"/>
+<text x="1090" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#C3D0E0">Log in</text>
+<rect x="1150" y="48" width="90" height="32" fill="transparent" rx="8" stroke="#5B7396" stroke-width="1"/>
+<text x="1195" y="69" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle">Sign up</text>
+<text x="64" y="140" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A">Upcoming events</text>
+<text x="64" y="164" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#64748B">All events open for registration or recently closed</text>
+<rect x="64" y="180" width="360" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="80" y="205" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#64748B">🔍  Search events…</text>
+<rect x="440" y="180" width="180" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="456" y="205" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">Any month  ▾</text>
+<text x="640" y="205" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Clear filters</text>
+<circle cx="700" cy="200" r="11" fill="#E8590C"/>
+<text x="700" y="204" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="64" y="248" width="368" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="65" y="249" width="366" height="196" fill="#E9EEF3" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="73" y1="257" x2="423" y2="437" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="423" y1="257" x2="73" y2="437" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="143" y="336" width="210" height="22" fill="#FFFFFF" rx="11" opacity="0.9"/>
+<text x="248" y="351" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="400" fill="#64748B" text-anchor="middle">event image · 3:2 · object-fit: cover</text>
+<rect x="76" y="260" width="86" height="24" fill="#FFFFFF" rx="6"/>
+<text x="119" y="276" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">JUN 20</text>
+<text x="80" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Intro to Sailing</text>
+<text x="80" y="496" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Marina Bay Dock C</text>
+<text x="80" y="544" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">$25.00</text>
+<rect x="80" y="564" width="248" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="80" y="564" width="59.52" height="8" fill="#F08C00" rx="4"/>
+<text x="80" y="590" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#F08C00">12 of 50 left</text>
+<text x="416" y="548" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#E8590C" text-anchor="end">Register →</text>
+<rect x="456" y="248" width="368" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="457" y="249" width="366" height="196" fill="url(#ng)" rx="8"/>
+<text x="640" y="349" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="58" font-weight="800" fill="#FFFFFF" text-anchor="middle">FD</text>
+<text x="640" y="373" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#C3D0E0" text-anchor="middle">JUL 02</text>
+<rect x="468" y="260" width="86" height="24" fill="#FFFFFF" rx="6"/>
+<text x="511" y="276" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">JUL 02</text>
+<text x="472" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Founders Dinner</text>
+<text x="472" y="496" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">The Press Room</text>
+<text x="472" y="544" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">$80.00</text>
+<text x="808" y="538" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#E03131" text-anchor="end">Sold out</text>
+<text x="808" y="556" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F" text-anchor="end">Join waitlist →</text>
+<rect x="848" y="248" width="368" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="849" y="249" width="366" height="196" fill="#E9EEF3" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="857" y1="257" x2="1207" y2="437" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="1207" y1="257" x2="857" y2="437" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="927" y="336" width="210" height="22" fill="#FFFFFF" rx="11" opacity="0.9"/>
+<text x="1032" y="351" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="400" fill="#64748B" text-anchor="middle">event image · 3:2 · object-fit: cover</text>
+<rect x="860" y="260" width="86" height="24" fill="#FFFFFF" rx="6"/>
+<text x="903" y="276" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">JUL 18</text>
+<text x="864" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Summer 5K Run</text>
+<text x="864" y="496" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Riverside Park</text>
+<text x="864" y="544" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">$15.00</text>
+<rect x="864" y="564" width="248" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="864" y="564" width="173.6" height="8" fill="#2F9E44" rx="4"/>
+<text x="864" y="590" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">210 of 300 left</text>
+<text x="1200" y="548" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#E8590C" text-anchor="end">Register →</text>
+<rect x="64" y="628" width="368" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="65" y="629" width="366" height="196" fill="url(#ng)" rx="8"/>
+<text x="248" y="729" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="58" font-weight="800" fill="#FFFFFF" text-anchor="middle">PW</text>
+<text x="248" y="753" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#C3D0E0" text-anchor="middle">JUL 25</text>
+<rect x="76" y="640" width="86" height="24" fill="#FFFFFF" rx="6"/>
+<text x="119" y="656" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">JUL 25</text>
+<text x="80" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Pottery Workshop</text>
+<text x="80" y="876" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Clay Studio North</text>
+<text x="80" y="924" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">$45.00</text>
+<rect x="80" y="944" width="248" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="80" y="944" width="163.68" height="8" fill="#2F9E44" rx="4"/>
+<text x="80" y="970" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">8 of 12 left</text>
+<text x="416" y="928" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#E8590C" text-anchor="end">Register →</text>
+<rect x="456" y="628" width="368" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="457" y="629" width="366" height="196" fill="#E9EEF3" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="465" y1="637" x2="815" y2="817" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="815" y1="637" x2="465" y2="817" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="535" y="716" width="210" height="22" fill="#FFFFFF" rx="11" opacity="0.9"/>
+<text x="640" y="731" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="400" fill="#64748B" text-anchor="middle">event image · 3:2 · object-fit: cover</text>
+<rect x="468" y="640" width="86" height="24" fill="#FFFFFF" rx="6"/>
+<text x="511" y="656" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">AUG 01</text>
+<text x="472" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Wine &amp; Paint Night</text>
+<text x="472" y="876" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Gallery 22</text>
+<text x="472" y="924" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">$35.00</text>
+<rect x="472" y="944" width="248" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="472" y="944" width="186" height="8" fill="#2F9E44" rx="4"/>
+<text x="472" y="970" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">30 of 40 left</text>
+<text x="808" y="928" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#E8590C" text-anchor="end">Register →</text>
+<rect x="848" y="628" width="368" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<rect x="848" y="628" width="368" height="356" fill="#FFFFFF" rx="12" opacity="0.55"/>
+<rect x="849" y="629" width="366" height="196" fill="url(#ng)" rx="8"/>
+<text x="1032" y="729" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="58" font-weight="800" fill="#FFFFFF" text-anchor="middle">SG</text>
+<text x="1032" y="753" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#C3D0E0" text-anchor="middle">MAY 30</text>
+<rect x="860" y="640" width="86" height="24" fill="#FFFFFF" rx="6"/>
+<text x="903" y="656" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">MAY 30</text>
+<text x="864" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Spring Gala (closed)</text>
+<text x="864" y="876" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Grand Hall</text>
+<text x="864" y="924" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">$120.00</text>
+<text x="1200" y="924" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#64748B" text-anchor="end">Registration closed</text>
+<circle cx="488" cy="348" r="11" fill="#E8590C"/>
+<text x="488" y="352" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<circle cx="880" cy="728" r="11" fill="#E8590C"/>
+<text x="880" y="732" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<rect x="560" y="1016" width="160" height="40" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="640" y="1041" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Load more</text>
+<circle cx="740" cy="1036" r="11" fill="#E8590C"/>
+<text x="740" y="1040" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<rect x="40" y="1078" width="1200" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="64" cy="1100" r="11" fill="#E8590C"/>
+<text x="64" y="1104" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="84" y="1104" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Text search + month filter submit via HTMX (hx-get) and replace the grid only — no full reload.</text>
+<circle cx="64" cy="1122" r="11" fill="#E8590C"/>
+<text x="64" y="1126" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="84" y="1126" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Sold-out events stay listed (social proof) with the waitlist CTA replacing Register.</text>
+<circle cx="64" cy="1144" r="11" fill="#E8590C"/>
+<text x="64" y="1148" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="84" y="1148" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">CLOSED events render at 55% opacity, &#x27;Registration closed&#x27;, no CTA (site-map Q1 default).</text>
+<circle cx="64" cy="1166" r="11" fill="#E8590C"/>
+<text x="64" y="1170" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="84" y="1170" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">HTMX pagination, 12 cards per page. Empty state: &#x27;No upcoming events yet&#x27; + nothing else.</text>
+</svg>

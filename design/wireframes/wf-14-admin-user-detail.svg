@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1090" viewBox="0 0 1280 1090">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="1090" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/admin/users/7d3e…</text>
+<rect x="0" y="36" width="240" height="1054" fill="#1F3A5F"/>
+<text x="32" y="80" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="88" cy="66" r="4" fill="#E8590C"/>
+<text x="32" y="100" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="600" fill="#9FB3CC" letter-spacing="2px">ADMIN</text>
+<text x="38" y="146" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Dashboard</text>
+<text x="38" y="190" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Events</text>
+<text x="38" y="234" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Transactions</text>
+<text x="38" y="278" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Refund requests</text>
+<rect x="14" y="300" width="212" height="34" fill="#2C4A73" rx="8"/>
+<rect x="14" y="300" width="4" height="34" fill="#E8590C" rx="2"/>
+<text x="38" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF">Users</text>
+<text x="38" y="366" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Activity</text>
+<line x1="14" y1="1026" x2="226" y2="1026" stroke="#3A567C" stroke-width="1"/>
+<text x="38" y="1052" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#9FB3CC">← Back to site</text>
+<text x="280" y="134" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F">← Users</text>
+<rect x="280" y="156" width="936" height="120" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="336" cy="216" r="28" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+<text x="336" y="224" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#1F3A5F" text-anchor="middle">DR</text>
+<text x="384" y="200" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#0F172A">Dana Reyes</text>
+<text x="384" y="224" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#64748B">dana@example.com · created Jun 02, 2026</text>
+<rect x="384" y="238" width="56.4" height="20" fill="#FFF4E0" rx="10"/>
+<text x="412.2" y="252" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#F08C00" text-anchor="middle">shadow</text>
+<text x="480" y="252" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">unverified · not admin</text>
+<rect x="1040" y="196" width="152" height="38" fill="#FFFFFF" rx="8" stroke="#E03131" stroke-width="1.5"/>
+<text x="1116" y="220" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E03131" text-anchor="middle">Lock account</text>
+<circle cx="1210" cy="215" r="11" fill="#E8590C"/>
+<text x="1210" y="219" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="280" y="320" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">Purchases</text>
+<rect x="280" y="336" width="660" height="36" fill="#F1F5F9" rx="8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="359" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">EVENT</text>
+<text x="526" y="359" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">DATE</text>
+<text x="656" y="359" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">AMOUNT</text>
+<text x="756" y="359" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">STATUS</text>
+<line x1="280" y1="372" x2="940" y2="372" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Intro to Sailing</text>
+<text x="526" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 20, 2026</text>
+<text x="656" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$25.00</text>
+<rect x="756" y="383" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="793.8" y="397" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">CONFIRMED</text>
+<rect x="280" y="414" width="660" height="42" fill="#F8FAFC"/>
+<line x1="280" y1="414" x2="940" y2="414" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="440" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Summer 5K Run</text>
+<text x="526" y="440" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jul 18, 2026</text>
+<text x="656" y="440" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$15.00</text>
+<rect x="756" y="425" width="114" height="20" fill="#E7F1FA" rx="10"/>
+<text x="813" y="439" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#1971C2" text-anchor="middle">PENDING_CAPTURE</text>
+<line x1="280" y1="456" x2="940" y2="456" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="970" cy="360" r="11" fill="#E8590C"/>
+<text x="970" y="364" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="280" y="496" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">Login history</text>
+<rect x="280" y="512" width="660" height="36" fill="#F1F5F9" rx="8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="535" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">WHEN</text>
+<text x="456" y="535" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">IP</text>
+<text x="596" y="535" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">RESULT</text>
+<text x="716" y="535" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">USER AGENT</text>
+<line x1="280" y1="548" x2="940" y2="548" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="574" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 12, 8:44 AM</text>
+<text x="456" y="574" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">198.51.100.3</text>
+<rect x="596" y="559" width="56.4" height="20" fill="#FDECEC" rx="10"/>
+<text x="624.2" y="573" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#E03131" text-anchor="middle">DENIED</text>
+<text x="716" y="574" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Mobile Safari · iOS 19</text>
+<rect x="280" y="590" width="660" height="42" fill="#F8FAFC"/>
+<line x1="280" y1="590" x2="940" y2="590" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="616" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 11, 9:02 PM</text>
+<text x="456" y="616" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">198.51.100.3</text>
+<rect x="596" y="601" width="56.4" height="20" fill="#FDECEC" rx="10"/>
+<text x="624.2" y="615" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#E03131" text-anchor="middle">DENIED</text>
+<text x="716" y="616" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Mobile Safari · iOS 19</text>
+<line x1="280" y1="632" x2="940" y2="632" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="970" cy="552" r="11" fill="#E8590C"/>
+<text x="970" y="556" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="280" y="672" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">Action history</text>
+<circle cx="288" cy="696" r="4" fill="#94A3B8"/>
+<text x="304" y="700" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Jun 02 — registration_created (Intro to Sailing)</text>
+<circle cx="288" cy="724" r="4" fill="#94A3B8"/>
+<text x="304" y="728" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Jun 02 — shadow_account_created (guest checkout)</text>
+<circle cx="288" cy="752" r="4" fill="#94A3B8"/>
+<text x="304" y="756" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Jun 12 — refund_requested (Intro to Sailing)</text>
+<rect x="280" y="792" width="960" height="136" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="304" cy="814" r="11" fill="#E8590C"/>
+<text x="304" y="818" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="324" y="818" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Modal-confirmed. Lock revokes all sessions (destroyUserSessions) and blocks login; admins cannot lock themselves (S7). Both lock and unlock</text>
+<text x="324" y="840" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">are written to user_action_events.</text>
+<circle cx="304" cy="858" r="11" fill="#E8590C"/>
+<text x="304" y="862" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="324" y="862" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Same data as the customer&#x27;s My Registrations — support sees exactly what the customer sees.</text>
+<circle cx="304" cy="880" r="11" fill="#E8590C"/>
+<text x="304" y="884" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="324" y="884" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Shadow user login attempts show as denied — expected until they activate (R2); a wall of these plus a refund request is a support signal,</text>
+<text x="324" y="906" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">not an attack.</text>
+</svg>

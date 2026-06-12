@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="980" viewBox="0 0 1280 980">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="980" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/registration/9c1b…/confirmed</text>
+<rect x="0" y="36" width="1280" height="56" fill="#1F3A5F"/>
+<text x="40" y="72" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="96" cy="58" r="4" fill="#E8590C"/>
+<text x="140" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="400" fill="#C3D0E0">Events</text>
+<text x="1090" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#C3D0E0">Log in</text>
+<rect x="1150" y="48" width="90" height="32" fill="transparent" rx="8" stroke="#5B7396" stroke-width="1"/>
+<text x="1195" y="69" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle">Sign up</text>
+<rect x="320" y="132" width="640" height="560" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="640" cy="200" r="34" fill="#EBF7ED"/>
+<text x="640" y="212" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="34" font-weight="800" fill="#2F9E44" text-anchor="middle">✓</text>
+<text x="640" y="276" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A" text-anchor="middle">You&#x27;re registered!</text>
+<text x="640" y="302" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#64748B" text-anchor="middle">A receipt is on its way to dana@example.com</text>
+<line x1="368" y1="322" x2="912" y2="322" stroke="#E2E8F0" stroke-width="1"/>
+<text x="368" y="344" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Event</text>
+<text x="912" y="344" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#0F172A" text-anchor="end">Intro to Sailing</text>
+<line x1="368" y1="360" x2="912" y2="360" stroke="#E2E8F0" stroke-width="1"/>
+<text x="368" y="382" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">When</text>
+<text x="912" y="382" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#0F172A" text-anchor="end">Sat, Jun 20 · 9:00 AM</text>
+<line x1="368" y1="398" x2="912" y2="398" stroke="#E2E8F0" stroke-width="1"/>
+<text x="368" y="420" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Where</text>
+<text x="912" y="420" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#0F172A" text-anchor="end">Marina Bay, Dock C</text>
+<line x1="368" y1="436" x2="912" y2="436" stroke="#E2E8F0" stroke-width="1"/>
+<text x="368" y="458" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Amount paid</text>
+<text x="912" y="458" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#0F172A" text-anchor="end">$25.00</text>
+<line x1="368" y1="474" x2="912" y2="474" stroke="#E2E8F0" stroke-width="1"/>
+<text x="368" y="496" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Registration ID</text>
+<text x="912" y="496" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#0F172A" text-anchor="end">9c1b2e84-…</text>
+<line x1="368" y1="512" x2="912" y2="512" stroke="#E2E8F0" stroke-width="1"/>
+<text x="368" y="534" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Status</text>
+<rect x="820" y="520" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="857.8" y="534" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">CONFIRMED</text>
+<circle cx="936" cy="352" r="11" fill="#E8590C"/>
+<text x="936" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="368" y="574" width="262" height="40" fill="#FFFFFF" rx="8" stroke="#1F3A5F" stroke-width="1.5"/>
+<text x="499" y="599" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#1F3A5F" text-anchor="middle">Add to calendar</text>
+<rect x="650" y="574" width="262" height="40" fill="#FFFFFF" rx="8" stroke="#E03131" stroke-width="1.5"/>
+<text x="781" y="599" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#E03131" text-anchor="middle">Request a refund</text>
+<circle cx="936" cy="594" r="11" fill="#E8590C"/>
+<text x="936" y="598" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<rect x="320" y="716" width="640" height="110" fill="#FFF4EC" rx="12" stroke="#F3CDB3" stroke-width="1"/>
+<text x="344" y="748" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">Want an account?</text>
+<text x="344" y="772" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">You don&#x27;t need one — but set a password and your purchases,</text>
+<text x="344" y="790" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">refunds and future tickets all live in one place.</text>
+<rect x="764" y="748" width="172" height="38" fill="#FFFFFF" rx="8" stroke="#1F3A5F" stroke-width="1.5"/>
+<text x="850" y="772" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F" text-anchor="middle">Activate account</text>
+<circle cx="936" cy="734" r="11" fill="#E8590C"/>
+<text x="936" y="738" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<rect x="40" y="856" width="1200" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="64" cy="878" r="11" fill="#E8590C"/>
+<text x="64" y="882" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="84" y="882" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Page is reachable by capability URL (unguessable registration UUID) — guests need no login (audit-documented pattern).</text>
+<circle cx="64" cy="900" r="11" fill="#E8590C"/>
+<text x="64" y="904" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="84" y="904" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">→ /registration/:id/refund-request (WF-05 flow, J4): optional reason, idempotent, acknowledged by email.</text>
+<circle cx="64" cy="922" r="11" fill="#E8590C"/>
+<text x="64" y="926" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="84" y="926" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Shadow-account activation (D1/J3): links to /forgot-password with email prefilled. Password reset flips shadow → active and the purchase is already attached. Hidden when</text>
+<text x="84" y="948" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">viewer&#x27;s account is already active.</text>
+</svg>

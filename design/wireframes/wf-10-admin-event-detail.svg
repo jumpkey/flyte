@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1080" viewBox="0 0 1280 1080">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="1080" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/admin/events/4f2a…</text>
+<rect x="0" y="36" width="240" height="1044" fill="#1F3A5F"/>
+<text x="32" y="80" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="88" cy="66" r="4" fill="#E8590C"/>
+<text x="32" y="100" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="600" fill="#9FB3CC" letter-spacing="2px">ADMIN</text>
+<text x="38" y="146" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Dashboard</text>
+<rect x="14" y="168" width="212" height="34" fill="#2C4A73" rx="8"/>
+<rect x="14" y="168" width="4" height="34" fill="#E8590C" rx="2"/>
+<text x="38" y="190" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF">Events</text>
+<text x="38" y="234" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Transactions</text>
+<text x="38" y="278" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Refund requests</text>
+<text x="38" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Users</text>
+<text x="38" y="366" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Activity</text>
+<line x1="14" y1="1016" x2="226" y2="1016" stroke="#3A567C" stroke-width="1"/>
+<text x="38" y="1042" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#9FB3CC">← Back to site</text>
+<text x="280" y="134" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F">← Events</text>
+<text x="280" y="172" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A">Intro to Sailing</text>
+<rect x="480" y="156" width="43.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="501.8" y="170" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">OPEN</text>
+<rect x="860" y="142" width="90" height="36" fill="#FFFFFF" rx="8" stroke="#1F3A5F" stroke-width="1.5"/>
+<text x="905" y="165" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F" text-anchor="middle">Edit</text>
+<rect x="962" y="142" width="100" height="36" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="1012" y="165" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#334155" text-anchor="middle">Close</text>
+<rect x="1074" y="142" width="142" height="36" fill="#FFFFFF" rx="8" stroke="#E03131" stroke-width="1.5"/>
+<text x="1145" y="165" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E03131" text-anchor="middle">Cancel event</text>
+<circle cx="1236" cy="160" r="11" fill="#E8590C"/>
+<text x="1236" y="164" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="280" y="204" width="176" height="72" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="230" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">CAPACITY</text>
+<text x="296" y="258" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#0F172A">50</text>
+<rect x="470" y="204" width="176" height="72" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="486" y="230" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">CONFIRMED</text>
+<text x="486" y="258" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#0F172A">38</text>
+<rect x="660" y="204" width="176" height="72" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="676" y="230" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">AVAILABLE</text>
+<text x="676" y="258" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#0F172A">12</text>
+<rect x="850" y="204" width="176" height="72" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="866" y="230" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">WAITLIST</text>
+<text x="866" y="258" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#0F172A">5</text>
+<rect x="1040" y="204" width="176" height="72" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="1056" y="230" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">GROSS REVENUE</text>
+<text x="1056" y="258" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#0F172A">$950</text>
+<text x="280" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">Roster</text>
+<rect x="280" y="338" width="936" height="36" fill="#F1F5F9" rx="8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="361" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">PARTICIPANT</text>
+<text x="496" y="361" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">EMAIL</text>
+<text x="746" y="361" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">STATUS</text>
+<text x="906" y="361" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">AMOUNT</text>
+<text x="1006" y="361" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">REGISTERED</text>
+<line x1="280" y1="374" x2="1216" y2="374" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="400" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Dana Reyes</text>
+<text x="496" y="400" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">dana@example.com</text>
+<line x1="496" y1="404" x2="592" y2="404" stroke="#1971C2" stroke-width="0.75"/>
+<rect x="746" y="385" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="783.8" y="399" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">CONFIRMED</text>
+<text x="906" y="400" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$25.00</text>
+<text x="1006" y="400" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 02, 9:14 AM</text>
+<rect x="280" y="416" width="936" height="42" fill="#F8FAFC"/>
+<line x1="280" y1="416" x2="1216" y2="416" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="442" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Ben Ortiz</text>
+<text x="496" y="442" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">ben@example.com</text>
+<line x1="496" y1="446" x2="586" y2="446" stroke="#1971C2" stroke-width="0.75"/>
+<rect x="746" y="427" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="783.8" y="441" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">CONFIRMED</text>
+<text x="906" y="442" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$25.00</text>
+<text x="1006" y="442" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 02, 8:01 AM</text>
+<line x1="280" y1="458" x2="1216" y2="458" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="484" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Kim Lau</text>
+<text x="496" y="484" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">kim@example.com</text>
+<line x1="496" y1="488" x2="586" y2="488" stroke="#1971C2" stroke-width="0.75"/>
+<rect x="746" y="469" width="114" height="20" fill="#FFF4E0" rx="10"/>
+<text x="803" y="483" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#F08C00" text-anchor="middle">PENDING_PAYMENT</text>
+<text x="906" y="484" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">—</text>
+<text x="1006" y="484" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 02, 8:00 AM</text>
+<rect x="280" y="500" width="936" height="42" fill="#F8FAFC"/>
+<line x1="280" y1="500" x2="1216" y2="500" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="526" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Joe Fox</text>
+<text x="496" y="526" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">joe@example.com</text>
+<line x1="496" y1="530" x2="586" y2="530" stroke="#1971C2" stroke-width="0.75"/>
+<rect x="746" y="511" width="69.2" height="20" fill="#E7F1FA" rx="10"/>
+<text x="780.6" y="525" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#1971C2" text-anchor="middle">REFUNDED</text>
+<text x="906" y="526" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$0.00</text>
+<text x="1006" y="526" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">May 28, 4:40 PM</text>
+<line x1="280" y1="542" x2="1216" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="760" cy="408" r="11" fill="#E8590C"/>
+<text x="760" y="412" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="280" y="582" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">Waitlist (5)</text>
+<rect x="280" y="598" width="936" height="36" fill="#F1F5F9" rx="8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="621" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">POSITION</text>
+<text x="386" y="621" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">NAME</text>
+<text x="606" y="621" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">EMAIL</text>
+<text x="886" y="621" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">JOINED</text>
+<line x1="280" y1="634" x2="1216" y2="634" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="660" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">1</text>
+<text x="386" y="660" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Ana Silva</text>
+<text x="606" y="660" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">ana@example.com</text>
+<text x="886" y="660" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 03, 11:02 AM</text>
+<rect x="280" y="676" width="936" height="42" fill="#F8FAFC"/>
+<line x1="280" y1="676" x2="1216" y2="676" stroke="#E2E8F0" stroke-width="1"/>
+<text x="296" y="702" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">2</text>
+<text x="386" y="702" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Raj Patel</text>
+<text x="606" y="702" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">raj@example.com</text>
+<text x="886" y="702" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 03, 2:48 PM</text>
+<line x1="280" y1="718" x2="1216" y2="718" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="760" cy="638" r="11" fill="#E8590C"/>
+<text x="760" y="642" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<rect x="280" y="754" width="960" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="304" cy="776" r="11" fill="#E8590C"/>
+<text x="304" y="780" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="324" y="780" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Cancel opens a confirm modal: “Refund all 38 confirmed registrations ($950)?” → existing bulk-refund path; event flips to CANCELLED only if</text>
+<text x="324" y="802" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">every Stripe refund succeeds (engine A6 semantics).</text>
+<circle cx="304" cy="820" r="11" fill="#E8590C"/>
+<text x="304" y="824" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="324" y="824" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Email links jump to /admin/users/:id; row click → /admin/registrations/:id for the payment record.</text>
+<circle cx="304" cy="842" r="11" fill="#E8590C"/>
+<text x="304" y="846" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="324" y="846" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">v1 waitlist is visibility only — promotion is a manual contact (J7); automation is parked for v2.</text>
+</svg>

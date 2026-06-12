@@ -45,6 +45,8 @@ All state-changing actions are protected by CSRF tokens. Login attempts, registr
 flyte/
 ├── db/
 │   └── migrations/          # Sequential SQL migration files (001_…, 002_…)
+├── design/                  # UI design suite: site map & storyboard, wireframes,
+│   └── wireframes/          #   web kit standards, implementation plan
 ├── public/                  # Static assets (CSS, client-side JS)
 ├── scripts/
 │   ├── migrate.ts           # Migration runner  (npm run migrate)

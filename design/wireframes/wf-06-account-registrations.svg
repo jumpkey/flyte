@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="800" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/account/registrations</text>
+<rect x="0" y="36" width="1280" height="56" fill="#1F3A5F"/>
+<text x="40" y="72" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="96" cy="58" r="4" fill="#E8590C"/>
+<text x="140" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="400" fill="#C3D0E0">Events</text>
+<circle cx="1110" cy="64" r="13" fill="#2C4A73" stroke="#5B7396" stroke-width="1"/>
+<text x="1110" y="69" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">D</text>
+<text x="1132" y="69" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Dana  ▾</text>
+<text x="64" y="150" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A">My registrations</text>
+<text x="64" y="174" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#64748B">Every ticket on this account — including ones bought before you set a password</text>
+<circle cx="560" cy="168" r="11" fill="#E8590C"/>
+<text x="560" y="172" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="64" y="210" width="1152" height="36" fill="#F1F5F9" rx="8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="80" y="233" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">EVENT</text>
+<text x="360" y="233" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">DATE</text>
+<text x="510" y="233" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">AMOUNT</text>
+<text x="620" y="233" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">STATUS</text>
+<text x="790" y="233" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">RECEIPT</text>
+<text x="900" y="233" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px"></text>
+<line x1="64" y1="246" x2="1216" y2="246" stroke="#E2E8F0" stroke-width="1"/>
+<text x="80" y="272" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Intro to Sailing</text>
+<text x="360" y="272" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jun 20, 2026</text>
+<text x="510" y="272" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$25.00</text>
+<rect x="620" y="257" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="657.8" y="271" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">CONFIRMED</text>
+<text x="790" y="272" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">View</text>
+<line x1="790" y1="276" x2="814" y2="276" stroke="#1971C2" stroke-width="0.75"/>
+<text x="900" y="272" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E03131">Request refund</text>
+<rect x="64" y="288" width="1152" height="42" fill="#F8FAFC"/>
+<line x1="64" y1="288" x2="1216" y2="288" stroke="#E2E8F0" stroke-width="1"/>
+<text x="80" y="314" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Summer 5K Run</text>
+<text x="360" y="314" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Jul 18, 2026</text>
+<text x="510" y="314" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$15.00</text>
+<rect x="620" y="299" width="114" height="20" fill="#E7F1FA" rx="10"/>
+<text x="677" y="313" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#1971C2" text-anchor="middle">PENDING_CAPTURE</text>
+<text x="790" y="314" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">—</text>
+<text x="900" y="314" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155"></text>
+<line x1="64" y1="330" x2="1216" y2="330" stroke="#E2E8F0" stroke-width="1"/>
+<text x="80" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Spring Gala</text>
+<text x="360" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">May 30, 2026</text>
+<text x="510" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$120.00</text>
+<rect x="620" y="341" width="69.2" height="20" fill="#E7F1FA" rx="10"/>
+<text x="654.6" y="355" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#1971C2" text-anchor="middle">REFUNDED</text>
+<text x="790" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">View</text>
+<line x1="790" y1="360" x2="814" y2="360" stroke="#1971C2" stroke-width="0.75"/>
+<text x="900" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155"></text>
+<rect x="64" y="372" width="1152" height="42" fill="#F8FAFC"/>
+<line x1="64" y1="372" x2="1216" y2="372" stroke="#E2E8F0" stroke-width="1"/>
+<text x="80" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Pottery Workshop</text>
+<text x="360" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">Apr 02, 2026</text>
+<text x="510" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="400" fill="#334155">$45.00</text>
+<rect x="620" y="383" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="657.8" y="397" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">CONFIRMED</text>
+<text x="790" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1971C2">View</text>
+<line x1="790" y1="402" x2="814" y2="402" stroke="#1971C2" stroke-width="0.75"/>
+<text x="900" y="398" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E03131">Request refund</text>
+<line x1="64" y1="414" x2="1216" y2="414" stroke="#E2E8F0" stroke-width="1"/>
+<circle cx="1000" cy="270" r="11" fill="#E8590C"/>
+<text x="1000" y="274" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<circle cx="700" cy="354" r="11" fill="#E8590C"/>
+<text x="700" y="358" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<rect x="64" y="444" width="1152" height="70" fill="#F1F5F9" rx="10"/>
+<text x="80" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#64748B">Empty state:</text>
+<text x="170" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">“No registrations yet.”  +  [Browse events] secondary button</text>
+<rect x="40" y="544" width="1200" height="92" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="64" cy="566" r="11" fill="#E8590C"/>
+<text x="64" y="570" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="84" y="570" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Rows are all registrations with user_id = session user — guest purchases made pre-activation appear automatically (the shadow-account payoff, J3).</text>
+<circle cx="64" cy="588" r="11" fill="#E8590C"/>
+<text x="64" y="592" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="84" y="592" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Request refund shown only for CONFIRMED rows with no open/approved refund request; row click → /account/registrations/:id (ownership-checked).</text>
+<circle cx="64" cy="610" r="11" fill="#E8590C"/>
+<text x="64" y="614" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="84" y="614" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">REFUNDED rows keep their receipt; refund details shown on the detail page.</text>
+</svg>

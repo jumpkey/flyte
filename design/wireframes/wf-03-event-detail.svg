@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1010" viewBox="0 0 1280 1010">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="1010" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/events/4f2a…</text>
+<rect x="0" y="36" width="1280" height="56" fill="#1F3A5F"/>
+<text x="40" y="72" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="96" cy="58" r="4" fill="#E8590C"/>
+<text x="140" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">Events</text>
+<rect x="140" y="82" width="46" height="3" fill="#E8590C" rx="1.5"/>
+<text x="1090" y="71" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#C3D0E0">Log in</text>
+<rect x="1150" y="48" width="90" height="32" fill="transparent" rx="8" stroke="#5B7396" stroke-width="1"/>
+<text x="1195" y="69" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle">Sign up</text>
+<text x="64" y="134" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#1F3A5F">← All events</text>
+<rect x="64" y="156" width="720" height="480" fill="#E9EEF3" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="72" y1="164" x2="776" y2="628" stroke="#CBD5E1" stroke-width="1"/>
+<line x1="776" y1="164" x2="72" y2="628" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="319" y="385" width="210" height="22" fill="#FFFFFF" rx="11" opacity="0.9"/>
+<text x="424" y="400" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="400" fill="#64748B" text-anchor="middle">event image · 3:2 · object-fit: cover</text>
+<circle cx="96" cy="188" r="11" fill="#E8590C"/>
+<text x="96" y="192" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="64" y="678" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#0F172A">About this event</text>
+<rect x="64" y="700" width="700" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="64" y="722" width="679" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="64" y="744" width="644" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="64" y="766" width="434" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="64" y="788" width="700" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="64" y="810" width="616" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="64" y="832" width="665" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="824" y="156" width="392" height="446" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<text x="848" y="198" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="800" fill="#0F172A">Intro to Sailing</text>
+<rect x="848" y="214" width="43.6" height="20" fill="#EBF7ED" rx="10"/>
+<text x="869.8" y="228" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">OPEN</text>
+<text x="848" y="266" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">📅  Saturday, June 20 · 9:00 AM</text>
+<text x="848" y="292" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">📍  Marina Bay, Dock C</text>
+<line x1="848" y1="316" x2="1192" y2="316" stroke="#E2E8F0" stroke-width="1"/>
+<text x="848" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="30" font-weight="800" fill="#0F172A">$25.00</text>
+<text x="944" y="356" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">per person</text>
+<rect x="848" y="380" width="344" height="8" fill="#E2E8F0" rx="4"/>
+<rect x="848" y="380" width="82.56" height="8" fill="#F08C00" rx="4"/>
+<text x="848" y="406" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#F08C00">12 of 50 spots left</text>
+<circle cx="1216" cy="384" r="11" fill="#E8590C"/>
+<text x="1216" y="388" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<rect x="848" y="442" width="344" height="48" fill="#E8590C" rx="8"/>
+<text x="1020" y="471" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Register — $25.00</text>
+<circle cx="1216" cy="466" r="11" fill="#E8590C"/>
+<text x="1216" y="470" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="1020" y="526" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B" text-anchor="middle">🔒 Secure checkout · Stripe</text>
+<text x="1020" y="556" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B" text-anchor="middle">No account needed</text>
+<circle cx="1216" cy="552" r="11" fill="#E8590C"/>
+<text x="1216" y="556" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<rect x="824" y="634" width="392" height="132" fill="#F1F5F9" rx="12"/>
+<text x="848" y="664" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#64748B" letter-spacing="1px">State variants</text>
+<rect x="848" y="682" width="344" height="40" fill="#FFFFFF" rx="8" stroke="#1F3A5F" stroke-width="1.5"/>
+<text x="1020" y="707" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#1F3A5F" text-anchor="middle">Join the waitlist</text>
+<text x="1020" y="752" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="middle">Sold out → CTA swaps to waitlist (J7)</text>
+<rect x="40" y="800" width="1200" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="64" cy="822" r="11" fill="#E8590C"/>
+<text x="64" y="826" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="84" y="826" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">image_url rendered 3:2, object-fit cover; missing/broken URL → navy fallback card with initials.</text>
+<circle cx="64" cy="844" r="11" fill="#E8590C"/>
+<text x="64" y="848" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="84" y="848" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Live availability from available_slots (the engine&#x27;s atomic counter) — amber when &lt; 25%.</text>
+<circle cx="64" cy="866" r="11" fill="#E8590C"/>
+<text x="64" y="870" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="84" y="870" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Primary CTA → /events/:id/register. CLOSED: disabled bar &#x27;Registration closed&#x27;. CANCELLED: info alert.</text>
+<circle cx="64" cy="888" r="11" fill="#E8590C"/>
+<text x="64" y="892" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="84" y="892" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Guest checkout is first-class (decision D1) — copy says so to remove signup anxiety.</text>
+</svg>
