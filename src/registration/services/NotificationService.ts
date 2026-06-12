@@ -13,6 +13,18 @@ function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+// Registrant-supplied fields (and event names) are interpolated into HTML
+// email bodies; escape them so markup in a name field cannot inject content
+// into mail sent from our trusted sender address.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export class NotificationService implements INotificationService {
   async sendRegistrationConfirmation(registration: RegistrationRecord, eventName: string): Promise<void> {
     const amount = formatCents(registration.grossAmountCents);
@@ -22,8 +34,8 @@ export class NotificationService implements INotificationService {
       subject: `Registration Confirmed: ${eventName}`,
       html: `
         <h2>Registration Confirmed!</h2>
-        <p>Dear ${registration.firstName} ${registration.lastName},</p>
-        <p>Your registration for <strong>${eventName}</strong> has been confirmed.</p>
+        <p>Dear ${escapeHtml(registration.firstName)} ${escapeHtml(registration.lastName)},</p>
+        <p>Your registration for <strong>${escapeHtml(eventName)}</strong> has been confirmed.</p>
         <ul>
           <li><strong>Registration ID:</strong> ${registration.registrationId}</li>
           <li><strong>Amount Charged:</strong> ${amount}</li>
@@ -42,8 +54,8 @@ export class NotificationService implements INotificationService {
       subject: `You're on the waitlist: ${eventName}`,
       html: `
         <h2>You're on the Waitlist</h2>
-        <p>Dear ${entry.firstName} ${entry.lastName},</p>
-        <p>You are #${position} on the waitlist for <strong>${eventName}</strong>.</p>
+        <p>Dear ${escapeHtml(entry.firstName)} ${escapeHtml(entry.lastName)},</p>
+        <p>You are #${position} on the waitlist for <strong>${escapeHtml(eventName)}</strong>.</p>
         <p>If a spot opens up, we will contact you at this email address. No payment is required at this time.</p>
       `,
       text: `You're on the Waitlist\n\nDear ${entry.firstName} ${entry.lastName},\n\nYou are #${position} on the waitlist for ${eventName}.\n\nIf a spot opens up, we will contact you. No payment is required at this time.`,
@@ -58,8 +70,8 @@ export class NotificationService implements INotificationService {
       subject: `Refund Processed: ${eventName}`,
       html: `
         <h2>Refund Processed</h2>
-        <p>Dear ${registration.firstName} ${registration.lastName},</p>
-        <p>A refund of <strong>${amount}</strong> has been issued for your registration to <strong>${eventName}</strong>.</p>
+        <p>Dear ${escapeHtml(registration.firstName)} ${escapeHtml(registration.lastName)},</p>
+        <p>A refund of <strong>${amount}</strong> has been issued for your registration to <strong>${escapeHtml(eventName)}</strong>.</p>
         <p><strong>Registration ID:</strong> ${registration.registrationId}</p>
         <p>Please allow 5–10 business days for the refund to appear on your statement.</p>
       `,
