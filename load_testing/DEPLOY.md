@@ -126,7 +126,8 @@ NODE_ENV=production node dist/index.js
 
 ```bash
 npm run seed
-# Creates admin@flyte.local / changeme123
+# Dev default: admin@flyte.local / changeme123
+# (in production, SEED_ADMIN_PASSWORD is required and existing admins are never overwritten)
 ```
 
 ### 1g. Create a test event

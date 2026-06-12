@@ -99,10 +99,14 @@ fly ssh console --app <your-app-name> --command "node dist/index.js" 2>/dev/null
 ### 5. (Optional) Seed the admin user
 
 ```bash
+NODE_ENV=production SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD='<strong-password>' \
 DATABASE_URL=postgres://flyte:<password>@localhost:5433/flyte npm run seed
 ```
 
-This creates `admin@flyte.local` / `changeme123`. Change the password immediately after first login or use the `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` env vars to override.
+`SEED_ADMIN_PASSWORD` is **required** when `NODE_ENV=production` — the seeder
+refuses to run without it (the `changeme123` fallback is development-only).
+The seeder is insert-only: if the admin user already exists it is left
+untouched, so re-running it never resets a changed password.
 
 ### 6. Deploy
 

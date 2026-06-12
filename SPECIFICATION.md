@@ -484,7 +484,7 @@ Defined in `.env` (never committed) with `.env.example` as template.
 | `VERIFICATION_TOKEN_TTL_HOURS` | `24` | No | Default 24 |
 | `PASSWORD_RESET_TOKEN_TTL_HOURS` | `1` | No | Default 1 |
 | `SEED_ADMIN_EMAIL` | `admin@flyte.local` | No | Default `admin@flyte.local` |
-| `SEED_ADMIN_PASSWORD` | `changeme123` | No | Default `changeme123` |
+| `SEED_ADMIN_PASSWORD` | `changeme123` (dev only) | In production | Required when `NODE_ENV=production`; seeding aborts without it |
 
 ---
 
@@ -635,8 +635,9 @@ The seed script creates a default admin user for immediate development use. It *
   - `is_verified`: `TRUE` (skip email verification)
   - `is_admin`: `TRUE`
   - `is_locked`: `FALSE`
-- If the user already exists, update the `password_hash` to match `SEED_ADMIN_PASSWORD` (in case the env var changed) and ensure `is_verified` and `is_admin` are `TRUE`. Use an `INSERT ... ON CONFLICT (LOWER(email)) DO UPDATE` (upsert).
-- Log the result to stdout: `"Seeded admin user: admin@flyte.local"` or `"Admin user already exists, password updated."`.
+- If the user already exists, leave the row **untouched** (insert-only via `INSERT ... ON CONFLICT (LOWER(email)) DO NOTHING`), so a re-run can never reset an operator-changed password back to the seed value.
+- When `NODE_ENV=production` and `SEED_ADMIN_PASSWORD` is unset, abort with an error (mirrors the `SESSION_SECRET` production guard). The `changeme123` default applies only outside production.
+- Log the result to stdout: `"Admin user seeded: admin@flyte.local"` or `"Admin user already exists, left unmodified: admin@flyte.local"`.
 
 ### npm script
 
@@ -727,7 +728,7 @@ Read it fully before making changes.
 
 - `npm run dev` — start the dev server (requires Postgres on localhost:5432)
 - `npm run migrate` — run database migrations
-- `npm run seed` — seed the admin user (admin@flyte.local / changeme123)
+- `npm run seed` — seed the admin user (dev default: admin@flyte.local / changeme123; requires `SEED_ADMIN_PASSWORD` in production)
 - `npm run build` — compile TypeScript
 
 ## Database

@@ -123,7 +123,7 @@ GROUP BY status;
 
 ### Interpretation
 
-- **149.9 req/s** throughput for both phases on a single shared-CPU sandbox machine. This is the raw server capacity without rate limiting; the production rate limiter caps sustained per-IP throughput to ~10 requests per 60-second window, so real-user throughput is governed by that limit, not the server capacity.
+- **149.9 req/s** throughput for both phases on a single shared-CPU sandbox machine. This is the raw server capacity without rate limiting; the production rate limiter caps sustained per-IP throughput to 60 requests per 60-second window, so real-user throughput is governed by that limit, not the server capacity.
 - **p99 < 51 ms** for Phase 3 (which includes PI retrieve + capture + DB slot decrement + confirmed-count increment). This is very fast because the Stripe simulator responds in < 1 ms with no artificial delay.
 - **0 errors** across 100 HTTP requests (50 Phase 1 + 50 Phase 3). The full two-phase flow is working correctly end-to-end.
 

@@ -7,7 +7,7 @@ Read it fully before making changes.
 
 - `npm run dev` — start the dev server (requires Postgres on localhost:5432)
 - `npm run migrate` — run database migrations
-- `npm run seed` — seed the admin user (admin@flyte.local / changeme123)
+- `npm run seed` — seed the admin user (dev default: admin@flyte.local / changeme123; in production `SEED_ADMIN_PASSWORD` is required and existing admins are never overwritten)
 - `npm run build` — compile TypeScript
 
 ## Database

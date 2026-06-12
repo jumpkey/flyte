@@ -49,6 +49,13 @@ All critical state transitions are performed inside PostgreSQL stored procedures
 
 **With live keys**: Set `STRIPE_SECRET_KEY=sk_live_...` and configure webhook endpoint.
 
+> **Going live on Fly.io:** the complete pre-merge checklist — live-mode key
+> and webhook setup, required Fly secrets, the auto-deploy-on-merge flow, and
+> a live smoke test — is in **`DEPLOYMENT-CHECKLIST.md`**. Live mode requires
+> live keys, a live-mode dashboard webhook endpoint, and that endpoint's own
+> `whsec_` signing secret (test-mode and Stripe CLI secrets will not verify
+> live events).
+
 ## Required Environment Variables
 
 ```
@@ -71,6 +78,15 @@ STRIPE_SIMULATOR_PROTOCOL=http         # Protocol (default: https)
 ```
 
 Both the main app and the reconciliation runner honour these variables via `stripe-factory.ts`.
+
+## Frontend
+
+The registration page's payment script lives at
+`public/js/registration-form.js` (served from `/public/js/registration-form.js`,
+covered by the CSP's `script-src 'self'`). It is intentionally **not** inlined
+in the EJS view: the CSP does not allow `'unsafe-inline'` scripts. If you
+change the payment flow, edit the static file — do not add inline `<script>`
+blocks to the views.
 
 ## Webhook Setup
 
