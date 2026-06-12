@@ -37,11 +37,10 @@ Items marked ~~strikethrough~~ have been resolved and are kept for historical re
 - **Issue**: `version: '3.8'` is deprecated in Docker Compose v2+. Remove the line
   to suppress warnings.
 
-### Seed script redundant UPDATE (Very Low)
+### ~~Seed script redundant UPDATE~~ (Resolved)
 - **File**: `scripts/seed.ts`
-- **Issue**: `INSERT ... ON CONFLICT DO NOTHING` is immediately followed by an
-  unconditional `UPDATE` on the same email, making the conflict handling pointless.
-  Should use `ON CONFLICT DO UPDATE` or remove the separate `UPDATE`.
+- **Resolution**: Fixed in 51b0c29 — the seeder is now insert-only
+  (`ON CONFLICT DO NOTHING` + `RETURNING`), never overwriting an existing admin row.
 
 ---
 
@@ -138,10 +137,10 @@ Items marked ~~strikethrough~~ have been resolved and are kept for historical re
 
 ## Documentation
 
-### DEPLOY.md references `dist/scripts/migrate.js` (Low)
+### ~~DEPLOY.md references `dist/scripts/migrate.js`~~ (Resolved — verified)
 - **File**: `load_testing/DEPLOY.md`
-- **Issue**: References `dist/scripts/migrate.js` as a migration entry point. Verify
-  this path exists in the Docker build output or update the reference.
+- **Resolution**: Path confirmed valid — `fly.toml` uses it as the release command
+  and Fly releases v1–v5 all completed successfully through it.
 
 ### Fly.io secrets retrieval example (Low)
 - **File**: `load_testing/DEPLOY.md`
