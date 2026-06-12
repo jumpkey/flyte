@@ -17,10 +17,12 @@ case "${STRIPE_SECRET_KEY}${STRIPE_PUBLISHABLE_KEY}${STRIPE_WEBHOOK_SECRET}${SEE
     ;;
 esac
 
-flyctl secrets set -a "$APP" \
+flyctl secrets set --stage -a "$APP" \
   STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY" \
   STRIPE_PUBLISHABLE_KEY="$STRIPE_PUBLISHABLE_KEY" \
   STRIPE_WEBHOOK_SECRET="$STRIPE_WEBHOOK_SECRET" \
   SEED_ADMIN_PASSWORD="$SEED_ADMIN_PASSWORD"
+
+flyctl secrets deploy -a "$APP"
 
 flyctl secrets list -a "$APP"
