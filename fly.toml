@@ -16,6 +16,7 @@ primary_region = 'iad'
   worker = 'supercronic /app/crontab'
 
 [http_service]
+  processes = ['web']
   internal_port = 3000
   force_https = true
   auto_stop_machines = 'suspend'
