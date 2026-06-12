@@ -50,7 +50,8 @@ tokens, never raw hex — this is the dark-mode escape hatch (§2.5).
 | `--fl-white` | `#FFFFFF` | Cards, inputs, content panels |
 | `--fl-flare` | `#E8590C` | **The accent.** Large CTAs, hero buttons, active-nav markers, focus ring |
 | `--fl-flare-deep` | `#C2410C` | Accent for *small text* and standard-size button fills (AA-safe, §2.4) |
-| `--fl-flare-hover` | `#D9480F` | Hover state between the two |
+| `--fl-flare-hover` | `#D9480F` | Hover for **large CTAs only** — at 4.30:1 it fails AA behind small white text |
+| `--fl-flare-deep-hover` | `#9A3412` | Hover for standard flare-deep buttons (7.31:1 with white — hovers go *darker*, never lighter) |
 | `--fl-flare-tint` | `#FFF4EC` | Accent surfaces: callouts, annotation blocks |
 | `--fl-success` / `-tint` / `-text` | `#2F9E44` / `#EBF7ED` / `#237032` | Positive: CONFIRMED, OPEN, success alerts |
 | `--fl-warning` / `-tint` / `-text` | `#F08C00` / `#FFF4E0` / `#9C5A00` | Caution: pending states, low availability |
@@ -93,6 +94,11 @@ pill text uses the `-text` variant on the `-tint` surface (**WK-COL-5, MUST**):
 
 \* REFUNDED is a derived display status — site map §7.
 
+Deliberate divergence: the admin **FULL pill is info** (a full event is a
+neutral fact in a back office) while storefront **sold-out copy is
+danger-text** (WK-CMP-10 — urgency is the message there). Pills describe
+state; storefront copy persuades. Don't "fix" one to match the other.
+
 ### 2.4 Contrast — measured, not asserted
 
 WCAG 2.1 AA: ≥ 4.5:1 normal text, ≥ 3:1 large text (≥ 24px regular /
@@ -109,6 +115,7 @@ WCAG 2.1 AA: ≥ 4.5:1 normal text, ≥ 3:1 large text (≥ 24px regular /
 | line `#94A3B8` on white | 2.56:1 | ❌ | decorative/disabled only (token table note) |
 | white on flare `#E8590C` | 3.58:1 | ❌ (large only) | see WK-COL-7 |
 | white on flare-deep `#C2410C` | 5.18:1 | ✅ | standard buttons |
+| white on flare-deep-hover `#9A3412` | 7.31:1 | ✅ | standard-button hover |
 | flare-deep on white / tint | 5.18 / 4.78 | ✅ | accent text/links |
 | flare on white | 3.58:1 | ❌ (large only) | accent text must use flare-deep |
 | success/warning/danger/info **base** on their tints | 3.13 / 2.28 / 3.95 / 4.39 | ❌ | bases are fills/icons only |
@@ -119,7 +126,8 @@ WCAG 2.1 AA: ≥ 4.5:1 normal text, ≥ 3:1 large text (≥ 24px regular /
 - **WK-COL-7 (MUST):** Pure Flare fills with white labels are reserved for
   **large CTAs** (label ≥ 18.66px bold — hero buttons, the event-detail
   register button). Standard-size buttons (14–16px labels) use
-  `--fl-flare-deep` fill (5.18:1 ✅), hover `#A8390B`-direction darker. This
+  `--fl-flare-deep` fill (5.18:1 ✅), hover `--fl-flare-deep-hover` (7.31:1 —
+  hover must go darker, never lighter, so contrast never dips below AA). This
   is the honest resolution of a real conflict between the vivid accent and AA:
   we keep the vivid hue where text is big, and shift one step deeper where it
   isn't.
@@ -367,16 +375,23 @@ async: loading. Error state additionally for inputs.
   (email ≠ web; CSP doesn't apply there).
 - **WK-CODE-3 (MUST):** Adopting any CDN-hosted asset means updating the CSP
   allowlist in `src/web/app.ts` deliberately — prefer self-hosting (npm →
-  build → `public/`) over widening CSP. The planned `img-src https:` change
-  for D2 event images is the documented exception (security S5).
+  build → `public/`) over widening CSP. The CSP **already** allows
+  `unpkg.com` (HTMX) and `cdn.jsdelivr.net` (Pico CSS): increment I1
+  self-hosts HTMX and the framework CSS and removes both hosts from the
+  allowlist — the CSP gets *tighter* with this work, not looser. The planned
+  `img-src https:` change for D2 event images is the one documented widening
+  (security S5).
 - **WK-CODE-4 (MUST):** HTMX is the interactivity layer: server-rendered
   partials swapped into regions (`hx-get` + `hx-target` for filters/
   pagination, `hx-boost` optional for nav). Every HTMX interaction has a
   working plain-HTTP fallback (WK-CMP-14). No SPA framework enters through
   the side door.
-- **WK-CODE-5 (MUST):** Views remain EJS with `<%= %>` escaping only — the
-  `<%- %>` raw-output form stays banned outside vetted partials (the existing
-  codebase has zero; keep it zero).
+- **WK-CODE-5 (MUST):** All *data* interpolation in EJS uses escaped
+  `<%= %>`. Raw `<%- %>` output is reserved for layout plumbing —
+  `<%- include(…) %>` and `<%- body %>`, the only two uses in the existing
+  codebase (`layouts/main.ejs`), and the only two the new admin layout may
+  add. Raw output never touches request data, DB values, or anything
+  user-originated.
 
 ---
 
@@ -452,5 +467,5 @@ Evidence column gets a link or a waiver note.
 | WK-MOT-1..3 | Timings, reduced-motion, skeleton threshold | ☐ |
 | WK-A11Y-1..5 | Focus ring, keyboard journeys, non-color carriers, targets, semantics | ☐ |
 | WK-EML-1..4 | Email structure, single CTA, escaping + text part, receipt content | ☐ |
-| WK-CODE-1..5 | No inline JS, class-based CSS, CSP discipline, HTMX fallbacks, `<%= %>` only | ☐ |
+| WK-CODE-1..5 | No inline JS, class-based CSS, CSP discipline (unpkg/jsdelivr retired), HTMX fallbacks, raw EJS only in layout plumbing | ☐ |
 | WK-MAP-1..2 | Framework decision recorded; tokens as custom properties | ☐ |

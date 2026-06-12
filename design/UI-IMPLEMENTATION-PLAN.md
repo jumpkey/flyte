@@ -11,8 +11,8 @@
 Same discipline that shipped the payment engine: **small increments, each
 fully implemented, fully tested, and evidenced before the next begins.** Every
 increment lands as its own PR against `main` with the full local gate green
-(`scripts/run-all-tests.sh`, extended as we go). No increment starts until its
-predecessor is merged.
+(`npm test` — created in I1, since today the repo has no test script and no CI
+test workflow; see §4). No increment starts until its predecessor is merged.
 
 Cross-references used below: `D1–D4` (product decisions), `J1–J8` (journeys),
 `R1–R4` (role rules), `S1–S7` (security requirements) from the site map;
@@ -20,7 +20,8 @@ Cross-references used below: `D1–D4` (product decisions), `J1–J8` (journeys)
 
 ### Gate 0 — joint review (you + me, before any code)
 
-1. Walk the four documents; resolve open questions Q1–Q4 (site map §10).
+1. Walk the four documents; resolve open questions Q1–Q6 (site map §10 —
+   Q5 timezone policy and Q6 historical shadow backfill affect migration 007).
 2. Confirm the framework decision in WebKit §11 (recommendation: Bootstrap 5
    themed via SCSS variables; alternatives assessed there).
 3. Approve or amend the migration 007 spec — it's the hardest thing to change
@@ -40,7 +41,7 @@ DRAFT → APPROVED. Nothing else.
 | I2 | Storefront | `/`, `/events`, `/events/:id` (WF-01..03) | I1 | M |
 | I3 | Checkout & shadow accounts | Email double-entry, shadow users, confirmation upgrades, activation (WF-04, WF-05) | I1 | M |
 | I4 | Admin events | CRUD, roster, lifecycle incl. cancel+bulk refund (WF-08..10) | I1 | L |
-| I5 | Transactions & refunds | Transaction log, payment detail, refund execution over HTTP (WF-11, WF-12) | I4 | M |
+| I5 | Transactions & refunds | Transaction log, payment detail, refund execution over HTTP, **admin dashboard** (WF-07, WF-11, WF-12) | I4 | M |
 | I6 | Refund requests | Customer request flow + admin queue, end to end (WF-05 §, WF-15) | I3, I5 | M |
 | I7 | Account & dashboard | My Registrations, account detail, user-dashboard panel (WF-06) | I3 | S |
 | I8 | Admin users & activity | User list/detail, lock/unlock, activity log (WF-13, WF-14) | I1 | M |
@@ -62,11 +63,19 @@ PR description with evidence links, exactly like the payment-engine ledger.
 **Scope.** Everything later increments stand on; no user-visible features.
 
 - Migration `007_ui_elaboration.sql` exactly per site map §5 (shadow accounts,
-  `user_id` on registrations/waitlist, `events.image_url`/`summary`/`DRAFT`,
+  `user_id` on registrations/waitlist + historical email backfill,
+  `events.image_url`, the `events_status_check` recreate that admits `DRAFT`,
   `refund_requests` table).
+- **Test & CI plumbing** — today the repo has no `npm test` script and no CI
+  test workflow (only fly-deploy). I1 adds: an `npm test` script wrapping the
+  existing runner (`src/registration/testing/run-all-tests.ts`) plus the new
+  web suites, and a GitHub Actions workflow running it on every PR. Without
+  this, every later "gate green" claim is unenforceable.
 - `adminGuard` middleware (R1/S1); wire to an empty `/admin` placeholder route.
 - Theme build per WebKit §11 decision; design tokens as CSS custom properties
-  (WK §2); replace Pico wiring in `layout.ejs`.
+  (WK §2); replace Pico wiring in `layout.ejs`; **self-host HTMX and the
+  framework CSS, removing `unpkg.com` and `cdn.jsdelivr.net` from the CSP**
+  (WK-CODE-3).
 - New `views/layouts/admin.ejs` (sidebar shell, WF-07 left rail) and updated
   public layout (auth-aware nav).
 - Shared partials: status pill (WK §5 mapping — single source of truth),
@@ -78,18 +87,21 @@ PR description with evidence links, exactly like the payment-engine ledger.
   bug, so it gets dedicated tests.*
 
 **AC-I1.** ① Migration applies cleanly to a database with existing data
-(testcontainers proof) and `npm run seed` still produces a working admin.
+(testcontainers proof), backfills `user_id` for historical rows matching
+existing accounts, and `npm run seed` still produces a working admin.
 ② `adminGuard`: anonymous → 404, active non-admin → 404, locked admin → 404,
 admin → 200 (unit-tested). ③ Login with a shadow user's email + any password
-returns the standard invalid-credentials response, timing-equalized like
-existing auth paths (S6). ④ All existing pages render under the new theme
+returns the standard invalid-credentials response via a **dummy bcrypt
+compare on the NULL `password_hash` branch** — never a thrown error or early
+return (today's login has no timing padding, so the dummy compare is what
+keeps shadow accounts indistinguishable from wrong passwords — S6). ④ All existing pages render under the new theme
 with no functional regressions — full existing suite green. ⑤ Status-pill
 partial renders every registration, event and account status with WK §5 colors,
 including the derived `REFUNDED` display status (`CANCELLED` +
 `refunded_amount_cents > 0` — see site map §7) — snapshot test.
 
 **Tests.** New `admin-guard.test.ts`, `shadow-login.test.ts`, migration
-applied in CI compose flow; `run-all-tests.sh` gains the new suites.
+applied in the CI flow; `npm test` gains the new suites.
 **Evidence.** Test output, before/after screenshots of restyled existing pages.
 
 ### I2 — Storefront
@@ -125,9 +137,17 @@ card-state unit tests on the view helper.
 - Confirmation page upgrades (WF-05): receipt block, activation callout
   (hidden for active-account viewers), refund-request entry point (link only —
   the flow itself is I6).
-- Login-page R2 hint copy; password-reset flow flips shadow → active +
-  verified (J3); confirmation/receipt email gains the activation paragraph
-  (D1 copy).
+- **Auth amendments for activation (J3)** — verified necessary against
+  `auth.ts`: `forgotPassword` currently issues reset tokens only to verified
+  users, so shadow accounts would silently get nothing. Amend issuance to
+  include shadow accounts (never locked ones); `resetPassword` completion
+  performs the shadow → active + verified flip. Login-page R2 hint copy;
+  confirmation/receipt email gains the activation paragraph (D1 copy).
+- **Duplicate-state UI** for the engine's existing constraints:
+  `already_registered` (migration 006) renders a friendly "You're already
+  registered" state; duplicate waitlist joins render "You're already on the
+  waitlist"; event detail shows **"You're registered ✓"** to logged-in
+  holders instead of the CTA.
 
 **AC-I3.** ① Guest checkout with mismatched emails fails client-side and
 server-side; with matching emails creates exactly one shadow user (repeat
@@ -135,12 +155,16 @@ purchases reuse it — proven by a double-purchase test). ② Existing active
 users are never modified by guest checkout with their email, and the
 registration still binds to their `user_id`. ③ Logged-in checkout never shows
 the confirm field and ignores any submitted email mismatch with the session
-email (session wins). ④ Password reset on a shadow account: sets password,
+email (session wins). ④ Forgot-password issues a reset token to a shadow account (and still
+refuses locked ones); completing the reset sets password,
 `account_status='active'`, `is_verified=TRUE`; the user's guest purchases are
 immediately visible in I7's pages (until I7: asserted at the DB layer).
-⑤ No login oracle: response for shadow-email login is byte-identical in shape
-and statistically similar in timing to unknown-email login (S6).
-⑥ Full Stripe-CLI manual run of J1 + J3 recorded.
+⑤ No login oracle: shadow-email login returns the identical
+invalid-credentials response via the I1 dummy-compare path; forgot-password's
+existing min-time padding holds for shadow issuance (S6).
+⑥ Duplicate active registration, duplicate waitlist join, and the
+logged-in "You're registered" event-detail state all render their friendly
+states, never raw errors. ⑦ Full Stripe-CLI manual run of J1 + J3 recorded.
 
 **Tests.** Unit (mismatch validator, find-or-create idempotency, no-mutation
 invariant), HTTP (guest + logged-in checkout), manual Stripe journey.
@@ -176,14 +200,21 @@ transaction log, payment-detail page with reconstructed timeline
 (registration timestamps + `refund_log`), Stripe deep-link, and the **refund
 modal → `POST /admin/registrations/:id/refund`** — the first HTTP exposure of
 `RefundService` (S3): amount validated server-side against remaining net,
-full/partial, audit-logged, customer emailed via the existing template.
+full/partial, optional reason captured (passed as the service's `reason`,
+default `admin_initiated`), audit-logged, customer emailed via the existing
+template. A direct refund **auto-resolves any open refund request** for the
+registration (site map §4.3) so I6's queue can never go stale. Also ships the
+**admin dashboard** (WF-07): KPI cards, recent transactions, recent sign-ins —
+its queries are this increment's data, so it lands here (the
+pending-refund-requests banner slot ships empty until I6 wires it).
 
 **AC-I5.** ① Log shows every fixture state incl. `PAYMENT_FAILED`/`EXPIRED`;
 filters compose and survive pagination (query-string state). ② Refund happy
 path (Stripe CLI): money moves, `refund_log` row, timeline entry, customer
 email. ③ Over-amount, zero, negative, non-CONFIRMED-status refunds rejected
 server-side. ④ Stripe failure → error flash, **no** `refund_log` row, status
-unchanged. ⑤ Guard tests as I4-④.
+unchanged. ⑤ Guard tests as I4-④. ⑥ Admin dashboard renders the WF-07 KPIs
+and feeds from fixtures; money figures match the transaction log's totals.
 
 **Tests.** HTTP filter/pagination suite; refund validation unit tests; mocked
 Stripe failure; one manual Stripe-CLI partial + full refund.
@@ -195,14 +226,16 @@ engine precedent.
 **Scope.** Journey J4 end to end: `refundRequestController` (form + ack,
 idempotent open-request constraint, RL(5), S2) and `adminRefundsController`
 (queue WF-15, approve = `RefundService` full refund + `APPROVED` +
-`resolved_by`, deny = required note + email). Dashboard banner (WF-07) ships
-here with a minimal `/admin` dashboard if I7 hasn't landed.
+`resolved_by`, deny = required note + email). Wires the pending-requests
+banner into the I5 admin dashboard.
 
 **AC-I6.** ① Guest (capability URL) and logged-in user can both file exactly
 one open request per registration; duplicates get the friendly "already
 requested" state, not an error. ② Non-CONFIRMED registrations can't file.
 ③ Approve executes the refund and stamps the resolver; Stripe failure leaves
-the request `REQUESTED` with an error flash (never silently resolved).
+the request `REQUESTED` with an error flash (never silently resolved); approve
+against an already-refunded registration resolves the request gracefully with
+**no second refund** (RefundService idempotency, site map §4.3).
 ④ Deny requires a note; customer receives it HTML-escaped (S4 — test with a
 hostile note string). ⑤ Admin notification + customer ack emails on filing.
 ⑥ Full J4 manual run (file → approve → money back → emails) recorded.
@@ -262,9 +295,13 @@ inline styles) with plain-text parts.
 
 ## 4. Test strategy (cumulative)
 
-- **Gate:** `scripts/run-all-tests.sh` stays the single local gate; each
-  increment adds its suites there and to CI. Target: suite stays under ~3 min
-  by keeping testcontainers DBs shared per-suite as today.
+- **Gate:** `npm test` (created in I1 — it wraps the existing
+  `src/registration/testing/run-all-tests.ts` runner plus the new web suites)
+  is the single local gate, and I1 adds the GitHub Actions workflow that runs
+  it on every PR. **Today neither exists** — the repo has no test script and
+  the only workflows are fly-deploy and copilot-setup, so this plumbing is a
+  hard prerequisite for every later "gate green" claim. Target: suite stays
+  under ~3 min by keeping testcontainers DBs shared per-suite as today.
 - **Layers:** unit (validators, guards, state transitions, eligibility
   matrices) → HTTP integration (`app.request()` against the real Hono app + test DB,
   fixture users: anon/shadow/active/admin/locked-admin) → manual Stripe-CLI
@@ -291,8 +328,9 @@ inline styles) with plain-text parts.
 ## 6. Definition of done (per increment, and overall)
 
 An increment is done when: AC all checked with linked evidence in the PR ·
-full gate green locally and in CI · security regression set green · no
-`<%- %>` introduced (S4) · new routes present in the site-map route table
+full gate green locally and in CI (gate created in I1) · security regression
+set green · no raw `<%- %>` data interpolation introduced (layout plumbing
+only — WK-CODE-5 / S4) · new routes present in the site-map route table
 (doc updated in the same PR if reality diverged) · screenshots reviewed
 against wireframes. The project is done when I9's compliance checklist is
 ticked and journeys J1–J8 each have a recorded happy-path run.

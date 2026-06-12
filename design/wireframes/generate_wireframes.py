@@ -448,11 +448,12 @@ def wf03_event_detail():
     s.text(panel_x + 196, panel_y + 370, "🔒 Secure checkout · Stripe", 12, MUTED, anchor="middle")
     s.text(panel_x + 196, panel_y + 400, "No account needed", 12, MUTED, anchor="middle")
     note(s, panel_x + 392, panel_y + 396, 4)
-    s.rect(panel_x, 634, 392, 132, SURFACE, rx=12)
+    s.rect(panel_x, 634, 392, 168, SURFACE, rx=12)
     s.text(panel_x + 24, 664, "State variants", 12, MUTED, 700, spacing="1px")
     btn(s, panel_x + 24, 682, 344, "Join the waitlist", "secondary", 40)
-    s.text(panel_x + 196, 752, "Sold out → CTA swaps to waitlist (J7)", 11, MUTED, anchor="middle")
-    legend(s, 800, [
+    s.text(panel_x + 196, 748, "Sold out → CTA swaps to waitlist (J7)", 11, MUTED, anchor="middle")
+    s.text(panel_x + 196, 768, "Already registered (logged in) → “You're registered ✓”", 11, MUTED, anchor="middle")
+    legend(s, 822, [
         "image_url rendered 3:2, object-fit cover; missing/broken URL → navy fallback card with initials.",
         "Live availability from available_slots (the engine's atomic counter) — amber when < 25%.",
         "Primary CTA → /events/:id/register. CLOSED: disabled bar 'Registration closed'. CANCELLED: info alert.",
@@ -506,8 +507,8 @@ def wf04_checkout():
            11, MUTED, anchor="middle")
     legend(s, 850, [
         "Logged-in users: email prefilled from session, read-only; Confirm email field is hidden entirely.",
-        "Guest (D1): email entered twice, compared case-insensitively client-side AND server-side (400 EMAIL_MISMATCH). On success a shadow user row is found-or-created and stamped on the registration.",
-        "POST /events/:id/register → slot reserved atomically (engine) → PaymentIntent created → step 2.",
+        "Guest (D1): email entered twice, compared case-insensitively client-side AND server-side (400 email_mismatch). On success a shadow user row is found-or-created and stamped on the registration.",
+        "POST /events/:id/register → slot reserved atomically (engine) → PaymentIntent created → step 2. Duplicate active registration → friendly already-registered state (engine 400).",
         "Element container per WK §5; manual capture flow unchanged from the payment engine.",
         "stripe.confirmPayment → POST /registration/confirm/:piId → capture → redirect to confirmation.",
     ])
@@ -537,7 +538,7 @@ def wf05_confirmation():
             s.text(cx + cw - 48, ry + 4, v, 13, INK, 600, anchor="end")
         ry += 38
     note(s, cx + cw - 24, 352, 1)
-    btn(s, cx + 48, ry + 6, (cw - 116) / 2, "Add to calendar", "secondary")
+    btn(s, cx + 48, ry + 6, (cw - 116) / 2, "View event", "secondary")
     btn(s, cx + 48 + (cw - 116) / 2 + 20, ry + 6, (cw - 116) / 2, "Request a refund", "danger-o")
     note(s, cx + cw - 24, ry + 26, 2)
     # activation callout
@@ -665,7 +666,6 @@ def wf09_admin_event_form():
     fx, fw = x, 560
     y = 196
     y = field(s, fx, y, fw, "Name", "Intro to Sailing", req=True)
-    y = field(s, fx, y, fw, "Summary (card blurb, 140 chars)", "Learn the ropes — literally.")
     s.text(fx, y + 12, "Description", 12, INK, 600)
     s.rect(fx, y + 20, fw, 110, WHITE, stroke=BORDER, rx=8)
     bars(s, fx + 12, y + 38, fw - 60, 3, gap=12, h=7)
@@ -697,7 +697,7 @@ def wf09_admin_event_form():
     note(s, pvx + 316, 232, 4)
     legend(s, y + 60, [
         "On edit, capacity may not drop below the current confirmed count — server-enforced, inline error.",
-        "Entered in dollars, stored in cents (fee_cents) via the shared money helper; > $0 required.",
+        "Entered in dollars, stored in cents (registration_fee_cents) via the shared money helper; > $0 required.",
         "https:// only, ≤ 2048 chars (security S5). Broken URL degrades to the fallback card at render time.",
         "Live preview (HTMX) shows the storefront card and the no-image fallback as the admin types.",
     ], x=280)
@@ -789,7 +789,7 @@ def wf11_admin_transactions():
 
 
 def wf12_admin_reg_detail():
-    s = S(1280, 1030)
+    s = S(1280, 1130)
     browser(s, "flyte.fly.dev/admin/registrations/9c1b…")
     admin_nav(s, "Transactions")
     x = 280
@@ -836,23 +836,24 @@ def wf12_admin_reg_detail():
     note(s, rx + 190, 408, 3)
     # modal sketch
     my = 480
-    s.rect(rx, my, 450, 290, WHITE, stroke=LINE, rx=12, sw=1.5)
-    s.rect(rx, my, 450, 290, INK, rx=12, op=0.03)
+    s.rect(rx, my, 450, 360, WHITE, stroke=LINE, rx=12, sw=1.5)
+    s.rect(rx, my, 450, 360, INK, rx=12, op=0.03)
     s.text(rx + 24, my + 34, "Refund registration", 16, INK, 800)
     s.text(rx + 24, my + 58, "Up to $20.00 remaining is refundable.", 12, MUTED)
     field(s, rx + 24, my + 74, 200, "Amount (USD)", "$ 20.00")
     s.rect(rx + 248, my + 96, 16, 16, WHITE, stroke=BORDER, rx=4)
     s.text(rx + 272, my + 108, "Full remaining amount", 12, TEXT)
-    s.text(rx + 24, my + 176, "The card is refunded via Stripe and the customer", 11, MUTED)
-    s.text(rx + 24, my + 192, "is emailed automatically. This cannot be undone.", 11, MUTED)
-    btn(s, rx + 24, my + 216, 180, "Confirm refund", "danger", 40)
-    btn(s, rx + 220, my + 216, 100, "Cancel", "ghost", 40)
-    note(s, rx + 420, my + 236, 4)
+    field(s, rx + 24, my + 140, 402, "Reason (optional)", "Duplicate purchase")
+    s.text(rx + 24, my + 248, "The card is refunded via Stripe and the customer", 11, MUTED)
+    s.text(rx + 24, my + 264, "is emailed automatically. This cannot be undone.", 11, MUTED)
+    btn(s, rx + 24, my + 286, 180, "Confirm refund", "danger", 40)
+    btn(s, rx + 220, my + 286, 100, "Cancel", "ghost", 40)
+    note(s, rx + 420, my + 306, 4)
     s.text(rx + 10, my - 12, "MODAL", 9, MUTED, 700, spacing="2px")
-    legend(s, 820, [
+    legend(s, 900, [
         "Linked user → /admin/users/:id; shadow accounts are labelled so support knows the customer can't log in yet.",
         "Timeline reconstructed from registration timestamps + refund_log — answers “what happened?” without psql.",
-        "First HTTP exposure of RefundService: adminGuard + CSRF + server-validated amount ≤ remaining net (S3).",
+        "First HTTP exposure of RefundService: adminGuard + CSRF + server-validated amount ≤ remaining net (S3); optional reason recorded; a direct refund auto-resolves any open refund request.",
         "Success → refund_log row + customer email (existing template) + timeline entry. Stripe failure → error flash, nothing recorded as refunded.",
     ], x=280)
     s.save("wf-12-admin-registration-detail.svg")

@@ -95,14 +95,14 @@ New controllers live in `src/web/controllers/`, admin controllers in
 |---|---|---|---|
 | `GET /` | `homeController.index` (rework) | `home.ejs` (rework) | Hero + up to 6 `OPEN` upcoming events as cards (thumbnail → detail). Zero-events empty state. |
 | `GET /events` | `catalogController.list` *(new)* | `events-list.ejs` *(new)* | All upcoming `OPEN`/`FULL`/`CLOSED` events, soonest first; availability meter; sold-out shows waitlist CTA. Filter: text search, month. HTMX-paginated, 12/page. |
-| `GET /events/:eventId` | `catalogController.detail` *(new)* | `event-detail.ejs` *(new)* | Public. Image (D2 fallback card), full description, date/location/price, live availability, primary CTA → `/register` (or waitlist CTA when full; "Registration closed" state otherwise). |
-| `GET /events/:eventId/register` | `registrationController.showForm` *(enhance)* | `registration-form.ejs` *(enhance)* | Adds **Confirm email** field (D1). If session user: email prefilled + read-only, confirm field hidden. |
-| `POST /events/:eventId/register` | `registrationController.initiateRegistration` *(enhance)* | — (JSON) | Server validates `email === emailConfirm` (case-insensitive, trimmed) → 400 `EMAIL_MISMATCH` otherwise. Find-or-create shadow user; stamp `registrations.user_id`. Logged-in: session email wins; no confirm required. RL(60). |
+| `GET /events/:eventId` | `catalogController.detail` *(new)* | `event-detail.ejs` *(new)* | Public. Image (D2 fallback card), full description, date/location/price, live availability, primary CTA → `/register` (or waitlist CTA when full; "Registration closed" state otherwise). Logged-in users who already hold an active registration see a **"You're registered ✓"** state linking to My Registrations instead of the CTA. |
+| `GET /events/:eventId/register` | `registrationController.showRegistrationForm` *(enhance)* | `registration-form.ejs` *(enhance)* | Adds **Confirm email** field (D1). If session user: email prefilled + read-only, confirm field hidden. |
+| `POST /events/:eventId/register` | `registrationController.initiateRegistration` *(enhance)* | — (JSON) | Server validates `email === emailConfirm` (case-insensitive, trimmed) → 400 `email_mismatch` otherwise (matching the existing lowercase error-code convention). Find-or-create shadow user; stamp `registrations.user_id`. Logged-in: session email wins; no confirm required. The engine's existing `already_registered` outcome (one active registration per email per event — migration 006) renders a friendly "You're already registered" state, not a raw error. RL(60). |
 | `POST /registration/confirm/:piId` | *(exists, unchanged)* | — | |
 | `GET /registration/:id/confirmed` | `registrationController.showConfirmed` *(enhance)* | `registration-confirmed.ejs` *(enhance)* | Adds: receipt block, **Request a refund** CTA → refund-request form, and (for shadow owners) an "Activate your account" callout linking to `/forgot-password` with email query-prefill. |
 | `GET /registration/:id/refund-request` | `refundRequestController.form` *(new)* | `refund-request.ejs` *(new)* | Reachable from confirmation page (capability) or My Registrations. Shows masked summary (event, date, amount). Optional reason textarea (≤500 chars). |
 | `POST /registration/:id/refund-request` | `refundRequestController.create` *(new)* | redirect → `?sent=1` | Guards: registration exists & status `CONFIRMED`; no open request for it (idempotent → friendly "already requested" state). Creates `refund_requests` row (`REQUESTED`), emails admin + ack to customer. RL(5). |
-| `GET/POST /events/:eventId/waitlist` | *(exist — enhance)* | `waitlist-form.ejs` | Adds confirm-email field + shadow user binding, same as registration (D1). |
+| `GET/POST /events/:eventId/waitlist` | *(exist — enhance)* | `waitlist-form.ejs` | Adds confirm-email field + shadow user binding, same as registration (D1). Duplicate join (`UNIQUE (event_id, email)`) renders a friendly "You're already on the waitlist" state with the existing position. |
 
 ### 4.2 Account
 
@@ -118,7 +118,7 @@ New controllers live in `src/web/controllers/`, admin controllers in
 |---|---|---|---|
 | `GET /admin` | `adminDashboardController.index` | `admin/dashboard.ejs` | KPIs: gross revenue (30d), confirmed registrations (30d), upcoming events, **pending refund requests** (alert-styled when > 0); recent transactions (10); recent signins. |
 | `GET /admin/events` | `adminEventsController.list` | `admin/events-list.ejs` | All events, all statuses; columns: name, date, status pill, confirmed/capacity, available, revenue; row → detail. |
-| `GET /admin/events/new` | `adminEventsController.newForm` | `admin/event-form.ejs` | Shared create/edit form: name*, date*, location, description (plain text/markdown-lite), capacity*, fee* (dollars input, stored cents), image URL (https only), status. |
+| `GET /admin/events/new` | `adminEventsController.newForm` | `admin/event-form.ejs` | Shared create/edit form: name*, date & time* (entered and displayed in the configured venue timezone — Q5), location, description (plain text/markdown-lite), capacity*, fee* (dollars input, stored as `registration_fee_cents`), image URL (https only), status. |
 | `POST /admin/events` | `adminEventsController.create` | redirect → detail | Server validation mirrors form; create defaults to status `DRAFT` (new status value — not publicly listed) unless "Open immediately". |
 | `GET /admin/events/:id` | `adminEventsController.detail` | `admin/event-detail.ejs` | Header stats (capacity, confirmed, available, waitlist count, gross/net revenue); **roster table** (registrations w/ status); waitlist table; actions: Edit, Open, Close, **Cancel event** (modal: "refund all N confirmed registrations" → existing bulk-refund path). |
 | `GET /admin/events/:id/edit` | `adminEventsController.editForm` | `admin/event-form.ejs` | Capacity may not be set below `confirmed_count`. |
@@ -126,9 +126,9 @@ New controllers live in `src/web/controllers/`, admin controllers in
 | `POST /admin/events/:id/cancel` | `adminEventsController.cancel` | redirect → detail | Confirm-modal-gated. Invokes existing `RefundService` bulk refund; event becomes `CANCELLED` only if all refunds succeed (existing A6 semantics surfaced in UI). |
 | `GET /admin/registrations` | `adminRegistrationsController.list` | `admin/registrations-list.ejs` | **The transaction log.** Filters: event, status, email substring, date range. Columns: created, event, name, email, status pill, gross/net, refunded. HTMX pagination, 25/page. |
 | `GET /admin/registrations/:id` | `adminRegistrationsController.detail` | `admin/registration-detail.ejs` | Full record: participant, event, **payment timeline** (initiated → authorized → captured → confirmed → refunds, from row timestamps + `refund_log`), Stripe PI id (deep-link to Stripe dashboard), refund history, linked user. Action: **Refund** (modal: full or partial $ amount ≤ remaining net). |
-| `POST /admin/registrations/:id/refund` | `adminRegistrationsController.refund` | redirect → detail | First HTTP exposure of `RefundService` — adminGuard + CSRF + server-validated amount. Writes `refund_log`, emails customer (existing template). |
+| `POST /admin/registrations/:id/refund` | `adminRegistrationsController.refund` | redirect → detail | First HTTP exposure of `RefundService` — adminGuard + CSRF + server-validated amount. Modal captures an optional reason (passed as `RefundService` `reason`, default `admin_initiated`). Writes `refund_log`, emails customer (existing template). **Auto-resolves any open refund request** for the registration (`APPROVED`, note "resolved by direct refund") so the queue never goes stale. |
 | `GET /admin/refund-requests` | `adminRefundsController.queue` | `admin/refund-requests.ejs` | Tabs: Requested / Resolved. Row: requested at, event, customer, amount, reason. Actions inline: **Approve & refund** (modal) / **Deny** (modal w/ required note → email to customer). |
-| `POST /admin/refund-requests/:id/approve` | `adminRefundsController.approve` | redirect → queue | Executes full refund via `RefundService`; request → `APPROVED`, stamped `resolved_by`. Failure leaves request `REQUESTED` + error flash. |
+| `POST /admin/refund-requests/:id/approve` | `adminRefundsController.approve` | redirect → queue | Executes full refund via `RefundService`; request → `APPROVED`, stamped `resolved_by`. Stripe failure leaves request `REQUESTED` + error flash. If the registration was already refunded directly (`ALREADY_REFUNDED` — RefundService is idempotent), the request resolves to `APPROVED` with a note and **no money moves**. |
 | `POST /admin/refund-requests/:id/deny` | `adminRefundsController.deny` | redirect → queue | Request → `DENIED` + `resolution_note`; customer notified by email (escaped). |
 | `GET /admin/users` | `adminUsersController.list` | `admin/users-list.ejs` | Search email/name; filter account_status (shadow/active) & locked. Columns: email, name, status pill, locked?, registrations count, created. |
 | `GET /admin/users/:id` | `adminUsersController.detail` | `admin/user-detail.ejs` | Profile card (status, verified, admin flag — read-only); **purchases table** (their registrations); waitlist entries; **login history** (`login_events`); **action history** (`user_action_events`); actions: Lock / Unlock (modal-confirmed; cannot lock self; logged to `user_action_events`). |
@@ -162,11 +162,23 @@ ALTER TABLE registrations    ADD COLUMN user_id UUID REFERENCES users(id);
 ALTER TABLE waitlist_entries ADD COLUMN user_id UUID REFERENCES users(id);
 CREATE INDEX idx_registrations_user ON registrations(user_id);
 
+-- Backfill: bind historical purchases to accounts that already exist
+-- (whether to ALSO create shadow rows for unmatched historical guest
+--  emails is open question Q6)
+UPDATE registrations r SET user_id = u.id
+  FROM users u WHERE r.user_id IS NULL AND LOWER(r.email) = LOWER(u.email);
+UPDATE waitlist_entries w SET user_id = u.id
+  FROM users u WHERE w.user_id IS NULL AND LOWER(w.email) = LOWER(u.email);
+
 -- D2 + storefront content
 ALTER TABLE events ADD COLUMN image_url TEXT;          -- https URL or NULL
-ALTER TABLE events ADD COLUMN summary  TEXT;           -- 1-2 line card blurb
--- events.status gains 'DRAFT' as an allowed value (publicly invisible).
--- Existing engine-managed 'FULL' (auto when available_slots = 0) is untouched;
+
+-- Event lifecycle gains DRAFT (publicly invisible). The status CHECK is an
+-- inline constraint in 005, so it must be dropped and recreated:
+ALTER TABLE events DROP CONSTRAINT events_status_check;
+ALTER TABLE events ADD CONSTRAINT events_status_check
+  CHECK (status IN ('DRAFT', 'OPEN', 'FULL', 'CLOSED', 'CANCELLED'));
+-- Engine-managed 'FULL' (auto when available_slots = 0) is untouched;
 -- the storefront renders it as "Sold out" + waitlist CTA.
 
 -- Refund request workflow
@@ -188,9 +200,33 @@ CREATE UNIQUE INDEX idx_refund_requests_open
 
 **Shadow lifecycle invariants**
 
-1. Guest checkout: `INSERT users (email, account_status='shadow', is_verified=FALSE, password_hash=NULL) ON CONFLICT (LOWER(email)) DO NOTHING`, then select — never modifies an existing row (active users keep their state; repeat guests reuse their shadow row).
-2. `/login` with a shadow email behaves exactly like a wrong password (no oracle), and the login page persistently shows the R2 hint copy.
-3. Password reset against a shadow user sets `password_hash`, `account_status='active'`, `is_verified=TRUE` (the emailed link proves mailbox control). This **is** the activation flow — no new mechanism.
+1. Guest checkout normalizes the email to lowercase at write time, then:
+   `INSERT INTO users (email, display_name, account_status, is_verified, password_hash)
+   VALUES ($lower_email, $first_last_from_checkout, 'shadow', FALSE, NULL)
+   ON CONFLICT ((LOWER(email))) DO NOTHING`, then select. `display_name` is
+   NOT NULL in the schema, so it MUST be supplied — built from the checkout
+   first/last name, **set on create only**. The flow never modifies an
+   existing row: active users keep their state; repeat guests reuse their
+   shadow row even if they typed a different name. (Note the double parens —
+   the unique index `users_email_lower_idx` is an expression index, and
+   Postgres conflict targets on expressions require their own parentheses.)
+2. `/login` with a shadow email behaves exactly like a wrong password (no
+   oracle), and the login page persistently shows the R2 hint copy.
+   Implementation note: shadow rows have `password_hash = NULL`, and today's
+   login path has no timing padding and would short-circuit (or throw) on a
+   NULL hash — the NULL branch MUST run a dummy bcrypt compare so shadow
+   emails stay indistinguishable from wrong passwords. Covered by the I1
+   fail-closed audit.
+3. Password reset against a shadow user sets `password_hash`,
+   `account_status='active'`, `is_verified=TRUE` (the emailed link proves
+   mailbox control). This is the activation flow, **but it requires two
+   amendments to existing auth code** (verified against `auth.ts`):
+   `forgotPassword` currently issues tokens only when `user.isVerified` — it
+   must also issue them to shadow accounts (still never to locked ones); and
+   `resetPassword` completion must perform the shadow→active+verified flip.
+   `resetPassword` itself is token-gated only, so nothing else changes. The
+   forgot-password flow's existing min-time padding keeps issuance
+   enumeration-safe.
 4. `npm run seed` admin is always `active`. Shadow users are never admins.
 
 ---
@@ -213,7 +249,7 @@ Same as J1 from any entry point, except: checkout email is prefilled & read-only
 
 ### J3 — Shadow → Active (account activation)
 1. Guest opens confirmation email → clicks "Activate your account" → `/forgot-password` (email prefilled).
-2. Standard reset email → `/reset-password?token=…` → sets password.
+2. Standard reset email (issuance amended for shadow accounts — §5 invariant 3) → `/reset-password?token=…` → sets password.
 3. Row flips to `active`+verified; redirected to `/dashboard`; **My Registrations already contains the guest purchase** (same `user_id`). *This is the wow-moment the shadow model buys us.*
 
 ### J4 — Refund, end to end
@@ -274,7 +310,7 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 | ID | Requirement |
 |---|---|
 | S1 | `adminGuard` on every `/admin` route; 404 to non-admins; covered by tests. (Closes the `is_admin`-unenforced gap — audit issue #22.) |
-| S2 | All new POSTs: CSRF + rate limits as tabled in §4. Refund-request endpoint RL(5)/h-equivalent and idempotent per registration. |
+| S2 | All new POSTs: CSRF + rate limits as tabled in §4 (`RL(n)` = n per 60s per IP, the existing middleware's semantics). Refund-request endpoint: RL(5) — the real duplicate guard is the partial unique index (one open request per registration), not the rate limit. |
 | S3 | Refund execution: server validates amount ≤ remaining net; full audit trail; only ever via adminGuard routes or existing internal paths. |
 | S4 | All user-originated strings in emails go through the existing `escapeHtml`; all views stay on `<%= %>`. |
 | S5 | `image_url`: server-side validation `https://` only, ≤ 2048 chars; rendered exclusively as `<img src>` (escaped); **CSP change**: `img-src` gains `https:` (documented tradeoff: remote images may leak viewer IPs to the image host — acceptable for admin-curated URLs). |
@@ -286,6 +322,7 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 ## 9. Explicitly out of scope (v1) — parked for v2
 
 - Automated waitlist promotion (offer emails with hold windows)
+- Add-to-calendar (ICS) downloads on confirmation pages
 - Email preference center / newsletter & blog mailing management (noted in D1 as the future driver for account activation)
 - Event image uploads (D2 keeps URLs), event categories/tags, recurring events
 - Customer-visible partial refunds (admin can issue them; customers just see the result)
@@ -303,3 +340,5 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 | Q2 | Refund-request reason: required or optional? | Optional, ≤500 chars |
 | Q3 | Dashboard KPI window: 30 days or all-time? | 30 days with all-time secondary figure |
 | Q4 | Should the activation callout also appear on the waitlist ack page? | Yes |
+| Q5 | Event times: `event_date` is `TIMESTAMPTZ` — entered and displayed in which timezone? | A single configured venue timezone (`EVENT_TIMEZONE` env var); admin enters and customers see that timezone, labelled |
+| Q6 | Should migration 007 also create shadow users for historical guest registrations whose emails match no account (so past purchases are claimable via activation)? | Yes — it's the D1 model applied retroactively, and it makes admin user counts truthful |

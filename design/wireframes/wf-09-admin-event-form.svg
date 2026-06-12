@@ -26,42 +26,39 @@
 <text x="280" y="208" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Name *</text>
 <rect x="280" y="216" width="560" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
 <text x="292" y="241" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">Intro to Sailing</text>
-<text x="280" y="284" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Summary (card blurb, 140 chars)</text>
-<rect x="280" y="292" width="560" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="292" y="317" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">Learn the ropes — literally.</text>
-<text x="280" y="360" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Description</text>
-<rect x="280" y="368" width="560" height="110" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<rect x="292" y="386" width="500" height="7" fill="#E2E8F0" rx="4"/>
-<rect x="292" y="405" width="485" height="7" fill="#E2E8F0" rx="4"/>
-<rect x="292" y="424" width="460" height="7" fill="#E2E8F0" rx="4"/>
-<text x="280" y="510" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Date &amp; time *</text>
-<rect x="280" y="518" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="292" y="543" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">2026-06-20 09:00</text>
-<text x="570" y="510" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Location</text>
-<rect x="570" y="518" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="582" y="543" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">Marina Bay, Dock C</text>
-<text x="280" y="596" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Capacity *</text>
-<rect x="280" y="604" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="292" y="629" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">50</text>
-<circle cx="532" cy="624" r="11" fill="#E8590C"/>
-<text x="532" y="628" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
-<text x="570" y="596" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Fee (USD) *</text>
-<rect x="570" y="604" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="582" y="629" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">$ 25.00</text>
+<text x="280" y="284" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Description</text>
+<rect x="280" y="292" width="560" height="110" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="292" y="310" width="500" height="7" fill="#E2E8F0" rx="4"/>
+<rect x="292" y="329" width="485" height="7" fill="#E2E8F0" rx="4"/>
+<rect x="292" y="348" width="460" height="7" fill="#E2E8F0" rx="4"/>
+<text x="280" y="434" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Date &amp; time *</text>
+<rect x="280" y="442" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="292" y="467" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">2026-06-20 09:00</text>
+<text x="570" y="434" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Location</text>
+<rect x="570" y="442" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="582" y="467" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">Marina Bay, Dock C</text>
+<text x="280" y="520" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Capacity *</text>
+<rect x="280" y="528" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="292" y="553" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">50</text>
+<circle cx="532" cy="548" r="11" fill="#E8590C"/>
+<text x="532" y="552" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="570" y="520" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Fee (USD) *</text>
+<rect x="570" y="528" width="270" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="582" y="553" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">$ 25.00</text>
+<circle cx="822" cy="548" r="11" fill="#E8590C"/>
+<text x="822" y="552" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="280" y="606" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Image URL (https)</text>
+<rect x="280" y="614" width="560" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="292" y="639" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">https://images.example.com/sailing.jpg</text>
 <circle cx="822" cy="624" r="11" fill="#E8590C"/>
-<text x="822" y="628" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
-<text x="280" y="682" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Image URL (https)</text>
-<rect x="280" y="690" width="560" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="292" y="715" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">https://images.example.com/sailing.jpg</text>
-<circle cx="822" cy="700" r="11" fill="#E8590C"/>
-<text x="822" y="704" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
-<text x="280" y="758" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Status</text>
-<rect x="280" y="766" width="220" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
-<text x="292" y="791" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">DRAFT  ▾</text>
-<rect x="280" y="832" width="160" height="40" fill="#E8590C" rx="8"/>
-<text x="360" y="857" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Save event</text>
-<rect x="456" y="832" width="120" height="40" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
-<text x="516" y="857" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Cancel</text>
+<text x="822" y="628" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="280" y="682" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Status</text>
+<rect x="280" y="690" width="220" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="292" y="715" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">DRAFT  ▾</text>
+<rect x="280" y="756" width="160" height="40" fill="#E8590C" rx="8"/>
+<text x="360" y="781" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Save event</text>
+<rect x="456" y="756" width="120" height="40" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="516" y="781" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Cancel</text>
 <text x="900" y="208" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">CARD PREVIEW</text>
 <rect x="900" y="220" width="316" height="356" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
 <rect x="901" y="221" width="314" height="196" fill="#E9EEF3" rx="8" stroke="#CBD5E1" stroke-width="1"/>
@@ -84,17 +81,17 @@
 <text x="1058" y="748" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#C3D0E0" text-anchor="middle">JUN 20</text>
 <circle cx="1216" cy="232" r="11" fill="#E8590C"/>
 <text x="1216" y="236" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
-<rect x="280" y="892" width="960" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
-<circle cx="304" cy="914" r="11" fill="#E8590C"/>
-<text x="304" y="918" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
-<text x="324" y="918" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">On edit, capacity may not drop below the current confirmed count — server-enforced, inline error.</text>
-<circle cx="304" cy="936" r="11" fill="#E8590C"/>
-<text x="304" y="940" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
-<text x="324" y="940" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Entered in dollars, stored in cents (fee_cents) via the shared money helper; &gt; $0 required.</text>
-<circle cx="304" cy="958" r="11" fill="#E8590C"/>
-<text x="304" y="962" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
-<text x="324" y="962" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">https:// only, ≤ 2048 chars (security S5). Broken URL degrades to the fallback card at render time.</text>
-<circle cx="304" cy="980" r="11" fill="#E8590C"/>
-<text x="304" y="984" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
-<text x="324" y="984" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Live preview (HTMX) shows the storefront card and the no-image fallback as the admin types.</text>
+<rect x="280" y="816" width="960" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="304" cy="838" r="11" fill="#E8590C"/>
+<text x="304" y="842" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="324" y="842" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">On edit, capacity may not drop below the current confirmed count — server-enforced, inline error.</text>
+<circle cx="304" cy="860" r="11" fill="#E8590C"/>
+<text x="304" y="864" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="324" y="864" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Entered in dollars, stored in cents (registration_fee_cents) via the shared money helper; &gt; $0 required.</text>
+<circle cx="304" cy="882" r="11" fill="#E8590C"/>
+<text x="304" y="886" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="324" y="886" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">https:// only, ≤ 2048 chars (security S5). Broken URL degrades to the fallback card at render time.</text>
+<circle cx="304" cy="904" r="11" fill="#E8590C"/>
+<text x="304" y="908" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="324" y="908" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Live preview (HTMX) shows the storefront card and the no-image fallback as the admin types.</text>
 </svg>

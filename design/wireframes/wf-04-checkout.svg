@@ -79,10 +79,10 @@
 <text x="84" y="876" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Logged-in users: email prefilled from session, read-only; Confirm email field is hidden entirely.</text>
 <circle cx="64" cy="894" r="11" fill="#E8590C"/>
 <text x="64" y="898" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
-<text x="84" y="898" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Guest (D1): email entered twice, compared case-insensitively client-side AND server-side (400 EMAIL_MISMATCH). On success a shadow user row is found-or-created and stamped on the registration.</text>
+<text x="84" y="898" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Guest (D1): email entered twice, compared case-insensitively client-side AND server-side (400 email_mismatch). On success a shadow user row is found-or-created and stamped on the registration.</text>
 <circle cx="64" cy="916" r="11" fill="#E8590C"/>
 <text x="64" y="920" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
-<text x="84" y="920" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">POST /events/:id/register → slot reserved atomically (engine) → PaymentIntent created → step 2.</text>
+<text x="84" y="920" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">POST /events/:id/register → slot reserved atomically (engine) → PaymentIntent created → step 2. Duplicate active registration → friendly already-registered state (engine 400).</text>
 <circle cx="64" cy="938" r="11" fill="#E8590C"/>
 <text x="64" y="942" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
 <text x="84" y="942" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Element container per WK §5; manual capture flow unchanged from the payment engine.</text>

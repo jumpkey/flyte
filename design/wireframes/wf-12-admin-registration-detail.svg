@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1030" viewBox="0 0 1280 1030">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1130" viewBox="0 0 1280 1130">
 <defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
-<rect x="0" y="0" width="1280" height="1030" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="1130" fill="#F8FAFC"/>
 <rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
 <circle cx="22" cy="18" r="5" fill="#FC8181"/>
 <circle cx="40" cy="18" r="5" fill="#F6E05E"/>
 <circle cx="58" cy="18" r="5" fill="#68D391"/>
 <rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
 <text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/admin/registrations/9c1b…</text>
-<rect x="0" y="36" width="240" height="994" fill="#1F3A5F"/>
+<rect x="0" y="36" width="240" height="1094" fill="#1F3A5F"/>
 <text x="32" y="80" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
 <circle cx="88" cy="66" r="4" fill="#E8590C"/>
 <text x="32" y="100" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="600" fill="#9FB3CC" letter-spacing="2px">ADMIN</text>
@@ -19,8 +19,8 @@
 <text x="38" y="278" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Refund requests</text>
 <text x="38" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Users</text>
 <text x="38" y="366" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Activity</text>
-<line x1="14" y1="966" x2="226" y2="966" stroke="#3A567C" stroke-width="1"/>
-<text x="38" y="992" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#9FB3CC">← Back to site</text>
+<line x1="14" y1="1066" x2="226" y2="1066" stroke="#3A567C" stroke-width="1"/>
+<text x="38" y="1092" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#9FB3CC">← Back to site</text>
 <text x="280" y="134" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F">← Transactions</text>
 <text x="280" y="172" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="24" font-weight="800" fill="#0F172A">Registration 9c1b2e84</text>
 <rect x="580" y="156" width="75.6" height="20" fill="#EBF7ED" rx="10"/>
@@ -68,8 +68,8 @@
 <text x="861" y="414" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E03131" text-anchor="middle">Refund…</text>
 <circle cx="956" cy="408" r="11" fill="#E8590C"/>
 <text x="956" y="412" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
-<rect x="766" y="480" width="450" height="290" fill="#FFFFFF" rx="12" stroke="#94A3B8" stroke-width="1.5"/>
-<rect x="766" y="480" width="450" height="290" fill="#0F172A" rx="12" opacity="0.03"/>
+<rect x="766" y="480" width="450" height="360" fill="#FFFFFF" rx="12" stroke="#94A3B8" stroke-width="1.5"/>
+<rect x="766" y="480" width="450" height="360" fill="#0F172A" rx="12" opacity="0.03"/>
 <text x="790" y="514" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">Refund registration</text>
 <text x="790" y="538" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B">Up to $20.00 remaining is refundable.</text>
 <text x="790" y="566" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Amount (USD)</text>
@@ -77,26 +77,30 @@
 <text x="802" y="599" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">$ 20.00</text>
 <rect x="1014" y="576" width="16" height="16" fill="#FFFFFF" rx="4" stroke="#CBD5E1" stroke-width="1"/>
 <text x="1038" y="588" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Full remaining amount</text>
-<text x="790" y="656" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">The card is refunded via Stripe and the customer</text>
-<text x="790" y="672" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">is emailed automatically. This cannot be undone.</text>
-<rect x="790" y="696" width="180" height="40" fill="#E03131" rx="8"/>
-<text x="880" y="721" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Confirm refund</text>
-<rect x="986" y="696" width="100" height="40" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
-<text x="1036" y="721" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Cancel</text>
-<circle cx="1186" cy="716" r="11" fill="#E8590C"/>
-<text x="1186" y="720" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="790" y="632" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Reason (optional)</text>
+<rect x="790" y="640" width="402" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="802" y="665" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">Duplicate purchase</text>
+<text x="790" y="728" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">The card is refunded via Stripe and the customer</text>
+<text x="790" y="744" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">is emailed automatically. This cannot be undone.</text>
+<rect x="790" y="766" width="180" height="40" fill="#E03131" rx="8"/>
+<text x="880" y="791" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Confirm refund</text>
+<rect x="986" y="766" width="100" height="40" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="1036" y="791" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Cancel</text>
+<circle cx="1186" cy="786" r="11" fill="#E8590C"/>
+<text x="1186" y="790" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
 <text x="776" y="468" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2px">MODAL</text>
-<rect x="280" y="820" width="960" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
-<circle cx="304" cy="842" r="11" fill="#E8590C"/>
-<text x="304" y="846" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
-<text x="324" y="846" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Linked user → /admin/users/:id; shadow accounts are labelled so support knows the customer can&#x27;t log in yet.</text>
-<circle cx="304" cy="864" r="11" fill="#E8590C"/>
-<text x="304" y="868" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
-<text x="324" y="868" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Timeline reconstructed from registration timestamps + refund_log — answers “what happened?” without psql.</text>
-<circle cx="304" cy="886" r="11" fill="#E8590C"/>
-<text x="304" y="890" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
-<text x="324" y="890" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">First HTTP exposure of RefundService: adminGuard + CSRF + server-validated amount ≤ remaining net (S3).</text>
-<circle cx="304" cy="908" r="11" fill="#E8590C"/>
-<text x="304" y="912" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
-<text x="324" y="912" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Success → refund_log row + customer email (existing template) + timeline entry. Stripe failure → error flash, nothing recorded as refunded.</text>
+<rect x="280" y="900" width="960" height="136" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="304" cy="922" r="11" fill="#E8590C"/>
+<text x="304" y="926" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="324" y="926" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Linked user → /admin/users/:id; shadow accounts are labelled so support knows the customer can&#x27;t log in yet.</text>
+<circle cx="304" cy="944" r="11" fill="#E8590C"/>
+<text x="304" y="948" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="324" y="948" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Timeline reconstructed from registration timestamps + refund_log — answers “what happened?” without psql.</text>
+<circle cx="304" cy="966" r="11" fill="#E8590C"/>
+<text x="304" y="970" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="324" y="970" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">First HTTP exposure of RefundService: adminGuard + CSRF + server-validated amount ≤ remaining net (S3); optional reason recorded; a direct</text>
+<text x="324" y="992" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">refund auto-resolves any open refund request.</text>
+<circle cx="304" cy="1010" r="11" fill="#E8590C"/>
+<text x="304" y="1014" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="324" y="1014" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Success → refund_log row + customer email (existing template) + timeline entry. Stripe failure → error flash, nothing recorded as refunded.</text>
 </svg>
