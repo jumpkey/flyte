@@ -1,7 +1,7 @@
 # Flyte — Site Map & Storyboard
 
-**Suite:** UI Elaboration v1 · Document 1 of 4
-**Companions:** [`WIREFRAMES.md`](WIREFRAMES.md) · [`WEBKIT-STANDARDS.md`](WEBKIT-STANDARDS.md) · [`UI-IMPLEMENTATION-PLAN.md`](UI-IMPLEMENTATION-PLAN.md)
+**Suite:** UI Elaboration v1 · Document 1 of 5
+**Companions:** [`WIREFRAMES.md`](WIREFRAMES.md) · [`WEBKIT-STANDARDS.md`](WEBKIT-STANDARDS.md) · [`UI-IMPLEMENTATION-PLAN.md`](UI-IMPLEMENTATION-PLAN.md) · [`VIEWS-AND-ANALYTICS-ADDENDUM.md`](VIEWS-AND-ANALYTICS-ADDENDUM.md)
 **Status:** DRAFT for owner review — every section is intended to be revised jointly before implementation.
 
 ---
@@ -57,6 +57,10 @@ flyte.fly.dev
 │   ├── /events/:eventId/waitlist           Waitlist form (exists — enhanced)
 │   ├── /registration/:id/confirmed         Confirmation (exists — + refund request CTA)
 │   ├── /registration/:id/refund-request    Refund request form + ack
+│   ├── /registration/:id/calendar.ics      Add-to-calendar download (V2)
+│   ├── /find-registration                  Guest "resend my links" recovery (V1)
+│   ├── /waitlist/:entryId                  Live waitlist position, capability URL (V7)
+│   ├── /about /contact /terms /privacy     Static pages (V6 — footer already links them)
 │   ├── /login /register /verify-email      (exist)
 │   └── /forgot-password /reset-password    (exist — reset doubles as shadow activation)
 │
@@ -67,12 +71,17 @@ flyte.fly.dev
 │   └── /profile                            (exists)
 │
 └── ADMIN (adminGuard — 404 to everyone else)
-    ├── /admin                              Dashboard: KPIs, recent activity, pending refunds
-    ├── /admin/events                       Event management list
+    ├── /admin                              Dashboard: KPIs, needs-attention panel (A5), recent activity
+    ├── /admin/analytics                    Sales & business analytics (A1/A4, WF-17)
+    ├── /admin/events                       Event management list (+ pace column, A3)
     │   ├── /admin/events/new               Create event form
     │   ├── /admin/events/:id               Event detail: roster, waitlist, revenue, actions
+    │   ├── /admin/events/:id/performance   Booking curve, velocity, projections (A2, WF-18)
+    │   ├── /admin/events/:id/checkin       Day-of check-in (A6 — Q8/I11)
+    │   ├── /admin/events/:id/roster.csv    + waitlist.csv exports (A7)
     │   └── /admin/events/:id/edit          Edit event form
     ├── /admin/registrations                Transaction log (all registrations, filterable)
+    │   ├── /admin/registrations.csv        Filtered export (A7)
     │   └── /admin/registrations/:id        Payment detail: timeline, Stripe IDs, refund action
     ├── /admin/refund-requests              Refund request queue (approve / deny)
     ├── /admin/users                        User list (search, status, lock state)
@@ -135,7 +144,18 @@ New controllers live in `src/web/controllers/`, admin controllers in
 | `POST /admin/users/:id/lock` `…/unlock` | `adminUsersController.lock/unlock` | redirect → detail | Lock also revokes the user's sessions (reuses `destroyUserSessions`). |
 | `GET /admin/activity` | `adminActivityController.list` | `admin/activity.ejs` | Unified, filterable feed over `login_events` + `user_action_events` (type, user email, date range). 50/page. |
 
-### 4.4 New middleware & shared pieces
+### 4.4 Addendum routes
+
+The views above marked `A-n`/`V-n` (analytics, exports, check-in, guest
+recovery, ICS, waitlist position, static pages, social-card meta, map links)
+are specified — with driving questions, content specs, projection math, and
+data requirements — in
+[`VIEWS-AND-ANALYTICS-ADDENDUM.md`](VIEWS-AND-ANALYTICS-ADDENDUM.md)
+§3 (admin) and §4 (visitor/user). Same guards apply: every `/admin` addendum
+route sits behind `adminGuard` (S1); `/find-registration` follows the
+forgot-password anti-enumeration pattern.
+
+### 4.5 New middleware & shared pieces
 
 | Piece | Spec |
 |---|---|
@@ -196,6 +216,12 @@ CREATE TABLE refund_requests (
 );
 CREATE UNIQUE INDEX idx_refund_requests_open
   ON refund_requests(registration_id) WHERE status = 'REQUESTED';
+
+-- Analytics & operations structural columns (Document 5 §5):
+ALTER TABLE events ADD COLUMN opened_at TIMESTAMPTZ;        -- set on first DRAFT→OPEN
+UPDATE events SET opened_at = created_at WHERE status <> 'DRAFT';
+ALTER TABLE registrations ADD COLUMN checked_in_at TIMESTAMPTZ;  -- A6 check-in (Q8)
+-- plus the optional page_views counter table if Q7 is accepted (Document 5 §5)
 ```
 
 **Shadow lifecycle invariants**
@@ -322,7 +348,12 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 ## 9. Explicitly out of scope (v1) — parked for v2
 
 - Automated waitlist promotion (offer emails with hold windows)
-- Add-to-calendar (ICS) downloads on confirmation pages
+- Email change on profile (auth-sensitive; needs a re-verification flow)
+- Event-update notification emails ("time/location changed")
+- QR codes on confirmations + scan-based check-in (builds on A6)
+- Curve-shape priors for booking projections, fitted from our own completed
+  events (v1 is the deliberately linear model in Document 5 §3.1)
+- Generated Open Graph fallback images (v1 uses a static brand card)
 - Email preference center / newsletter & blog mailing management (noted in D1 as the future driver for account activation)
 - Event image uploads (D2 keeps URLs), event categories/tags, recurring events
 - Customer-visible partial refunds (admin can issue them; customers just see the result)
@@ -342,3 +373,5 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 | Q4 | Should the activation callout also appear on the waitlist ack page? | Yes |
 | Q5 | Event times: `event_date` is `TIMESTAMPTZ` — entered and displayed in which timezone? | A single configured venue timezone (`EVENT_TIMEZONE` env var); admin enters and customers see that timezone, labelled |
 | Q6 | Should migration 007 also create shadow users for historical guest registrations whose emails match no account (so past purchases are claimable via activation)? | Yes — it's the D1 model applied retroactively, and it makes admin user counts truthful |
+| Q7 | First-party page-view counters (aggregate, anonymous) so funnels include the view stage? (Document 5 §9) | Yes — counts only, no visitor data |
+| Q8 | Day-of check-in (A6) in v1 scope? (Document 5 §9) | Yes if a real event happens within a month of launch |

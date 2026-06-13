@@ -1,7 +1,7 @@
 # Flyte — UI Implementation Plan
 
-**Suite:** UI Elaboration v1 · Document 4 of 4
-**Companions:** [`SITE-MAP-AND-STORYBOARD.md`](SITE-MAP-AND-STORYBOARD.md) · [`WIREFRAMES.md`](WIREFRAMES.md) · [`WEBKIT-STANDARDS.md`](WEBKIT-STANDARDS.md)
+**Suite:** UI Elaboration v1 · Document 4 of 5
+**Companions:** [`SITE-MAP-AND-STORYBOARD.md`](SITE-MAP-AND-STORYBOARD.md) · [`WIREFRAMES.md`](WIREFRAMES.md) · [`WEBKIT-STANDARDS.md`](WEBKIT-STANDARDS.md) · [`VIEWS-AND-ANALYTICS-ADDENDUM.md`](VIEWS-AND-ANALYTICS-ADDENDUM.md)
 **Status:** DRAFT — no implementation work begins until the suite is jointly reviewed and revised.
 
 ---
@@ -46,9 +46,20 @@ DRAFT → APPROVED. Nothing else.
 | I7 | Account & dashboard | My Registrations, account detail, user-dashboard panel (WF-06) | I3 | S |
 | I8 | Admin users & activity | User list/detail, lock/unlock, activity log (WF-13, WF-14) | I1 | M |
 | I9 | Polish & compliance | WebKit audit, responsive pass, a11y pass, email restyle, WF-16 | all | M |
+| I10 | Analytics | A1 sales dashboard, A2 event performance + pace surfaces, A4 customers, SVG chart helper (WF-17, WF-18) | I5 | M |
+| I11 *(optional — Q8)* | Day-of check-in | A6 mobile check-in view | I4 | S |
 
 Storefront-revenue path is I1→I2→I3; admin-operations path is I1→I4→I5→I6.
 After I1, the two paths can interleave if priorities shift.
+
+**Addendum absorption:** increments I1–I7 also carry the additions tabled in
+[`VIEWS-AND-ANALYTICS-ADDENDUM.md`](VIEWS-AND-ANALYTICS-ADDENDUM.md) §7 —
+structural columns in I1's migration, V3/V4/V5/V6 in I2, V7 in I3, audit
+metadata + `opened_at` stamping in I4, A5 attention panel + A7 CSV exports in
+I5, V1/V2 in I7. I10 is deliberately late: it *reads* what I1–I5 *record*, so
+real booking curves exist by the time it ships. Specs, driving questions and
+projection math live in the addendum (§3–§6); its acceptance criteria are
+written there at the same per-view granularity as §3 here.
 
 ---
 
@@ -337,7 +348,8 @@ ticked and journeys J1–J8 each have a recorded happy-path run.
 
 ## 7. Suggested order & first session
 
-Recommended sequence: **I1 → I2 → I3 → I4 → I5 → I6 → I7 → I8 → I9** (revenue
-path first; swap I4/I5 ahead of I2/I3 if admin tooling is more urgent).
+Recommended sequence: **I1 → I2 → I3 → I4 → I5 → I6 → I7 → I8 → I9 → I10**
+(revenue path first; swap I4/I5 ahead of I2/I3 if admin tooling is more
+urgent; slot I11 before the first real event if Q8 says yes).
 First working session after Gate 0: migration 007 + the nullable-hash auth
 audit, since everything else stacks on it.

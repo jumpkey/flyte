@@ -1,9 +1,9 @@
 # Flyte — Wireframes
 
-**Suite:** UI Elaboration v1 · Document 2 of 4
-**Companions:** [`SITE-MAP-AND-STORYBOARD.md`](SITE-MAP-AND-STORYBOARD.md) · [`WEBKIT-STANDARDS.md`](WEBKIT-STANDARDS.md) · [`UI-IMPLEMENTATION-PLAN.md`](UI-IMPLEMENTATION-PLAN.md)
+**Suite:** UI Elaboration v1 · Document 2 of 5
+**Companions:** [`SITE-MAP-AND-STORYBOARD.md`](SITE-MAP-AND-STORYBOARD.md) · [`WEBKIT-STANDARDS.md`](WEBKIT-STANDARDS.md) · [`UI-IMPLEMENTATION-PLAN.md`](UI-IMPLEMENTATION-PLAN.md) · [`VIEWS-AND-ANALYTICS-ADDENDUM.md`](VIEWS-AND-ANALYTICS-ADDENDUM.md)
 
-Sixteen annotated screens covering every page archetype in the site map. The
+Eighteen annotated screens covering every page archetype in the site map. The
 **orange numbered markers** on each screen correspond to the notes strip at its
 foot. Colors follow the WebKit tokens (navy trust base, Flare accent reserved
 for the primary action); status pills use the §5 mapping so the wireframes
@@ -38,6 +38,8 @@ python3 design/wireframes/generate_wireframes.py
 | [WF-13](#wf-13--admin-users) | User list | `/admin/users` | J6 |
 | [WF-14](#wf-14--admin-user-detail) | User detail & history | `/admin/users/:id` | J6 |
 | [WF-15](#wf-15--admin-refund-queue) | Refund request queue | `/admin/refund-requests` | J4 |
+| [WF-17](#wf-17--admin-analytics) | Analytics dashboard | `/admin/analytics` | A1/A4 |
+| [WF-18](#wf-18--event-performance) | Event performance & booking curve | `/admin/events/:id/performance` | A2, J5 |
 | [WF-16](#wf-16--mobile-storefront) | Mobile storefront | — | J1 |
 
 ---
@@ -186,6 +188,31 @@ silently resolve a request.
 
 ![Refund queue](wireframes/wf-15-admin-refund-queue.svg)
 
+### WF-17 · Admin analytics
+
+The business-wide *analytical* view (Document 5, A1/A4) — `/admin` stays the
+operational morning page, this answers "how's it going?": revenue with a
+7-day moving average, the payment funnel with the money each drop-off costs,
+per-event pace badges, and the customers strip whose star metric is
+**shadow→active conversion** — the score for decision D1. All charts are
+server-rendered SVG (addendum §6); every chart's message also appears as
+plain text.
+
+![Admin analytics](wireframes/wf-17-admin-analytics.svg)
+
+### WF-18 · Event performance
+
+The view for the *selling* weeks of an event's life (Document 5, A2). The
+headline is a sentence, not a chart: projected sellout date — or an
+undersell warning — computed from 7-day velocity with honesty rules
+(low-confidence labelling, "at current pace" phrasing, §3.1 of the
+addendum). The booking curve shows cumulative confirmations against the
+capacity ceiling with a dotted projection; capacity changes annotate the
+curve from the audit metadata. CSV exports (A7) live here and on the event
+detail page.
+
+![Event performance](wireframes/wf-18-event-performance.svg)
+
 ---
 
 ## Responsive
@@ -211,3 +238,7 @@ price with action. Admin pages degrade to a top-bar layout at < 1024px
 | Admin activity log | WF-11's table pattern over `login_events` + `user_action_events`. |
 | Error / 404 / failure pages | Exist; restyled per WebKit only. |
 | Emails | Specified in WebKit §9 (structure, not layout-critical). |
+| Find my registration (V1) | Single-field form — same pattern as forgot-password. |
+| Live waitlist position (V7) | One-line capability page; WF-05's receipt-block pattern. |
+| Static pages (V6) | Single prose column per WK-TYP-3; no new patterns. |
+| Day-of check-in (A6/I11) | WF-16's mobile conventions + a searchable roster list; wireframe when Q8 is decided. |

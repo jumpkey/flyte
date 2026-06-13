@@ -44,6 +44,8 @@ PILL = {
     "PAYMENT_FAILED": (RED, RED_T), "CANCELLED": (RED, RED_T), "DENIED": (RED, RED_T),
     "LOCKED": (RED, RED_T), "REQUESTED": (AMBER, AMBER_T),
     "EXPIRED": (MUTED, SURFACE), "DRAFT": (MUTED, SURFACE),
+    "ON PACE": (GREEN, GREEN_T), "AHEAD": (BLUE, BLUE_T), "AT RISK": (AMBER, AMBER_T),
+    "SOLD OUT": (BLUE, BLUE_T),
 }
 
 
@@ -94,6 +96,13 @@ class S:
             a += f' stroke="{stroke}" stroke-width="{sw}"'
         self.e.append(a + "/>")
 
+    def polyline(self, pts, stroke, sw=2, dash=None, fill="none"):
+        p = " ".join(f"{x:g},{y:g}" for x, y in pts)
+        a = f'<polyline points="{p}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"'
+        if dash:
+            a += f' stroke-dasharray="{dash}"'
+        self.e.append(a + ' stroke-linejoin="round" stroke-linecap="round"/>')
+
     def save(self, name):
         body = "\n".join(self.e)
         svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{self.w}" height="{self.h}" '
@@ -141,7 +150,8 @@ def admin_nav(s, active):
     s.circle(88, 66, 4, FLARE)
     s.text(32, 100, "ADMIN", 10, "#9FB3CC", 600, spacing="2px")
     y = 146
-    for it in ("Dashboard", "Events", "Transactions", "Refund requests", "Users", "Activity"):
+    for it in ("Dashboard", "Analytics", "Events", "Transactions", "Refund requests", "Users",
+               "Activity"):
         if it == active:
             s.rect(14, y - 22, 212, 34, "#2C4A73", rx=8)
             s.rect(14, y - 22, 4, 34, FLARE, rx=2)
@@ -1029,6 +1039,152 @@ def wf16_mobile():
     s.save("wf-16-mobile.svg")
 
 
+def chart_frame(s, x, y, w, h, ylabels=()):
+    s.rect(x, y, w, h, WHITE, stroke=BORDER_L, rx=8)
+    for i, lab in enumerate(ylabels):
+        gy = y + h - (i / (len(ylabels) - 1)) * (h - 24) - 12 if len(ylabels) > 1 else y + h - 12
+        s.line(x + 4, gy, x + w - 4, gy, BORDER_L)
+        s.text(x + 8, gy - 4, lab, 9, MUTED)
+
+
+def vbars(s, x, y, w, h, vals, vmax, color=NAVY, gap=3):
+    bw = (w - gap * (len(vals) - 1)) / len(vals)
+    for i, v in enumerate(vals):
+        bh = max(2, (v / vmax) * h)
+        s.rect(x + i * (bw + gap), y + h - bh, bw, bh, color, rx=2)
+    return bw + gap
+
+
+def wf17_analytics():
+    s = S(1280, 1200)
+    browser(s, "flyte.fly.dev/admin/analytics")
+    admin_nav(s, "Analytics")
+    x = 280
+    page_h1(s, x, 150, "Analytics", "Sales, conversion and customers")
+    for i, (lab, on) in enumerate([("30d", False), ("90d", True), ("1y", False), ("All", False)]):
+        bx = x + 720 + i * 56
+        s.rect(bx, 130, 48, 30, FLARE_T if on else WHITE, stroke="#F3CDB3" if on else BORDER, rx=15)
+        s.text(bx + 24, 150, lab, 12, FLARE if on else MUTED, 700 if on else 400, anchor="middle")
+    note(s, x + 950, 145, 1)
+    kpis = [("Gross revenue", "$18,240", "▲ 12% vs prior"), ("Net revenue", "$17,090", "▲ 9%"),
+            ("Avg order value", "$32.40", "▼ 3%"), ("Refund rate", "3.1%", "▲ 0.4 pts")]
+    for i, (lab, val, sub) in enumerate(kpis):
+        kpi(s, x + i * 238, 188, 222, lab, val, None, sub)
+    s.text(x, 336, "Net revenue · daily", 15, INK, 800)
+    chart_frame(s, x, 350, 560, 200, ("0", "$300", "$600"))
+    vals = [3, 5, 2, 6, 4, 7, 3, 2, 5, 8, 6, 4, 3, 7, 9, 5, 4, 6, 8, 10, 7, 5, 6, 9, 11, 8, 6, 7, 10, 12]
+    vbars(s, x + 12, 362, 536, 164, vals, 14, "#3C5A80")
+    pts = [(x + 12 + i * 18, 350 + 188 - (sum(vals[max(0, i - 6):i + 1]) / min(7, i + 1)) * 11) for i in range(30)]
+    s.polyline(pts, FLARE, 2.5)
+    note(s, x + 540, 370, 2)
+    fx = x + 590
+    s.text(fx, 336, "Payment funnel · 90d", 15, INK, 800)
+    s.rect(fx, 350, 346, 200, WHITE, stroke=BORDER_L, rx=8)
+    stages = [("Initiated", 412, NAVY), ("Authorized", 389, "#3C5A80"), ("Captured", 371, "#5B7C9E"),
+              ("Confirmed", 358, GREEN)]
+    losses = ["−23 abandoned/expired", "−18 declined", "−13 capture failed", ""]
+    fy = 372
+    for (lab, n, col), loss in zip(stages, losses):
+        bw = 200 * n / 412
+        s.rect(fx + 96, fy, bw, 22, col, rx=4)
+        s.text(fx + 88, fy + 16, lab, 11, TEXT, 600, anchor="end")
+        s.text(fx + 102 + bw, fy + 16, str(n), 11, INK, 700)
+        if loss:
+            s.text(fx + 96, fy + 38, loss, 9, RED)
+        fy += 44
+    s.text(fx + 16, fy + 4, "87% of started checkouts become paid", 11, MUTED)
+    note(s, fx + 330, 370, 3)
+    s.text(x, 596, "Events · this period", 15, INK, 800)
+    cols = [("Event", 210), ("Fill", 90), ("Pace", 130), ("Gross", 90), ("Net", 90), ("Refunds", 90), ("Days on sale", 110)]
+    rows = [
+        [("b", "Intro to Sailing"), "76%", ("pill", "ON PACE"), "$950", "$925", "1", "14"],
+        [("b", "Founders Dinner"), "100%", ("pill", "SOLD OUT"), "$1,920", "$1,920", "0", "9"],
+        [("b", "Summer 5K Run"), "30%", ("pill", "AT RISK"), "$1,350", "$1,350", "0", "21"],
+        [("b", "Pottery Workshop"), "33%", ("pill", "AHEAD"), "$180", "$180", "0", "2"],
+        [("b", "Spring Gala"), "100%", ("pill", "CLOSED"), "$21,600", "$21,400", "2", "38"],
+    ]
+    ty = table(s, x, 612, 936, cols, rows)
+    note(s, x + 320, 682, 4)
+    s.text(x, ty + 38, "Customers", 15, INK, 800)
+    s.rect(x, ty + 52, 936, 96, WHITE, stroke=BORDER_L, rx=12)
+    cust = [("New buyers", "64%"), ("Repeat-buyer rate", "28%"), ("Shadow → active", "41%"),
+            ("Top customer", "ben@… · $415")]
+    for i, (lab, val) in enumerate(cust):
+        cx2 = x + 24 + i * 232
+        s.text(cx2, ty + 84, lab.upper(), 9, MUTED, 700, spacing="1px")
+        s.text(cx2, ty + 116, val, 18, INK, 800)
+    note(s, x + 700, ty + 100, 5)
+    legend(s, ty + 178, [
+        "Range toggle = HTMX swap of the chart partials; range lives in the query string (shareable).",
+        "Daily net revenue bars + 7-day moving average (Flare line). Server-rendered SVG — no chart library (§6 of the addendum).",
+        "Funnel from existing registration statuses; each drop shows count and lost value. Abandonment = PENDING_PAYMENT→EXPIRED.",
+        "Pace badges come from the A2 projection math; row → event performance (WF-18).",
+        "Shadow→active = the D1 success metric: % of shadow accounts that later set a password.",
+    ], x=280)
+    s.save("wf-17-admin-analytics.svg")
+
+
+def wf18_event_performance():
+    s = S(1280, 1130)
+    browser(s, "flyte.fly.dev/admin/events/4f2a…/performance")
+    admin_nav(s, "Analytics")
+    x = 280
+    s.text(x, 134, "← Intro to Sailing", 12, NAVY, 600)
+    s.text(x, 170, "Performance — Intro to Sailing", 24, INK, 800)
+    pill(s, x + 420, 154, "ON PACE")
+    alert(s, x, 192, 936, "Projected to sell out Jun 17 — 3 days before the event (at current pace)",
+          "Details ↓", GREEN)
+    note(s, x + 960, 216, 1)
+    s.text(x, 290, "Booking curve", 15, INK, 800)
+    cx, cy, cw, ch = x, 304, 600, 260
+    chart_frame(s, cx, cy, cw, ch, ("0", "25", "50"))
+    def px(day): return cx + 14 + day / 21 * (cw - 28)
+    def py(c): return cy + ch - 16 - (c / 55) * (ch - 40)
+    s.line(cx + 8, py(50), cx + cw - 8, py(50), LINE, 1.5, dash="6 5")
+    s.text(cx + cw - 12, py(50) - 6, "capacity 50", 10, MUTED, anchor="end")
+    data = [(0, 0), (1, 4), (2, 9), (3, 12), (4, 14), (5, 16), (6, 17), (7, 19), (8, 21),
+            (9, 24), (10, 27), (11, 30), (12, 33), (13, 36), (14, 38)]
+    s.polyline([(px(d), py(c)) for d, c in data], NAVY, 2.5)
+    s.line(px(14), cy + 12, px(14), cy + ch - 14, FLARE, 1.5, dash="4 4")
+    s.text(px(14) + 6, cy + 24, "today", 10, FLARE, 700)
+    s.polyline([(px(14), py(38)), (px(19), py(50))], FLARE, 2, dash="2 5")
+    s.circle(px(19), py(50), 5, FLARE)
+    s.text(px(19), py(50) - 12, "sellout ~Jun 17", 10, FLARE, 700, anchor="middle")
+    s.circle(px(6), py(17), 4, "#5B7C9E")
+    s.text(px(6), py(17) + 16, "capacity 40→50", 9, MUTED, anchor="middle")
+    s.text(cx + 14, cy + ch + 16, "Jun 1 · opened", 10, MUTED)
+    s.text(cx + cw - 14, cy + ch + 16, "Jun 22 · event day", 10, MUTED, anchor="end")
+    note(s, cx + 230, cy + 36, 2)
+    note(s, px(19) + 22, py(50) + 10, 3)
+    rxx = x + 640
+    cards = [("Velocity (7d avg)", "2.4 / day"), ("Pace index", "1.12 · ahead of linear"),
+             ("Projected fill", "100%"), ("Demand overflow", "+7 beyond capacity"),
+             ("Waitlist", "5 waiting")]
+    for i, (lab, val) in enumerate(cards):
+        s.rect(rxx, 304 + i * 64, 296, 56, WHITE, stroke=BORDER_L, rx=10)
+        s.text(rxx + 16, 326 + i * 64, lab.upper(), 9, MUTED, 700, spacing="1px")
+        s.text(rxx + 16, 348 + i * 64, val, 15, INK, 800)
+    note(s, rxx + 280, 484, 4)
+    s.text(x, 624, "Daily bookings · 7-day moving average", 15, INK, 800)
+    chart_frame(s, x, 638, 600, 130)
+    daily = [4, 5, 3, 2, 2, 1, 2, 2, 3, 3, 3, 3, 3, 2, 2]
+    bw = vbars(s, x + 14, 648, 572, 100, daily, 6, "#5B7C9E")
+    ma = [(x + 14 + i * bw + bw / 2, 638 + 118 - (sum(daily[max(0, i - 6):i + 1]) / min(7, i + 1)) * 17)
+          for i in range(len(daily))]
+    s.polyline(ma, FLARE, 2.5)
+    btn(s, x, 800, 190, "Roster CSV ↓", "secondary", 36)
+    btn(s, x + 206, 800, 190, "Waitlist CSV ↓", "secondary", 36)
+    note(s, x + 420, 818, 5)
+    legend(s, 866, [
+        "The headline is a sentence, not a chart (WK-A11Y-3). Variants: 'At current pace this event reaches 62% of capacity — consider promotion' (AT RISK) / 'Early days — low confidence' when < 3 days on sale or < 5 confirmed (§3.1 honesty rules).",
+        "Cumulative confirmed from registrations timestamps; sale window runs opened_at → event_date (the migration-007 column this addendum exists to add).",
+        "Dotted projection at current 7-day velocity; capacity-change annotations come from user_action_events.metadata.",
+        "Demand overflow = projected demand beyond capacity → 'consider expanding or a second session'.",
+        "A7 exports: same queries as the HTML views, Content-Disposition: attachment.",
+    ], x=280)
+    s.save("wf-18-event-performance.svg")
+
+
 if __name__ == "__main__":
     print("Generating wireframes →", OUT)
     wf01_home(); wf02_events_list(); wf03_event_detail(); wf04_checkout()
@@ -1036,4 +1192,5 @@ if __name__ == "__main__":
     wf08_admin_events(); wf09_admin_event_form(); wf10_admin_event_detail()
     wf11_admin_transactions(); wf12_admin_reg_detail(); wf13_admin_users()
     wf14_admin_user_detail(); wf15_refund_queue(); wf16_mobile()
+    wf17_analytics(); wf18_event_performance()
     print("Done.")

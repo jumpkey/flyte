@@ -12,13 +12,14 @@
 <circle cx="88" cy="66" r="4" fill="#E8590C"/>
 <text x="32" y="100" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="600" fill="#9FB3CC" letter-spacing="2px">ADMIN</text>
 <text x="38" y="146" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Dashboard</text>
-<text x="38" y="190" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Events</text>
-<text x="38" y="234" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Transactions</text>
-<text x="38" y="278" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Refund requests</text>
-<rect x="14" y="300" width="212" height="34" fill="#2C4A73" rx="8"/>
-<rect x="14" y="300" width="4" height="34" fill="#E8590C" rx="2"/>
-<text x="38" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF">Users</text>
-<text x="38" y="366" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Activity</text>
+<text x="38" y="190" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Analytics</text>
+<text x="38" y="234" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Events</text>
+<text x="38" y="278" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Transactions</text>
+<text x="38" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Refund requests</text>
+<rect x="14" y="344" width="212" height="34" fill="#2C4A73" rx="8"/>
+<rect x="14" y="344" width="4" height="34" fill="#E8590C" rx="2"/>
+<text x="38" y="366" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF">Users</text>
+<text x="38" y="410" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Activity</text>
 <line x1="14" y1="1026" x2="226" y2="1026" stroke="#3A567C" stroke-width="1"/>
 <text x="38" y="1052" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#9FB3CC">← Back to site</text>
 <text x="280" y="134" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F">← Users</text>
