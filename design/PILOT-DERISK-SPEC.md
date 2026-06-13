@@ -88,14 +88,32 @@ for a human tester*:
 - **Mode switching** is already env-driven; the protocol documents the exact
   env vars per mode and the Stripe-dashboard webhook setup for live.
 
-## 4. Deployment target (one decision for the owner)
+## 4. Deployment target — **decided 2026-06-13: the existing fly.io testbed**
 
-Phone testing and the live-mode proof need a deployed instance. Options:
-**(a)** deploy `pilot-derisk` to a separate fly.io staging app
-(`flyte-pilot`, throwaway Postgres, sandbox keys; flip to live keys only for
-test 8) — *default*; or **(b)** local + Stripe CLI for everything except
-test 8, then a brief deploy of the pilot to the real app. (a) is cleaner;
-costs a few dollars of fly.io time.
+The current fly deployment is a scratchpad; the pilot deploys onto it via
+manual `flyctl deploy` from the `pilot-derisk` branch. Verified safe: the
+auto-deploy workflow triggers only on pushes to `main`. Guardrails:
+
+1. **Tagged deploys only.** Every pilot deploy is from a clean tree at a
+   tagged commit (`pilot-1`, `pilot-2`, …) so observed behavior is
+   attributable. No dirty-tree deploys.
+2. **Main freeze during the test window.** A push to `main` would silently
+   clobber the testbed mid-protocol. Conversely, restoring baseline is free:
+   re-deploy `main`. That's the undo button.
+3. **Zero-migration discipline is the safety property.** No schema changes
+   means the shared database stays compatible with both branches in both
+   directions. This rule is load-bearing — no exceptions, however small.
+4. **Live-key hygiene.** The testbed URL is public. Flip to live keys for
+   protocol row 8 only; run it; restore sandbox keys + webhook secret
+   immediately (explicit "restore state" step closes the protocol).
+5. **Baseline first.** Before the reskin deploys: screenshot the current
+   pages and run one sandbox happy-path on the testbed as-is (protocol
+   row 0, which also verifies the fly SMTP secrets are real) — so "pilot
+   broke it" is always distinguishable from "was always like that", and the
+   before/after pair exists for the O1 verdict.
+
+Nothing merges to `main` or `ui-elaboration` until the pilot's findings are
+shaken out; salvage happens per §6 through the real increments.
 
 ## 5. Outcomes — what "done" means
 
