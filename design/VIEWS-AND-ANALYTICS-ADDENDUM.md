@@ -155,7 +155,7 @@ hidden when empty — the calm-page rule from WF-07 holds):
 | A2 `AT RISK` events | "Summer 5K pacing to 62% — view performance" |
 | Events in the next 7 days | "Intro to Sailing runs Saturday · 42 confirmed — check-in / roster" |
 
-### A6 — Day-of check-in · `GET /admin/events/:id/checkin` *(optional increment I11)*
+### A6 — Day-of check-in · `GET /admin/events/:id/checkin` *(over-horizon TBD — Q8 resolved 2026-06-13)*
 
 Mobile-first (the admin is standing at a door with a phone): search-as-you-type
 roster, one **tap = check in** per row (HTMX POST, sets
@@ -292,7 +292,7 @@ garnish, the sentence is the data).
 | I5 | + A5 attention panel (supersedes the single refund banner), A7 CSV exports |
 | I7 | + V2 ICS endpoints + buttons |
 | **I10** *(new)* | A1 analytics dashboard, A2 event performance + WF-08/WF-10 pace surfaces, A4 customers strip, chart helper (§6). After I5; sized M |
-| **I11** *(new, optional)* | A6 check-in. After I4; sized S. Ship before the first real event |
+| ~~I11~~ *(over-horizon)* | A6 check-in — moved out of v1 (Q8, 2026-06-13); revisit alongside Document 6. The `checked_in_at` column ships in I1 regardless |
 
 Sequencing note: I10 is deliberately late — it *reads* what I1–I5 *record*.
 The structural columns land in I1 precisely so that by the time I10 ships,
@@ -322,10 +322,11 @@ query-string state and plain-GET fallback. ④ Pace badges on WF-08 match A2's
 band for the same fixtures. ⑤ Funnel counts reconcile exactly with the
 transaction log's status counts for the same period.
 
-**AC-I11.** ① Check-in sets `checked_in_at` once (idempotent; undo clears
-it), HTMX row swap, adminGuard + CSRF. ② Search filters the roster
-client-round-trip in < 1s on 300 rows. ③ Progress count is live. ④ Usable
-one-handed at 375px (44px targets — WK-A11Y-4).
+**AC-I11** *(dormant until A6 is revived).* ① Check-in sets `checked_in_at`
+once (idempotent; undo clears it), HTMX row swap, adminGuard + CSRF.
+② Search filters the roster client-round-trip in < 1s on 300 rows.
+③ Progress count is live. ④ Usable one-handed at 375px (44px targets —
+WK-A11Y-4).
 
 ## 8. Explicit non-goals (v1)
 
@@ -335,9 +336,9 @@ linear model with honesty labels beats a black box at this scale) ·
 revenue recognition/accounting exports beyond CSV · cross-event customer
 segmentation UI.
 
-## 9. New open questions (Gate 0)
+## 9. New open questions — **resolved 2026-06-13**
 
-| # | Question | Default |
+| # | Question | Resolution |
 |---|---|---|
-| Q7 | First-party page-view counters (aggregate, anonymous) so conversion funnels include the view stage? | Yes — counts only, no visitor data; revisit if privacy posture says otherwise |
-| Q8 | Is check-in (A6/I11) in v1 scope? | Yes if a real event happens within a month of launch; otherwise first v2 item |
+| Q7 | First-party page-view counters (aggregate, anonymous)? | ✅ Yes — anonymous counts only. Forensic-grade capture is a separate parked consideration (Document 6 §8 T-7), with no purpose-built UI. |
+| Q8 | Is check-in (A6/I11) in v1 scope? | **No — over-horizon TBD**, revisited alongside Document 6. `checked_in_at` ships in 007 anyway. |

@@ -118,7 +118,7 @@
 <text x="84" y="1104" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Text search + month filter submit via HTMX (hx-get) and replace the grid only — no full reload.</text>
 <circle cx="64" cy="1122" r="11" fill="#E8590C"/>
 <text x="64" y="1126" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
-<text x="84" y="1126" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Sold-out events stay listed (social proof) with the waitlist CTA replacing Register.</text>
+<text x="84" y="1126" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Sold-out events stay listed (social proof); the waitlist CTA replaces Register only while the event&#x27;s waitlist is enabled (D6), else plain &#x27;Sold out&#x27;.</text>
 <circle cx="64" cy="1144" r="11" fill="#E8590C"/>
 <text x="64" y="1148" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
 <text x="84" y="1148" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">CLOSED events render at 55% opacity, &#x27;Registration closed&#x27;, no CTA (site-map Q1 default).</text>

@@ -257,8 +257,9 @@ async: loading. Error state additionally for inputs.
 - **WK-CMP-10 (MUST):** Availability meter: 8px bar, success fill; switches
   to warning fill + warning-text label under 25% remaining ("12 of 50 left").
   Numbers AND color change (color is never the sole carrier, §8). Sold out:
-  meter hidden, "Sold out" danger-text + waitlist link. Closed: card at ~55%
-  opacity, no CTA.
+  meter hidden, "Sold out" danger-text + waitlist link **only while the
+  event's `waitlist_enabled` flag is on** (D6) — plain "Sold out" otherwise.
+  Closed: card at ~55% opacity, no CTA.
 
 ### 5.4 Tables (admin)
 
@@ -397,8 +398,8 @@ async: loading. Error state additionally for inputs.
 
 ## 11. Framework mapping
 
-**Recommendation (WK-MAP-1, SHOULD): Bootstrap 5, themed via SCSS variable
-overrides, compiled in our build, self-hosted.**
+**Decision (WK-MAP-1 — owner-confirmed 2026-06-13, D5): Bootstrap 5, themed
+via SCSS variable overrides, compiled in our build, self-hosted.**
 
 Rationale: the admin back office is table-, form-, and modal-heavy — exactly
 the components Bootstrap ships hardened (focus management, modal traps,
@@ -421,6 +422,41 @@ footprint) but means hand-building modal focus traps, table styles and form
 validation states that Bootstrap gives for free — the admin build cost lands
 on us. Either remains acceptable if the owner prefers; this document is
 framework-agnostic by construction (Gate 0 confirms the choice).
+
+### 11.1 How Bootstrap is consumed (WK-MAP-3, MUST)
+
+Not a vendored "tip" copy, and never edited in place. The standard pattern,
+which we follow exactly:
+
+1. **Pinned npm dependency.** `npm install bootstrap@5.3.x --save-exact` —
+   the lockfile *is* the curation. There is no "tip" to track: Bootstrap
+   ships tagged releases; upgrades are deliberate version bumps reviewed
+   with a visual pass against §12. Vendoring source into the repo is
+   rejected (loses provenance and clean upgrades); vendoring only the
+   prebuilt CSS is rejected too (loses SCSS theming, which is the entire
+   point of choosing the SCSS path).
+2. **Our SCSS layer owns all customization.** One entry file
+   (`src/styles/flyte.scss`): first our variable overrides (`$primary`,
+   `$font-family-base`, `$border-radius`, spacing/breakpoint maps from §2–§4),
+   then **curated imports of only the Bootstrap modules we use**
+   (reboot, grid, forms, buttons, tables, badge, alert, modal, dropdown,
+   nav — not carousel/accordion/etc.), then our component layer (tokens as
+   CSS custom properties, event card, pills, meter, admin sidebar, charts).
+   `node_modules` is never edited; if we're tempted to patch Bootstrap, the
+   override layer is where the patch goes.
+3. **Build step, self-hosted output.** `sass` (dart-sass, devDependency)
+   compiles to `public/css/flyte.css` in `npm run build` (and a watch task in
+   dev). No CDN — `cdn.jsdelivr.net`/`unpkg.com` leave the CSP (WK-CODE-3).
+4. **Bootstrap JS, minimal and external.** v5 is vanilla JS (no jQuery). We
+   ship only the widgets we use — modal and dropdown (collapse if the admin
+   topbar needs it) — as a self-hosted external file per WK-CODE-1.
+5. **HTMX coexistence rule.** Bootstrap is CSS plus a few self-contained
+   widgets; HTMX swaps server-rendered partials — they don't inherently
+   conflict. The one discipline: **JS-driven widgets live outside HTMX swap
+   targets** (modals/dropdowns sit in the layout or are plain-CSS variants);
+   where a swapped fragment must contain one, re-initialize it in a single
+   shared `htmx:afterSwap` listener in `public/js/`. Prefer server-rendered
+   alternatives when the choice is close.
 
 - **WK-MAP-2 (MUST):** Whatever framework: tokens land as CSS custom
   properties with the §2.1 names; components must pass the §12 checklist
@@ -468,4 +504,4 @@ Evidence column gets a link or a waiver note.
 | WK-A11Y-1..5 | Focus ring, keyboard journeys, non-color carriers, targets, semantics | ☐ |
 | WK-EML-1..4 | Email structure, single CTA, escaping + text part, receipt content | ☐ |
 | WK-CODE-1..5 | No inline JS, class-based CSS, CSP discipline (unpkg/jsdelivr retired), HTMX fallbacks, raw EJS only in layout plumbing | ☐ |
-| WK-MAP-1..2 | Framework decision recorded; tokens as custom properties | ☐ |
+| WK-MAP-1..3 | Bootstrap pinned + SCSS layer + curated imports + HTMX coexistence rule; tokens as custom properties | ☐ |

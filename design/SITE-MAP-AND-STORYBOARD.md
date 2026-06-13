@@ -23,6 +23,8 @@ increment with testable acceptance criteria (see `UI-IMPLEMENTATION-PLAN.md`).
 | D2 | **Event images** are an admin-supplied URL with a styled CSS fallback card. No upload infrastructure. |
 | D3 | **Visual direction:** trust-base neutrals + single vivid accent (see `WEBKIT-STANDARDS.md`). |
 | D4 | **Wireframes** are SVGs embedded in `WIREFRAMES.md`. |
+| D5 | **Bootstrap 5** is the framework foundation (2026-06-13): pinned npm release, themed via our SCSS override layer, self-hosted, coexisting with EJS + HTMX. Consumption spec in `WEBKIT-STANDARDS.md` §11. |
+| D6 | **Sold-out states** (2026-06-13): an event is *open*, *sold out — waitlist available*, or *sold out — waitlist closed*. A per-event `waitlist_enabled` flag (admin-togglable any time) controls whether FULL shows the waitlist CTA. |
 
 ---
 
@@ -104,15 +106,15 @@ New controllers live in `src/web/controllers/`, admin controllers in
 | Route | Controller.action | View | Notes |
 |---|---|---|---|
 | `GET /` | `homeController.index` (rework) | `home.ejs` (rework) | Hero + up to 6 `OPEN` upcoming events as cards (thumbnail → detail). Zero-events empty state. |
-| `GET /events` | `catalogController.list` *(new)* | `events-list.ejs` *(new)* | All upcoming `OPEN`/`FULL`/`CLOSED` events, soonest first; availability meter; sold-out shows waitlist CTA. Filter: text search, month. HTMX-paginated, 12/page. |
-| `GET /events/:eventId` | `catalogController.detail` *(new)* | `event-detail.ejs` *(new)* | Public. Image (D2 fallback card), full description, date/location/price, live availability, primary CTA → `/register` (or waitlist CTA when full; "Registration closed" state otherwise). Logged-in users who already hold an active registration see a **"You're registered ✓"** state linking to My Registrations instead of the CTA. |
+| `GET /events` | `catalogController.list` *(new)* | `events-list.ejs` *(new)* | All upcoming `OPEN`/`FULL`/`CLOSED` events, soonest first; availability meter; sold-out shows waitlist CTA when `waitlist_enabled`, plain "Sold out" otherwise (D6). Filter: text search, month. HTMX-paginated, 12/page. |
+| `GET /events/:eventId` | `catalogController.detail` *(new)* | `event-detail.ejs` *(new)* | Public. Image (D2 fallback card), full description, date/location/price, live availability, primary CTA → `/register` (or waitlist CTA when full **and** `waitlist_enabled`; plain "Sold out" when the waitlist is closed — D6; "Registration closed" state otherwise). Logged-in users who already hold an active registration see a **"You're registered ✓"** state linking to My Registrations instead of the CTA. |
 | `GET /events/:eventId/register` | `registrationController.showRegistrationForm` *(enhance)* | `registration-form.ejs` *(enhance)* | Adds **Confirm email** field (D1). If session user: email prefilled + read-only, confirm field hidden. |
 | `POST /events/:eventId/register` | `registrationController.initiateRegistration` *(enhance)* | — (JSON) | Server validates `email === emailConfirm` (case-insensitive, trimmed) → 400 `email_mismatch` otherwise (matching the existing lowercase error-code convention). Find-or-create shadow user; stamp `registrations.user_id`. Logged-in: session email wins; no confirm required. The engine's existing `already_registered` outcome (one active registration per email per event — migration 006) renders a friendly "You're already registered" state, not a raw error. RL(60). |
 | `POST /registration/confirm/:piId` | *(exists, unchanged)* | — | |
 | `GET /registration/:id/confirmed` | `registrationController.showConfirmed` *(enhance)* | `registration-confirmed.ejs` *(enhance)* | Adds: receipt block, **Request a refund** CTA → refund-request form, and (for shadow owners) an "Activate your account" callout linking to `/forgot-password` with email query-prefill. |
 | `GET /registration/:id/refund-request` | `refundRequestController.form` *(new)* | `refund-request.ejs` *(new)* | Reachable from confirmation page (capability) or My Registrations. Shows masked summary (event, date, amount). Optional reason textarea (≤500 chars). |
 | `POST /registration/:id/refund-request` | `refundRequestController.create` *(new)* | redirect → `?sent=1` | Guards: registration exists & status `CONFIRMED`; no open request for it (idempotent → friendly "already requested" state). Creates `refund_requests` row (`REQUESTED`), emails admin + ack to customer. RL(5). |
-| `GET/POST /events/:eventId/waitlist` | *(exist — enhance)* | `waitlist-form.ejs` | Adds confirm-email field + shadow user binding, same as registration (D1). Duplicate join (`UNIQUE (event_id, email)`) renders a friendly "You're already on the waitlist" state with the existing position. |
+| `GET/POST /events/:eventId/waitlist` | *(exist — enhance)* | `waitlist-form.ejs` | Adds confirm-email field + shadow user binding, same as registration (D1). Duplicate join (`UNIQUE (event_id, email)`) renders a friendly "You're already on the waitlist" state with the existing position. GET and POST both refuse (friendly state / 404-style) when `waitlist_enabled = FALSE` (D6) — existing entries remain admin-visible. |
 
 ### 4.2 Account
 
@@ -128,7 +130,7 @@ New controllers live in `src/web/controllers/`, admin controllers in
 |---|---|---|---|
 | `GET /admin` | `adminDashboardController.index` | `admin/dashboard.ejs` | KPIs: gross revenue (30d), confirmed registrations (30d), upcoming events, **pending refund requests** (alert-styled when > 0); recent transactions (10); recent signins. |
 | `GET /admin/events` | `adminEventsController.list` | `admin/events-list.ejs` | All events, all statuses; columns: name, date, status pill, confirmed/capacity, available, revenue; row → detail. |
-| `GET /admin/events/new` | `adminEventsController.newForm` | `admin/event-form.ejs` | Shared create/edit form: name*, date & time* (entered and displayed in the configured venue timezone — Q5), location, description (plain text/markdown-lite), capacity*, fee* (dollars input, stored as `registration_fee_cents`), image URL (https only), status. |
+| `GET /admin/events/new` | `adminEventsController.newForm` | `admin/event-form.ejs` | Shared create/edit form: name*, date & time* (entered and displayed in the configured venue timezone — Q5), location, description (plain text/markdown-lite), capacity*, fee* (dollars input, stored as `registration_fee_cents`), image URL (https only), **waitlist toggle** (D6), status. |
 | `POST /admin/events` | `adminEventsController.create` | redirect → detail | Server validation mirrors form; create defaults to status `DRAFT` (new status value — not publicly listed) unless "Open immediately". |
 | `GET /admin/events/:id` | `adminEventsController.detail` | `admin/event-detail.ejs` | Header stats (capacity, confirmed, available, waitlist count, gross/net revenue); **roster table** (registrations w/ status); waitlist table; actions: Edit, Open, Close, **Cancel event** (modal: "refund all N confirmed registrations" → existing bulk-refund path). |
 | `GET /admin/events/:id/edit` | `adminEventsController.editForm` | `admin/event-form.ejs` | Capacity may not be set below `confirmed_count`. |
@@ -193,6 +195,7 @@ UPDATE waitlist_entries w SET user_id = u.id
 
 -- D2 + storefront content
 ALTER TABLE events ADD COLUMN image_url TEXT;          -- https URL or NULL
+ALTER TABLE events ADD COLUMN waitlist_enabled BOOLEAN NOT NULL DEFAULT TRUE;  -- D6
 
 -- Event lifecycle gains DRAFT (publicly invisible). The status CHECK is an
 -- inline constraint in 005, so it must be dropped and recreated:
@@ -298,7 +301,7 @@ Same as J1 from any entry point, except: checkout email is prefilled & read-only
 3. Suspicious activity → **Lock account** (modal) → sessions revoked, login blocked; unlock reverses. Both actions audit-logged.
 
 ### J7 — Sold out → waitlist
-1. Event detail shows **Sold out** + waitlist CTA; `/events/:id/waitlist` mirrors checkout step 1 (email×2, shadow binding).
+1. Event detail shows **Sold out** + waitlist CTA — only while the admin has the waitlist enabled (D6); with the waitlist closed it's a plain "Sold out". `/events/:id/waitlist` mirrors checkout step 1 (email×2, shadow binding).
 2. Acknowledgement page + email with position. Admin sees the waitlist on the event detail page. *(v1 stops here: no automated promotion — admin contacts waitlisted users manually; automation is a listed v2 item.)*
 
 ### J8 — Payment failure / expiry (existing engine, now visible)
@@ -351,7 +354,9 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 - Automated waitlist promotion (offer emails with hold windows)
 - Email change on profile (auth-sensitive; needs a re-verification flow)
 - Event-update notification emails ("time/location changed")
+- Day-of check-in view (A6 — Q8 moved it over-horizon; `checked_in_at` column ships in 007 regardless)
 - QR codes on confirmations + scan-based check-in (builds on A6)
+- Forensic traffic-capture consideration (Document 6 §8 T-7 — no purpose-built UI)
 - Curve-shape priors for booking projections, fitted from our own completed
   events (v1 is the deliberately linear model in Document 5 §3.1)
 - Generated Open Graph fallback images (v1 uses a static brand card)
@@ -364,15 +369,19 @@ lives in exactly one place. Token mapping in `WEBKIT-STANDARDS.md` §5.
 
 ---
 
-## 10. Open questions for joint review
+## 10. Open questions — **resolved by the owner, 2026-06-13**
 
-| # | Question | Default if unanswered |
+| # | Question | Resolution |
 |---|---|---|
-| Q1 | Should `CLOSED` events remain visible on the storefront (greyed, "registration closed") or disappear? | Remain visible — social proof and link permanence |
-| Q2 | Refund-request reason: required or optional? | Optional, ≤500 chars |
-| Q3 | Dashboard KPI window: 30 days or all-time? | 30 days with all-time secondary figure |
-| Q4 | Should the activation callout also appear on the waitlist ack page? | Yes |
-| Q5 | Event times: `event_date` is `TIMESTAMPTZ` — entered and displayed in which timezone? | A single configured venue timezone (`EVENT_TIMEZONE` env var); admin enters and customers see that timezone, labelled |
-| Q6 | Should migration 007 also create shadow users for historical guest registrations whose emails match no account (so past purchases are claimable via activation)? | Yes — it's the D1 model applied retroactively, and it makes admin user counts truthful |
-| Q7 | First-party page-view counters (aggregate, anonymous) so funnels include the view stage? (Document 5 §9) | Yes — counts only, no visitor data |
-| Q8 | Day-of check-in (A6) in v1 scope? (Document 5 §9) | Yes if a real event happens within a month of launch |
+| Q1 | `CLOSED` events visible on the storefront? | ✅ Default — remain visible (greyed, "registration closed") |
+| Q2 | Refund-request reason required? | ✅ Default — optional, ≤500 chars |
+| Q3 | Dashboard KPI window | ✅ Default — 30 days with all-time secondary |
+| Q4 | Activation callout on waitlist ack? | ✅ Default — yes |
+| Q5 | Event timezone policy | ✅ Default — venue timezone via `EVENT_TIMEZONE`, labelled |
+| Q6 | Historical shadow backfill | **Moot** — the site has never been live, so there are no historical guest registrations. The backfill `UPDATE`s in §5 stay as no-op safety (they only matter for test data). |
+| Q7 | First-party page-view counters | ✅ Yes — anonymous aggregate counts only. A *forensic-grade* capture question (richer traffic data, retention, query tooling — no purpose-built UI) is parked as Document 6 §8 T-7. |
+| Q8 | Day-of check-in in v1? | **Over-horizon TBD** — A6/I11 move out of v1 alongside Document 6. The `checked_in_at` column stays in migration 007 (one line now; unbackfillable after real events have run). |
+
+Owner also confirmed at the same time: framework = **Bootstrap 5** (D5,
+consumption spec in `WEBKIT-STANDARDS.md` §11) and the D6 sold-out/waitlist
+states. Remaining before implementation: the owner's deep read of the suite.

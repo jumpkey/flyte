@@ -256,4 +256,4 @@ price with action. Admin pages degrade to a top-bar layout at < 1024px
 | Find my registration (V1) | Single-field form — same pattern as forgot-password. |
 | Live waitlist position (V7) | One-line capability page; WF-05's receipt-block pattern. |
 | Static pages (V6) | Single prose column per WK-TYP-3; no new patterns. |
-| Day-of check-in (A6/I11) | WF-16's mobile conventions + a searchable roster list; wireframe when Q8 is decided. |
+| Day-of check-in (A6) | Over-horizon TBD (Q8, 2026-06-13) — WF-16's mobile conventions + a searchable roster list, wireframed when revived. |

@@ -56,6 +56,9 @@
 <text x="280" y="682" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#0F172A">Status</text>
 <rect x="280" y="690" width="220" height="40" fill="#FFFFFF" rx="8" stroke="#CBD5E1" stroke-width="1"/>
 <text x="292" y="715" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#334155">DRAFT  ▾</text>
+<rect x="540" y="702" width="32" height="18" fill="#2F9E44" rx="9"/>
+<circle cx="563" cy="711" r="7" fill="#FFFFFF"/>
+<text x="582" y="715" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Waitlist when sold out (D6)</text>
 <rect x="280" y="756" width="160" height="40" fill="#E8590C" rx="8"/>
 <text x="360" y="781" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Save event</text>
 <rect x="456" y="756" width="120" height="40" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>

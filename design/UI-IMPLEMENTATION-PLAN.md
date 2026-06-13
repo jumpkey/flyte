@@ -22,8 +22,9 @@ Cross-references used below: `D1–D4` (product decisions), `J1–J8` (journeys)
 
 1. Walk the four documents; resolve open questions Q1–Q6 (site map §10 —
    Q5 timezone policy and Q6 historical shadow backfill affect migration 007).
-2. Confirm the framework decision in WebKit §11 (recommendation: Bootstrap 5
-   themed via SCSS variables; alternatives assessed there).
+2. ~~Confirm the framework decision~~ **Decided 2026-06-13: Bootstrap 5**
+   (D5) — pinned npm release, SCSS override layer, curated module imports,
+   HTMX coexistence rule; consumption spec in WebKit §11.1.
 3. Approve or amend the migration 007 spec — it's the hardest thing to change
    later, especially making `users.password_hash` nullable.
 4. Re-scope increments if priorities differ (e.g. admin-first vs storefront-first).
@@ -47,7 +48,7 @@ DRAFT → APPROVED. Nothing else.
 | I8 | Admin users & activity | User list/detail, lock/unlock, activity log (WF-13, WF-14) | I1 | M |
 | I9 | Polish & compliance | WebKit audit, responsive pass, a11y pass, email restyle, WF-16 | all | M |
 | I10 | Analytics | A1 sales dashboard, A2 event performance + pace surfaces, A4 customers, SVG chart helper (WF-17, WF-18) | I5 | M |
-| I11 *(optional — Q8)* | Day-of check-in | A6 mobile check-in view | I4 | S |
+| ~~I11~~ *(over-horizon — Q8 resolved 2026-06-13)* | Day-of check-in | Moved out of v1 with Document 6; `checked_in_at` column still ships in 007 | — | — |
 
 Storefront-revenue path is I1→I2→I3; admin-operations path is I1→I4→I5→I6.
 After I1, the two paths can interleave if priorities shift.
@@ -359,6 +360,7 @@ ticked and journeys J1–J8 each have a recorded happy-path run.
 
 Recommended sequence: **I1 → I2 → I3 → I4 → I5 → I6 → I7 → I8 → I9 → I10**
 (revenue path first; swap I4/I5 ahead of I2/I3 if admin tooling is more
-urgent; slot I11 before the first real event if Q8 says yes).
+urgent). Check-in (I11) and the drop console (Increment T) sit over the
+horizon together.
 First working session after Gate 0: migration 007 + the nullable-hash auth
 audit, since everything else stacks on it.

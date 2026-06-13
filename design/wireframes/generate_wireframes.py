@@ -427,7 +427,7 @@ def wf02_events_list():
     note(s, s.w / 2 + 100, y + 28, 4)
     legend(s, y + 70, [
         "Text search + month filter submit via HTMX (hx-get) and replace the grid only — no full reload.",
-        "Sold-out events stay listed (social proof) with the waitlist CTA replacing Register.",
+        "Sold-out events stay listed (social proof); the waitlist CTA replaces Register only while the event's waitlist is enabled (D6), else plain 'Sold out'.",
         "CLOSED events render at 55% opacity, 'Registration closed', no CTA (site-map Q1 default).",
         "HTMX pagination, 12 cards per page. Empty state: 'No upcoming events yet' + nothing else.",
     ])
@@ -459,12 +459,13 @@ def wf03_event_detail():
     s.text(panel_x + 196, panel_y + 370, "🔒 Secure checkout · Stripe", 12, MUTED, anchor="middle")
     s.text(panel_x + 196, panel_y + 400, "No account needed", 12, MUTED, anchor="middle")
     note(s, panel_x + 392, panel_y + 396, 4)
-    s.rect(panel_x, 634, 392, 168, SURFACE, rx=12)
+    s.rect(panel_x, 634, 392, 186, SURFACE, rx=12)
     s.text(panel_x + 24, 664, "State variants", 12, MUTED, 700, spacing="1px")
     btn(s, panel_x + 24, 682, 344, "Join the waitlist", "secondary", 40)
-    s.text(panel_x + 196, 748, "Sold out → CTA swaps to waitlist (J7)", 11, MUTED, anchor="middle")
-    s.text(panel_x + 196, 768, "Already registered (logged in) → “You're registered ✓”", 11, MUTED, anchor="middle")
-    legend(s, 822, [
+    s.text(panel_x + 196, 744, "Sold out + waitlist enabled → CTA above (J7/D6)", 11, MUTED, anchor="middle")
+    s.text(panel_x + 196, 764, "Sold out + waitlist closed → plain “Sold out” (D6)", 11, MUTED, anchor="middle")
+    s.text(panel_x + 196, 784, "Already registered (logged in) → “You're registered ✓”", 11, MUTED, anchor="middle")
+    legend(s, 836, [
         "image_url rendered 3:2, object-fit cover; missing/broken URL → navy fallback card with initials.",
         "Live availability from available_slots (the engine's atomic counter) — amber when < 25%.",
         "Primary CTA → /events/:id/register. CLOSED: disabled bar 'Registration closed'. CANCELLED: info alert.",
@@ -695,6 +696,9 @@ def wf09_admin_event_form():
     s.text(fx, y + 12, "Status", 12, INK, 600)
     s.rect(fx, y + 20, 220, 40, WHITE, stroke=BORDER, rx=8)
     s.text(fx + 12, y + 45, "DRAFT  ▾", 13, TEXT)
+    s.rect(fx + 260, y + 32, 32, 18, GREEN, rx=9)
+    s.circle(fx + 283, y + 41, 7, WHITE)
+    s.text(fx + 302, y + 45, "Waitlist when sold out (D6)", 12, TEXT)
     y += 86
     btn(s, fx, y, 160, "Save event", "primary")
     btn(s, fx + 176, y, 120, "Cancel", "ghost")

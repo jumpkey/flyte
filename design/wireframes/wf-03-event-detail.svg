@@ -53,23 +53,24 @@
 <text x="1020" y="556" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#64748B" text-anchor="middle">No account needed</text>
 <circle cx="1216" cy="552" r="11" fill="#E8590C"/>
 <text x="1216" y="556" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
-<rect x="824" y="634" width="392" height="168" fill="#F1F5F9" rx="12"/>
+<rect x="824" y="634" width="392" height="186" fill="#F1F5F9" rx="12"/>
 <text x="848" y="664" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#64748B" letter-spacing="1px">State variants</text>
 <rect x="848" y="682" width="344" height="40" fill="#FFFFFF" rx="8" stroke="#1F3A5F" stroke-width="1.5"/>
 <text x="1020" y="707" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#1F3A5F" text-anchor="middle">Join the waitlist</text>
-<text x="1020" y="748" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="middle">Sold out → CTA swaps to waitlist (J7)</text>
-<text x="1020" y="768" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="middle">Already registered (logged in) → “You&#x27;re registered ✓”</text>
-<rect x="40" y="822" width="1200" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
-<circle cx="64" cy="844" r="11" fill="#E8590C"/>
-<text x="64" y="848" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
-<text x="84" y="848" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">image_url rendered 3:2, object-fit cover; missing/broken URL → navy fallback card with initials.</text>
-<circle cx="64" cy="866" r="11" fill="#E8590C"/>
-<text x="64" y="870" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
-<text x="84" y="870" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Live availability from available_slots (the engine&#x27;s atomic counter) — amber when &lt; 25%.</text>
-<circle cx="64" cy="888" r="11" fill="#E8590C"/>
-<text x="64" y="892" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
-<text x="84" y="892" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Primary CTA → /events/:id/register. CLOSED: disabled bar &#x27;Registration closed&#x27;. CANCELLED: info alert.</text>
-<circle cx="64" cy="910" r="11" fill="#E8590C"/>
-<text x="64" y="914" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
-<text x="84" y="914" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Guest checkout is first-class (decision D1) — copy says so to remove signup anxiety.</text>
+<text x="1020" y="744" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="middle">Sold out + waitlist enabled → CTA above (J7/D6)</text>
+<text x="1020" y="764" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="middle">Sold out + waitlist closed → plain “Sold out” (D6)</text>
+<text x="1020" y="784" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="middle">Already registered (logged in) → “You&#x27;re registered ✓”</text>
+<rect x="40" y="836" width="1200" height="114" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="64" cy="858" r="11" fill="#E8590C"/>
+<text x="64" y="862" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="84" y="862" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">image_url rendered 3:2, object-fit cover; missing/broken URL → navy fallback card with initials.</text>
+<circle cx="64" cy="880" r="11" fill="#E8590C"/>
+<text x="64" y="884" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="84" y="884" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Live availability from available_slots (the engine&#x27;s atomic counter) — amber when &lt; 25%.</text>
+<circle cx="64" cy="902" r="11" fill="#E8590C"/>
+<text x="64" y="906" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="84" y="906" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Primary CTA → /events/:id/register. CLOSED: disabled bar &#x27;Registration closed&#x27;. CANCELLED: info alert.</text>
+<circle cx="64" cy="924" r="11" fill="#E8590C"/>
+<text x="64" y="928" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="84" y="928" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Guest checkout is first-class (decision D1) — copy says so to remove signup anxiety.</text>
 </svg>

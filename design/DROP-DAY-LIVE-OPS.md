@@ -196,6 +196,7 @@ it not oversell at 50 req/s" is evidence, not hope).
 | T-4 | Alert thresholds (p95 ceilings, 5xx %) and whether the console emails/pages anyone | Visual thresholds only v1; no paging |
 | T-5 | Rate-limit tuning protocol for drop days (raise RL(60)? per-route?) | Decide from rehearsal data, not guesswork |
 | T-6 | Retention & rollup granularity beyond 1-min/30-day | Defaults until proven wrong |
+| T-7 | Forensic traffic capture (owner, 2026-06-13): Q7's counters are deliberately anonymous; is richer request-level data (retention, query tooling) worth keeping for after-the-fact investigation? **No purpose-built UI regardless.** | Today's record (pino request logs + `login_events`/`user_action_events` with IP/UA) is the forensic baseline; decide retention policy in the swing, build nothing now |
 
 ## 9. Non-goals (even for the swing)
 
