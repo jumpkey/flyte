@@ -40,6 +40,7 @@ python3 design/wireframes/generate_wireframes.py
 | [WF-15](#wf-15--admin-refund-queue) | Refund request queue | `/admin/refund-requests` | J4 |
 | [WF-17](#wf-17--admin-analytics) | Analytics dashboard | `/admin/analytics` | A1/A4 |
 | [WF-18](#wf-18--event-performance) | Event performance & booking curve | `/admin/events/:id/performance` | A2, J5 |
+| [WF-19](#wf-19--drop-console-pencilled) | Drop console *(pencilled — Doc 6)* | `/admin/events/:id/live` | T1 |
 | [WF-16](#wf-16--mobile-storefront) | Mobile storefront | — | J1 |
 
 ---
@@ -212,6 +213,20 @@ curve from the audit metadata. CSV exports (A7) live here and on the event
 detail page.
 
 ![Event performance](wireframes/wf-18-event-performance.svg)
+
+### WF-19 · Drop console *(pencilled)*
+
+**Status: TBD horizon** — this screen belongs to
+[`DROP-DAY-LIVE-OPS.md`](DROP-DAY-LIVE-OPS.md) (Document 6), outside the
+I1–I11 increments. The same-day view for flash-sellout events: instantaneous
+and sliding-window booking rates with the email-blast T0 marker, a live
+per-minute payment funnel, and the site-performance strip (registration /
+Stripe / DB latency p95s, health counters). The dashed Postmark panel and the
+Phase A / Phase B split are explained in the legend and in Document 6 §3 —
+the commerce half is nearly free atop I10; the performance half is the
+telemetry swing.
+
+![Drop console](wireframes/wf-19-drop-console.svg)
 
 ---
 

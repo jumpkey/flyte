@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1240" viewBox="0 0 1280 1240">
+<defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F3A5F"/><stop offset="1" stop-color="#2C5282"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="1240" fill="#F8FAFC"/>
+<rect x="0" y="0" width="1280" height="36" fill="#E2E8F0"/>
+<circle cx="22" cy="18" r="5" fill="#FC8181"/>
+<circle cx="40" cy="18" r="5" fill="#F6E05E"/>
+<circle cx="58" cy="18" r="5" fill="#68D391"/>
+<rect x="90" y="8" width="1100" height="20" fill="#FFFFFF" rx="10" stroke="#CBD5E1" stroke-width="1"/>
+<text x="104" y="22" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">flyte.fly.dev/admin/events/4f2a…/live</text>
+<rect x="0" y="36" width="240" height="1204" fill="#1F3A5F"/>
+<text x="32" y="80" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">Flyte</text>
+<circle cx="88" cy="66" r="4" fill="#E8590C"/>
+<text x="32" y="100" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="600" fill="#9FB3CC" letter-spacing="2px">ADMIN</text>
+<text x="38" y="146" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Dashboard</text>
+<text x="38" y="190" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Analytics</text>
+<rect x="14" y="212" width="212" height="34" fill="#2C4A73" rx="8"/>
+<rect x="14" y="212" width="4" height="34" fill="#E8590C" rx="2"/>
+<text x="38" y="234" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF">Events</text>
+<text x="38" y="278" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Transactions</text>
+<text x="38" y="322" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Refund requests</text>
+<text x="38" y="366" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Users</text>
+<text x="38" y="410" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#C3D0E0">Activity</text>
+<line x1="14" y1="1176" x2="226" y2="1176" stroke="#3A567C" stroke-width="1"/>
+<text x="38" y="1202" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#9FB3CC">← Back to site</text>
+<text x="280" y="134" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F">← Intro to Sailing</text>
+<text x="280" y="170" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="24" font-weight="800" fill="#0F172A">Drop console — Intro to Sailing</text>
+<rect x="710" y="154" width="43.6" height="20" fill="#FDECEC" rx="10"/>
+<text x="731.8" y="168" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#E03131" text-anchor="middle">LIVE</text>
+<text x="1216" y="168" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B" text-anchor="end">auto-refresh 5s · HTMX poll</text>
+<rect x="280" y="188" width="360" height="30" fill="#E7F1FA" rx="15"/>
+<text x="296" y="208" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#1864AB">✉ Blast sent 11:02 via Postmark  ·  T0 on charts</text>
+<circle cx="660" cy="203" r="11" fill="#E8590C"/>
+<text x="660" y="207" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<rect x="280" y="232" width="222" height="96" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<text x="298" y="260" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">REMAINING</text>
+<text x="298" y="294" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#E8590C">12</text>
+<rect x="518" y="232" width="222" height="96" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<text x="536" y="260" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">BOOKED · LAST 5 MIN</text>
+<text x="536" y="294" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A">23</text>
+<rect x="756" y="232" width="222" height="96" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<text x="774" y="260" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">RATE NOW · 1M/5M/15M</text>
+<text x="774" y="294" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A">4.6 / 4.1 / 2.9</text>
+<rect x="994" y="232" width="222" height="96" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+<text x="1012" y="260" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#64748B" letter-spacing="1px">PROJECTED SELLOUT</text>
+<text x="1012" y="294" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" fill="#0F172A">~11:42 · 18 min</text>
+<text x="1012" y="314" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#64748B">at current 5-min pace</text>
+<circle cx="1210" cy="252" r="11" fill="#E8590C"/>
+<text x="1210" y="256" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="280" y="372" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">Bookings per minute · trailing hour</text>
+<rect x="280" y="386" width="600" height="210" fill="#FFFFFF" rx="8" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="284" y1="584" x2="876" y2="584" stroke="#E2E8F0" stroke-width="1"/>
+<text x="288" y="580" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="400" fill="#64748B">0</text>
+<line x1="284" y1="491" x2="876" y2="491" stroke="#E2E8F0" stroke-width="1"/>
+<text x="288" y="487" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="400" fill="#64748B">4</text>
+<line x1="284" y1="398" x2="876" y2="398" stroke="#E2E8F0" stroke-width="1"/>
+<text x="288" y="394" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="400" fill="#64748B">8</text>
+<rect x="294" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="313.167" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="332.333" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="351.5" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="370.667" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="389.833" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="409" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="428.167" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="447.333" y="552.667" width="16.1667" height="19.3333" fill="#5B7C9E" rx="2"/>
+<rect x="466.5" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="485.667" y="552.667" width="16.1667" height="19.3333" fill="#5B7C9E" rx="2"/>
+<rect x="504.833" y="552.667" width="16.1667" height="19.3333" fill="#5B7C9E" rx="2"/>
+<rect x="524" y="570" width="16.1667" height="2" fill="#5B7C9E" rx="2"/>
+<rect x="543.167" y="552.667" width="16.1667" height="19.3333" fill="#5B7C9E" rx="2"/>
+<rect x="562.333" y="533.333" width="16.1667" height="38.6667" fill="#5B7C9E" rx="2"/>
+<rect x="581.5" y="436.667" width="16.1667" height="135.333" fill="#5B7C9E" rx="2"/>
+<rect x="600.667" y="417.333" width="16.1667" height="154.667" fill="#5B7C9E" rx="2"/>
+<rect x="619.833" y="456" width="16.1667" height="116" fill="#5B7C9E" rx="2"/>
+<rect x="639" y="475.333" width="16.1667" height="96.6667" fill="#5B7C9E" rx="2"/>
+<rect x="658.167" y="456" width="16.1667" height="116" fill="#5B7C9E" rx="2"/>
+<rect x="677.333" y="475.333" width="16.1667" height="96.6667" fill="#5B7C9E" rx="2"/>
+<rect x="696.5" y="494.667" width="16.1667" height="77.3333" fill="#5B7C9E" rx="2"/>
+<rect x="715.667" y="475.333" width="16.1667" height="96.6667" fill="#5B7C9E" rx="2"/>
+<rect x="734.833" y="494.667" width="16.1667" height="77.3333" fill="#5B7C9E" rx="2"/>
+<rect x="754" y="494.667" width="16.1667" height="77.3333" fill="#5B7C9E" rx="2"/>
+<rect x="773.167" y="475.333" width="16.1667" height="96.6667" fill="#5B7C9E" rx="2"/>
+<rect x="792.333" y="494.667" width="16.1667" height="77.3333" fill="#5B7C9E" rx="2"/>
+<rect x="811.5" y="494.667" width="16.1667" height="77.3333" fill="#5B7C9E" rx="2"/>
+<rect x="830.667" y="475.333" width="16.1667" height="96.6667" fill="#5B7C9E" rx="2"/>
+<rect x="849.833" y="494.667" width="16.1667" height="77.3333" fill="#5B7C9E" rx="2"/>
+<polyline points="303.583,584 322.75,584 341.917,584 361.083,584 380.25,584 399.417,584 418.583,580.2 437.75,580.2 456.917,576.4 476.083,572.6 495.25,572.6 514.417,572.6 533.583,565 552.75,542.2 571.917,515.6 591.083,492.8 610.25,477.6 629.417,462.4 648.583,470 667.75,485.2 686.917,489 706.083,492.8 725.25,500.4 744.417,500.4 763.583,500.4 782.75,504.2 801.917,500.4 821.083,500.4 840.25,503.25 859.417,501.667" fill="none" stroke="#E8590C" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="571.917" y1="398" x2="571.917" y2="580" stroke="#1864AB" stroke-width="1.5" stroke-dasharray="4 4"/>
+<text x="576.917" y="410" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#1864AB">T0 blast</text>
+<circle cx="840" cy="410" r="11" fill="#E8590C"/>
+<text x="840" y="414" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<rect x="920" y="386" width="296" height="158" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="936" y="410" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">LIVE FUNNEL · PER MIN</text>
+<text x="936" y="432" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Initiated</text>
+<text x="1200" y="432" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#334155" text-anchor="end">5.1</text>
+<text x="936" y="453" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Authorized</text>
+<text x="1200" y="453" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#334155" text-anchor="end">4.9</text>
+<text x="936" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Captured</text>
+<text x="1200" y="474" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#334155" text-anchor="end">4.7</text>
+<text x="936" y="495" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Confirmed</text>
+<text x="1200" y="495" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#334155" text-anchor="end">4.6</text>
+<text x="936" y="516" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#E03131">Failed (0.1 decline / 0.1 error)</text>
+<text x="1200" y="516" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#E03131" text-anchor="end">0.2</text>
+<circle cx="1200" cy="404" r="11" fill="#E8590C"/>
+<text x="1200" y="408" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<rect x="920" y="556" width="296" height="130" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="936" y="580" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">HEALTH</text>
+<circle cx="940" cy="598" r="3.5" fill="#2F9E44"/>
+<text x="952" y="602" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">5xx error rate</text>
+<text x="1200" y="602" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A" text-anchor="end">0.0%</text>
+<circle cx="940" cy="619" r="3.5" fill="#F08C00"/>
+<text x="952" y="623" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Rate-limit rejections</text>
+<text x="1200" y="623" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A" text-anchor="end">3</text>
+<circle cx="940" cy="640" r="3.5" fill="#2F9E44"/>
+<text x="952" y="644" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Stripe webhook lag</text>
+<text x="1200" y="644" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A" text-anchor="end">2.1s</text>
+<circle cx="940" cy="661" r="3.5" fill="#2F9E44"/>
+<text x="952" y="665" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#334155">Email queue</text>
+<text x="1200" y="665" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A" text-anchor="end">0</text>
+<circle cx="1200" cy="648" r="11" fill="#E8590C"/>
+<text x="1200" y="652" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="280" y="634" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">Latency · p95, 5-min window</text>
+<rect x="280" y="648" width="144" height="96" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="292" y="668" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B" letter-spacing="0.5px">REGISTER POST</text>
+<text x="292" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">412 ms</text>
+<rect x="368" y="678" width="30.8" height="20" fill="#EBF7ED" rx="10"/>
+<text x="383.4" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">OK</text>
+<polyline points="292,731.2 309,729.6 326,731.2 343,728 360,729.6 377,726.4 394,728 411,728" fill="none" stroke="#5B7C9E" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="438" y="648" width="144" height="96" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="450" y="668" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B" letter-spacing="0.5px">STRIPE PI CREATE</text>
+<text x="450" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">887 ms</text>
+<rect x="526" y="678" width="30.8" height="20" fill="#EBF7ED" rx="10"/>
+<text x="541.4" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">OK</text>
+<polyline points="450,726.4 467,728 484,724.8 501,726.4 518,723.2 535,724.8 552,723.2 569,723.2" fill="none" stroke="#5B7C9E" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="596" y="648" width="144" height="96" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="608" y="668" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B" letter-spacing="0.5px">DB SLOT RESERVE</text>
+<text x="608" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">14 ms</text>
+<rect x="684" y="678" width="30.8" height="20" fill="#EBF7ED" rx="10"/>
+<text x="699.4" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#2F9E44" text-anchor="middle">OK</text>
+<polyline points="608,732.8 625,732.8 642,732.8 659,731.2 676,732.8 693,732.8 710,731.2 727,732.8" fill="none" stroke="#5B7C9E" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="754" y="648" width="144" height="96" fill="#FFFFFF" rx="10" stroke="#E2E8F0" stroke-width="1"/>
+<text x="766" y="668" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B" letter-spacing="0.5px">CONFIRM E2E</text>
+<text x="766" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#0F172A">1.9 s</text>
+<rect x="842" y="678" width="43.6" height="20" fill="#FFF4E0" rx="10"/>
+<text x="863.8" y="692" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#F08C00" text-anchor="middle">WARN</text>
+<polyline points="766,728 783,726.4 800,724.8 817,723.2 834,721.6 851,718.4 868,716.8 885,715.2" fill="none" stroke="#F08C00" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="900" cy="696" r="11" fill="#E8590C"/>
+<text x="900" y="700" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">6</text>
+<rect x="280" y="772" width="936" height="150" fill="#F8FAFC" rx="10" stroke="#94A3B8" stroke-width="1" stroke-dasharray="6 5"/>
+<text x="296" y="798" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="1px">EMAIL BLAST OVERLAY · POSTMARK · TIER 1 (TBD)</text>
+<text x="296" y="828" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B">DELIVERED</text>
+<text x="296" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">1,240</text>
+<text x="466" y="828" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B">OPENED</text>
+<text x="466" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">612</text>
+<text x="636" y="828" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B">CLICKED</text>
+<text x="636" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">388</text>
+<text x="806" y="828" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="8" font-weight="700" fill="#64748B">OPEN → BOOKED LAG (MEDIAN)</text>
+<text x="806" y="854" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" fill="#0F172A">3.4 min</text>
+<polyline points="980,892 991,887.5 1002,865 1013,851.5 1024,860.5 1035,869.5 1046,874 1057,878.5 1068,878.5 1079,883 1090,883 1101,883 1112,887.5 1123,887.5 1134,887.5 1145,887.5 1156,887.5 1167,887.5 1178,887.5 1189,887.5" fill="none" stroke="#1864AB" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="980,892 991,892 1002,887.5 1013,878.5 1024,865 1035,856 1046,860.5 1057,865 1068,869.5 1079,869.5 1090,874 1101,874 1112,869.5 1123,874 1134,874 1145,869.5 1156,874 1167,874 1178,869.5 1189,874" fill="none" stroke="#E8590C" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="980" y="910" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="9" font-weight="400" fill="#64748B">opens/min vs bookings/min</text>
+<circle cx="1190" cy="798" r="11" fill="#E8590C"/>
+<text x="1190" y="802" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">7</text>
+<rect x="280" y="942" width="170" height="36" fill="#FFFFFF" rx="8" stroke="#1F3A5F" stroke-width="1.5"/>
+<text x="365" y="965" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#1F3A5F" text-anchor="middle">Edit capacity</text>
+<rect x="466" y="942" width="170" height="36" fill="#F8FAFC" rx="8" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="551" y="965" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#334155" text-anchor="middle">View waitlist</text>
+<rect x="280" y="1002" width="960" height="224" fill="#FFF4EC" rx="10" stroke="#F3CDB3" stroke-width="1"/>
+<circle cx="304" cy="1024" r="11" fill="#E8590C"/>
+<text x="304" y="1028" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="324" y="1028" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Tier 0 = manual &#x27;blast sent&#x27; stamp; Tier 1 ingests Postmark Delivery/Open/Click webhooks (Document 6 §6).</text>
+<circle cx="304" cy="1046" r="11" fill="#E8590C"/>
+<text x="304" y="1050" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="324" y="1050" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Phase A panels (hero, rate chart, funnel) derive from existing registration timestamps — nearly free atop I10. Phase B (latency, health)</text>
+<text x="324" y="1072" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">waits for the telemetry swing (T2).</text>
+<circle cx="304" cy="1090" r="11" fill="#E8590C"/>
+<text x="304" y="1094" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="324" y="1094" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">1-minute bars with 5-min sliding average (Flare); 15-min line omitted here for legibility. T0 marker from the blast stamp. After sellout</text>
+<text x="324" y="1116" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">the series continues with waitlist joins/min.</text>
+<circle cx="304" cy="1134" r="11" fill="#E8590C"/>
+<text x="304" y="1138" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="324" y="1138" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">A gap opening between initiated and confirmed rates is the earliest failure signal; declines (customer) split from errors (us).</text>
+<circle cx="304" cy="1156" r="11" fill="#E8590C"/>
+<text x="304" y="1160" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="324" y="1160" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Rate-limit rejections answer &#x27;are we throttling real buyers?&#x27; — tuning protocol is deferred decision T-5.</text>
+<circle cx="304" cy="1178" r="11" fill="#E8590C"/>
+<text x="304" y="1182" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">6</text>
+<text x="324" y="1182" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">p95 from 1-minute histogram rollups (metrics_minute, §5.2); thresholds show words + color, never color alone.</text>
+<circle cx="304" cy="1200" r="11" fill="#E8590C"/>
+<text x="304" y="1204" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">7</text>
+<text x="324" y="1204" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#334155">Dashed = pencilled. Quick actions below because a hot drop prompts exactly two: add capacity, watch the waitlist.</text>
+</svg>

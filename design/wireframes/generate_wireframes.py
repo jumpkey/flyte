@@ -45,7 +45,8 @@ PILL = {
     "LOCKED": (RED, RED_T), "REQUESTED": (AMBER, AMBER_T),
     "EXPIRED": (MUTED, SURFACE), "DRAFT": (MUTED, SURFACE),
     "ON PACE": (GREEN, GREEN_T), "AHEAD": (BLUE, BLUE_T), "AT RISK": (AMBER, AMBER_T),
-    "SOLD OUT": (BLUE, BLUE_T),
+    "SOLD OUT": (BLUE, BLUE_T), "LIVE": (RED, RED_T), "OK": (GREEN, GREEN_T),
+    "WARN": (AMBER, AMBER_T),
 }
 
 
@@ -1185,6 +1186,99 @@ def wf18_event_performance():
     s.save("wf-18-event-performance.svg")
 
 
+def wf19_drop_console():
+    s = S(1280, 1240)
+    browser(s, "flyte.fly.dev/admin/events/4f2a…/live")
+    admin_nav(s, "Events")
+    x = 280
+    s.text(x, 134, "← Intro to Sailing", 12, NAVY, 600)
+    s.text(x, 170, "Drop console — Intro to Sailing", 24, INK, 800)
+    pill(s, x + 430, 154, "LIVE")
+    s.text(x + 936, 168, "auto-refresh 5s · HTMX poll", 11, MUTED, anchor="end")
+    s.rect(x, 188, 360, 30, BLUE_T, rx=15)
+    s.text(x + 16, 208, "✉ Blast sent 11:02 via Postmark  ·  T0 on charts", 11, "#1864AB", 600)
+    note(s, x + 380, 203, 1)
+    heroes = [("Remaining", "12", FLARE), ("Booked · last 5 min", "23", None),
+              ("Rate now · 1m/5m/15m", "4.6 / 4.1 / 2.9", None), ("Projected sellout", "~11:42 · 18 min", None)]
+    for i, (lab, val, accent) in enumerate(heroes):
+        kpi(s, x + i * 238, 232, 222, lab, val, accent,
+            None if i != 3 else "at current 5-min pace")
+    note(s, x + 930, 252, 2)
+    # rate chart
+    s.text(x, 372, "Bookings per minute · trailing hour", 15, INK, 800)
+    chart_frame(s, x, 386, 600, 210, ("0", "4", "8"))
+    vals = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 2, 7, 8, 6, 5, 6, 5, 4, 5, 4, 4, 5, 4, 4, 5, 4]
+    bw = vbars(s, x + 14, 398, 572, 174, vals, 9, "#5B7C9E")
+    ma5 = [(x + 14 + i * bw + bw / 2, 386 + 198 - (sum(vals[max(0, i - 2):i + 3]) / len(vals[max(0, i - 2):i + 3])) * 19)
+           for i in range(len(vals))]
+    s.polyline(ma5, FLARE, 2.5)
+    t0x = x + 14 + 15 * bw - bw / 2
+    s.line(t0x, 398, t0x, 580, "#1864AB", 1.5, dash="4 4")
+    s.text(t0x + 5, 410, "T0 blast", 10, "#1864AB", 700)
+    note(s, x + 560, 410, 3)
+    # right column: live funnel + health
+    rxx = x + 640
+    s.rect(rxx, 386, 296, 158, WHITE, stroke=BORDER_L, rx=10)
+    s.text(rxx + 16, 410, "LIVE FUNNEL · PER MIN", 9, MUTED, 700, spacing="1px")
+    for i, (lab, v, c) in enumerate([("Initiated", "5.1", TEXT), ("Authorized", "4.9", TEXT),
+                                     ("Captured", "4.7", TEXT), ("Confirmed", "4.6", TEXT),
+                                     ("Failed (0.1 decline / 0.1 error)", "0.2", RED)]):
+        s.text(rxx + 16, 432 + i * 21, lab, 11, c)
+        s.text(rxx + 280, 432 + i * 21, v, 11.5, c, 700, anchor="end")
+    note(s, rxx + 280, 404, 4)
+    s.rect(rxx, 556, 296, 130, WHITE, stroke=BORDER_L, rx=10)
+    s.text(rxx + 16, 580, "HEALTH", 9, MUTED, 700, spacing="1px")
+    for i, (lab, v, c) in enumerate([("5xx error rate", "0.0%", GREEN), ("Rate-limit rejections", "3", AMBER),
+                                     ("Stripe webhook lag", "2.1s", GREEN), ("Email queue", "0", GREEN)]):
+        s.circle(rxx + 20, 598 + i * 21, 3.5, c)
+        s.text(rxx + 32, 602 + i * 21, lab, 11, TEXT)
+        s.text(rxx + 280, 602 + i * 21, v, 11.5, INK, 700, anchor="end")
+    note(s, rxx + 280, 648, 5)
+    # latency strip
+    s.text(x, 634, "Latency · p95, 5-min window", 15, INK, 800)
+    lat = [("Register POST", "412 ms", "OK", [3, 4, 3, 5, 4, 6, 5, 5]),
+           ("Stripe PI create", "887 ms", "OK", [6, 5, 7, 6, 8, 7, 8, 8]),
+           ("DB slot reserve", "14 ms", "OK", [2, 2, 2, 3, 2, 2, 3, 2]),
+           ("Confirm e2e", "1.9 s", "WARN", [5, 6, 7, 8, 9, 11, 12, 13])]
+    for i, (lab, val, state, spark) in enumerate(lat):
+        lx = x + i * 158
+        s.rect(lx, 648, 144, 96, WHITE, stroke=BORDER_L, rx=10)
+        s.text(lx + 12, 668, lab.upper(), 8, MUTED, 700, spacing="0.5px")
+        s.text(lx + 12, 692, val, 15, INK, 800)
+        pill(s, lx + 88, 678, state)
+        pts = [(lx + 12 + j * 17, 736 - v * 1.6) for j, v in enumerate(spark)]
+        s.polyline(pts, AMBER if state == "WARN" else "#5B7C9E", 1.8)
+    note(s, x + 620, 696, 6)
+    # postmark overlay panel (TBD)
+    py2 = 772
+    s.rect(x, py2, 936, 150, CANVAS, stroke=LINE, rx=10, dash="6 5")
+    s.text(x + 16, py2 + 26, "EMAIL BLAST OVERLAY · POSTMARK · TIER 1 (TBD)", 9, MUTED, 700, spacing="1px")
+    for i, (lab, v) in enumerate([("Delivered", "1,240"), ("Opened", "612"), ("Clicked", "388"),
+                                  ("Open → booked lag (median)", "3.4 min")]):
+        s.text(x + 16 + i * 170, py2 + 56, lab.upper(), 8, MUTED, 700)
+        s.text(x + 16 + i * 170, py2 + 82, v, 16, INK, 800)
+    opens = [(x + 700 + j * 11, py2 + 120 - v * 4.5) for j, v in
+             enumerate([0, 1, 6, 9, 7, 5, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1])]
+    books = [(x + 700 + j * 11, py2 + 120 - v * 4.5) for j, v in
+             enumerate([0, 0, 1, 3, 6, 8, 7, 6, 5, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5, 4])]
+    s.polyline(opens, "#1864AB", 2)
+    s.polyline(books, FLARE, 2)
+    s.text(x + 700, py2 + 138, "opens/min vs bookings/min", 9, MUTED)
+    note(s, x + 910, py2 + 26, 7)
+    btn(s, x, py2 + 170, 170, "Edit capacity", "secondary", 36)
+    btn(s, x + 186, py2 + 170, 170, "View waitlist", "ghost", 36)
+    legend(s, py2 + 230, [
+        "Tier 0 = manual 'blast sent' stamp; Tier 1 ingests Postmark Delivery/Open/Click webhooks (Document 6 §6).",
+        "Phase A panels (hero, rate chart, funnel) derive from existing registration timestamps — nearly free atop I10. Phase B (latency, health) waits for the telemetry swing (T2).",
+        "1-minute bars with 5-min sliding average (Flare); 15-min line omitted here for legibility. T0 marker from the blast stamp. After sellout the series continues with waitlist joins/min.",
+        "A gap opening between initiated and confirmed rates is the earliest failure signal; declines (customer) split from errors (us).",
+        "Rate-limit rejections answer 'are we throttling real buyers?' — tuning protocol is deferred decision T-5.",
+        "p95 from 1-minute histogram rollups (metrics_minute, §5.2); thresholds show words + color, never color alone.",
+        "Dashed = pencilled. Quick actions below because a hot drop prompts exactly two: add capacity, watch the waitlist.",
+    ], x=280)
+    s.save("wf-19-drop-console.svg")
+
+
 if __name__ == "__main__":
     print("Generating wireframes →", OUT)
     wf01_home(); wf02_events_list(); wf03_event_detail(); wf04_checkout()
@@ -1192,5 +1286,5 @@ if __name__ == "__main__":
     wf08_admin_events(); wf09_admin_event_form(); wf10_admin_event_detail()
     wf11_admin_transactions(); wf12_admin_reg_detail(); wf13_admin_users()
     wf14_admin_user_detail(); wf15_refund_queue(); wf16_mobile()
-    wf17_analytics(); wf18_event_performance()
+    wf17_analytics(); wf18_event_performance(); wf19_drop_console()
     print("Done.")

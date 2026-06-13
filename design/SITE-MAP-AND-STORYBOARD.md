@@ -77,6 +77,7 @@ flyte.fly.dev
     │   ├── /admin/events/new               Create event form
     │   ├── /admin/events/:id               Event detail: roster, waitlist, revenue, actions
     │   ├── /admin/events/:id/performance   Booking curve, velocity, projections (A2, WF-18)
+    │   ├── /admin/events/:id/live          Drop console — PENCILLED, Document 6 (WF-19)
     │   ├── /admin/events/:id/checkin       Day-of check-in (A6 — Q8/I11)
     │   ├── /admin/events/:id/roster.csv    + waitlist.csv exports (A7)
     │   └── /admin/events/:id/edit          Edit event form

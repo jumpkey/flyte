@@ -61,6 +61,15 @@ real booking curves exist by the time it ships. Specs, driving questions and
 projection math live in the addendum (§3–§6); its acceptance criteria are
 written there at the same per-view granularity as §3 here.
 
+**Pencilled beyond the map:** [`DROP-DAY-LIVE-OPS.md`](DROP-DAY-LIVE-OPS.md)
+(Document 6) holds **Increment T** — the drop-day live console and telemetry
+cross-cut. It is deliberately *not* an increment here: it gets scheduled as
+one focused swing after I10, before the first mass-mail drop. What binds the
+I1–I11 work now is only Document 6 §7's build-now rules (keep Stripe calls
+behind the factory, keep every route on the standard middleware stack, keep
+hot paths chokepointed, reserve `/admin/events/:id/live` and
+`/webhooks/postmark`, no ad-hoc per-request metrics writes).
+
 ---
 
 ## 3. Increment specifications
