@@ -108,9 +108,11 @@ auto-deploy workflow triggers only on pushes to `main`. Guardrails:
    immediately (explicit "restore state" step closes the protocol).
 5. **Baseline first.** Before the reskin deploys: screenshot the current
    pages and run one sandbox happy-path on the testbed as-is (protocol
-   row 0, which also verifies the fly SMTP secrets are real) — so "pilot
-   broke it" is always distinguishable from "was always like that", and the
-   before/after pair exists for the O1 verdict.
+   row 0) — so "pilot broke it" is always distinguishable from "was always
+   like that", and the before/after pair exists for the O1 verdict. The
+   testbed's email config is confirmed real and working (owner, 2026-06-13);
+   row 0 still exercises it end-to-end so the receipt path is evidenced,
+   not just configured.
 
 Nothing merges to `main` or `ui-elaboration` until the pilot's findings are
 shaken out; salvage happens per §6 through the real increments.
