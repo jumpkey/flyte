@@ -1,28 +1,24 @@
-<div>
-  <h1>Registration Confirmed!</h1>
+<div class="container py-4">
+  <div class="panel checkout-panel text-center">
+    <div class="success-mark mb-3">✓</div>
+    <h1 class="h3 mb-1">You're registered!</h1>
+    <p class="text-muted mb-4">A receipt is on its way to <strong><%= registration.email %></strong></p>
 
-  <% if (event) { %>
-  <h2><%= event.name %></h2>
-  <p><strong>Date:</strong> <%= new Date(event.event_date).toLocaleDateString() %></p>
-  <% if (event.location) { %>
-  <p><strong>Location:</strong> <%= event.location %></p>
-  <% } %>
-  <% } %>
+    <div class="receipt text-start mb-4">
+      <% if (event) { %>
+      <div class="row-line"><span class="k">Event</span><span class="v"><%= event.name %></span></div>
+      <div class="row-line"><span class="k">When</span><span class="v"><%= new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) %></span></div>
+      <% if (event.location) { %>
+      <div class="row-line"><span class="k">Where</span><span class="v"><%= event.location %></span></div>
+      <% } %>
+      <% } %>
+      <div class="row-line"><span class="k">Name</span><span class="v"><%= registration.firstName %> <%= registration.lastName %></span></div>
+      <div class="row-line"><span class="k">Amount paid</span><span class="v money">$<%= (registration.grossAmountCents / 100).toFixed(2) %></span></div>
+      <div class="row-line"><span class="k">Registration ID</span><span class="v" style="font-size:.8rem;"><%= registration.registrationId %></span></div>
+      <div class="row-line"><span class="k">Status</span><span class="v"><span class="pill pill-success"><%= registration.status %></span></span></div>
+    </div>
 
-  <hr>
-
-  <h3>Registration Details</h3>
-  <ul>
-    <li><strong>Registration ID:</strong> <%= registration.registrationId %></li>
-    <li><strong>Name:</strong> <%= registration.firstName %> <%= registration.lastName %></li>
-    <li><strong>Email:</strong> <%= registration.email %></li>
-    <li><strong>Amount Charged:</strong> $<%= (registration.grossAmountCents / 100).toFixed(2) %></li>
-    <li><strong>Status:</strong> <%= registration.status %></li>
-  </ul>
-
-  <p>A confirmation email has been sent to <strong><%= registration.email %></strong>.</p>
-
-  <p>If you need to cancel, please contact us with your Registration ID: <strong><%= registration.registrationId %></strong>. Full refunds are available subject to our cancellation policy.</p>
-
-  <a href="/" role="button" class="outline">Return Home</a>
+    <p class="text-muted" style="font-size:.9rem;">Need to cancel? Contact us with your Registration ID — full refunds are available subject to our cancellation policy.</p>
+    <a href="/" class="btn btn-outline-secondary mt-2">Browse more events</a>
+  </div>
 </div>

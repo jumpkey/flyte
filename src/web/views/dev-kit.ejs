@@ -1,0 +1,135 @@
+<div class="container py-5">
+  <h1 class="h2 mb-1">Flyte style kit</h1>
+  <p class="text-muted mb-5">Every component state on one page — WEBKIT-STANDARDS.md §5 made judgeable. Dev-only.</p>
+
+  <p class="caption-label">Palette</p>
+  <div class="d-flex flex-wrap gap-2 mb-5">
+    <% [['Navy','#1F3A5F'],['Ink','#0F172A'],['Text','#334155'],['Muted','#64748B'],['Border','#CBD5E1'],['Surface','#F1F5F9'],['Flare','#E8590C'],['Flare deep','#C2410C'],['Success','#2F9E44'],['Warning','#F08C00'],['Danger','#E03131'],['Info','#1971C2']].forEach(function(c) { %>
+      <div class="text-center">
+        <div style="width:72px;height:48px;border-radius:8px;border:1px solid var(--fl-border-l);background:<%= c[1] %>"></div>
+        <small class="text-muted" style="font-size:.7rem;"><%= c[0] %></small>
+      </div>
+    <% }); %>
+  </div>
+
+  <p class="caption-label">Type scale</p>
+  <div class="panel mb-5">
+    <p class="display-5 mb-1">Display — Find your next event</p>
+    <h1 class="mb-1">H1 — Page title</h1>
+    <h2 class="mb-1">H2 — Section heading</h2>
+    <h3 class="mb-1">H3 — Card title</h3>
+    <p class="mb-1">Body — Workshops, meetups and community events with secure checkout.</p>
+    <p class="text-muted mb-1" style="font-size:.85rem;">Small — table cells, meta, help text</p>
+    <p class="caption-label mb-0">Caption — column headers</p>
+  </div>
+
+  <p class="caption-label">Buttons</p>
+  <div class="panel mb-5">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+      <button class="btn btn-cta">Register — $25.00</button>
+      <button class="btn btn-primary">Save event</button>
+      <button class="btn btn-outline-secondary">Secondary</button>
+      <button class="btn btn-danger">Confirm refund</button>
+      <button class="btn btn-outline-danger">Request a refund</button>
+      <a href="#" class="btn btn-link">Tertiary link</a>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <button class="btn btn-primary" disabled>Disabled</button>
+      <button class="btn btn-primary btn-sm">Small</button>
+      <span class="text-muted" style="font-size:.85rem;">← hover &amp; tab through these: focus ring is the Flare token (WK-A11Y-1)</span>
+    </div>
+  </div>
+
+  <p class="caption-label">Status pills (WK §2.3)</p>
+  <div class="panel mb-5 d-flex flex-wrap gap-2">
+    <span class="pill pill-success">CONFIRMED</span>
+    <span class="pill pill-success">OPEN</span>
+    <span class="pill pill-warning">PENDING_PAYMENT</span>
+    <span class="pill pill-warning">CLOSED</span>
+    <span class="pill pill-info">PENDING_CAPTURE</span>
+    <span class="pill pill-info">REFUNDED</span>
+    <span class="pill pill-info">FULL</span>
+    <span class="pill pill-danger">PAYMENT_FAILED</span>
+    <span class="pill pill-danger">CANCELLED</span>
+    <span class="pill pill-neutral">EXPIRED</span>
+    <span class="pill pill-neutral">DRAFT</span>
+  </div>
+
+  <p class="caption-label">Forms</p>
+  <div class="panel mb-5" style="max-width:35rem;">
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input class="form-control" type="email" value="dana@example.com">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Confirm email</label>
+      <input class="form-control is-invalid" type="email" value="dana@exmaple.com">
+      <div class="invalid-feedback d-block">Email addresses don't match</div>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">Read-only</label>
+      <input class="form-control" type="text" value="locked@example.com" disabled>
+    </div>
+  </div>
+
+  <p class="caption-label">Event card · meter states</p>
+  <div class="row g-4 mb-5">
+    <div class="col-12 col-md-4">
+      <span class="event-card">
+        <span class="event-media d-block"><span class="event-fallback"><span class="initials">IS</span><span class="when">JUN 20</span></span><span class="date-badge">JUN 20</span></span>
+        <span class="event-body d-block">
+          <span class="event-title d-block">Intro to Sailing</span>
+          <span class="event-meta d-block">Sat, Jun 20 · Marina Bay</span>
+          <span class="d-flex justify-content-between mb-2"><span class="event-price money">$25.00</span><span class="fw-bold" style="color:var(--fl-flare-deep);">Register →</span></span>
+          <span class="meter d-block"><span class="meter-fill d-block" style="width:70%"></span></span>
+          <span class="meter-label d-block">35 of 50 spots left</span>
+        </span>
+      </span>
+    </div>
+    <div class="col-12 col-md-4">
+      <span class="event-card">
+        <span class="event-media d-block"><span class="event-fallback"><span class="initials">5K</span><span class="when">JUL 18</span></span><span class="date-badge">JUL 18</span></span>
+        <span class="event-body d-block">
+          <span class="event-title d-block">Summer 5K Run (low)</span>
+          <span class="event-meta d-block">Sat, Jul 18 · Riverside</span>
+          <span class="d-flex justify-content-between mb-2"><span class="event-price money">$15.00</span><span class="fw-bold" style="color:var(--fl-flare-deep);">Register →</span></span>
+          <span class="meter meter-low d-block"><span class="meter-fill d-block" style="width:12%"></span></span>
+          <span class="meter-label low d-block">6 of 50 spots left</span>
+        </span>
+      </span>
+    </div>
+    <div class="col-12 col-md-4">
+      <span class="event-card">
+        <span class="event-media d-block"><span class="event-fallback"><span class="initials">FD</span><span class="when">JUL 02</span></span><span class="date-badge">JUL 02</span></span>
+        <span class="event-body d-block">
+          <span class="event-title d-block">Founders Dinner (full)</span>
+          <span class="event-meta d-block">Thu, Jul 02 · Press Room</span>
+          <span class="d-flex justify-content-between"><span class="event-price money">$80.00</span><span class="fw-bold" style="color:var(--fl-danger-text);">Sold out · waitlist →</span></span>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <p class="caption-label">Alerts</p>
+  <div class="mb-5">
+    <div class="alert alert-flyte" role="alert">Password reset successfully. Please sign in.</div>
+    <div class="alert alert-flyte alert-flyte-error mb-0" role="alert">We couldn't process your payment.</div>
+  </div>
+
+  <p class="caption-label">Stepper · order summary · receipt</p>
+  <div class="panel" style="max-width:35rem;">
+    <div class="stepper">
+      <span class="step done"><span class="dot">✓</span> Details</span>
+      <span class="rail"></span>
+      <span class="step active"><span class="dot">2</span> Payment</span>
+    </div>
+    <div class="order-summary mb-3">
+      <div class="d-flex justify-content-between"><span><strong>Intro to Sailing</strong> — Jun 20</span></div>
+      <div class="d-flex justify-content-between"><span class="text-muted">Total due today</span><span class="total money">$25.00</span></div>
+    </div>
+    <div class="receipt">
+      <div class="row-line"><span class="k">Amount paid</span><span class="v money">$25.00</span></div>
+      <div class="row-line"><span class="k">Status</span><span class="v"><span class="pill pill-success">CONFIRMED</span></span></div>
+    </div>
+  </div>
+</div>

@@ -1,8 +1,58 @@
-<div style="text-align: center; padding: 4rem 1rem;">
-  <h1>Welcome to Flyte</h1>
-  <p>A modern, secure web application template.</p>
-  <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-    <a href="/login" role="button">Sign In</a>
-    <a href="/register" role="button" class="outline">Create Account</a>
+<section class="hero">
+  <div class="container">
+    <h1 class="display-5">Find your next event</h1>
+    <p class="lead">Workshops, meetups and community events — secure checkout in under a minute. No account needed.</p>
+    <a href="#events" class="btn btn-cta mt-3">Browse events</a>
   </div>
-</div>
+</section>
+
+<section id="events" class="container py-5">
+  <h2 class="h3 mb-4">Upcoming events</h2>
+  <% if (!events || events.length === 0) { %>
+    <div class="panel text-center">
+      <p class="text-muted mb-0">No upcoming events yet — check back soon.</p>
+    </div>
+  <% } else { %>
+  <div class="row g-4">
+    <% events.forEach(function(ev) {
+         var soldOut = ev.available_slots === 0 || ev.status === 'FULL';
+         var frac = ev.total_capacity > 0 ? ev.available_slots / ev.total_capacity : 0;
+         var initials = ev.name.split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase();
+         var badge = new Date(ev.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+         var href = soldOut ? ('/events/' + ev.event_id + '/waitlist') : ('/events/' + ev.event_id + '/register');
+    %>
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="event-card h-100" href="<%= href %>">
+        <div class="event-media">
+          <div class="event-fallback">
+            <span class="initials"><%= initials %></span>
+            <span class="when"><%= badge %></span>
+          </div>
+          <span class="date-badge"><%= badge %></span>
+        </div>
+        <div class="event-body">
+          <p class="event-title"><%= ev.name %></p>
+          <p class="event-meta">
+            <%= new Date(ev.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %><% if (ev.location) { %> · <%= ev.location %><% } %>
+          </p>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="event-price money">$<%= (ev.registration_fee_cents / 100).toFixed(2) %></span>
+            <% if (soldOut) { %>
+              <span class="fw-bold" style="color: var(--fl-danger-text);">Sold out · waitlist →</span>
+            <% } else { %>
+              <span class="fw-bold" style="color: var(--fl-flare-deep);">Register →</span>
+            <% } %>
+          </div>
+          <% if (!soldOut) { %>
+          <div class="meter <%= frac < 0.25 ? 'meter-low' : '' %>">
+            <div class="meter-fill" style="width: <%= Math.max(4, Math.round(frac * 100)) %>%"></div>
+          </div>
+          <div class="meter-label <%= frac < 0.25 ? 'low' : '' %>"><%= ev.available_slots %> of <%= ev.total_capacity %> spots left</div>
+          <% } %>
+        </div>
+      </a>
+    </div>
+    <% }); %>
+  </div>
+  <% } %>
+</section>

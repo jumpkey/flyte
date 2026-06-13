@@ -29,4 +29,16 @@ export const eventService = {
       VALUES (${params.userId}, ${params.sessionId ?? null}, ${params.action}, ${params.resource ?? null}, ${params.metadata ? sql.json(params.metadata as any) : null}, ${params.ipAddress})
     `;
   },
+
+  async listUpcomingPublic(limit = 6): Promise<Array<Record<string, unknown>>> {
+    const rows = await sql`
+      SELECT event_id, name, description, event_date, location,
+             total_capacity, available_slots, registration_fee_cents, status
+      FROM events
+      WHERE status IN ('OPEN', 'FULL') AND event_date > now()
+      ORDER BY event_date ASC
+      LIMIT ${limit}
+    `;
+    return rows as unknown as Array<Record<string, unknown>>;
+  },
 };

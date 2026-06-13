@@ -1,15 +1,11 @@
-<div>
-  <h1>Payment Failed</h1>
-
-  <p>We were unable to process your payment. This may be due to:</p>
-  <ul>
-    <li>Insufficient funds</li>
-    <li>Card declined by your bank</li>
-    <li>Incorrect card details</li>
-  </ul>
-
-  <p>Please try again with a different payment method, or contact your bank for more information.</p>
-
-  <button type="button" onclick="history.back()">Try Again</button>
-  <a href="/" role="button" class="outline">Return Home</a>
+<div class="container py-4">
+  <div class="panel checkout-panel text-center">
+    <h1 class="h3 mb-3">Payment failed</h1>
+    <div class="alert alert-flyte alert-flyte-error text-start" role="alert">
+      We couldn't process your payment. This is usually insufficient funds, a bank decline, or mistyped card details.
+    </div>
+    <p class="text-muted">Try again with a different payment method, or contact your bank for details. Your spot was released — re-register to try again.</p>
+    <button type="button" class="btn btn-primary mt-2" data-back>Try again</button>
+    <a href="/" class="btn btn-outline-secondary mt-2">Return home</a>
+  </div>
 </div>

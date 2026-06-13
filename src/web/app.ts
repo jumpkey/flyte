@@ -10,6 +10,7 @@ import { dashboardController } from './controllers/dashboard.js';
 import { profileController } from './controllers/profile.js';
 import { registrationController } from './controllers/registration.js';
 import { webhookController } from './controllers/webhook.js';
+import { devKitController } from './controllers/dev-kit.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import type { SessionData } from './middleware/session.js';
@@ -34,11 +35,13 @@ app.post('/webhooks/stripe', webhookController.handleStripeWebhook);
 app.use('*', secureHeaders({
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", 'https://unpkg.com', 'https://js.stripe.com'],
-    styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+    // Pilot: HTMX and CSS are self-hosted — unpkg.com and cdn.jsdelivr.net
+    // removed from the allowlist (WK-CODE-3).
+    scriptSrc: ["'self'", 'https://js.stripe.com'],
+    styleSrc: ["'self'", "'unsafe-inline'"],
     imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
     connectSrc: ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://hooks.stripe.com'],
-    fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+    fontSrc: ["'self'"],
     formAction: ["'self'"],
     frameAncestors: ["'none'"],
     frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
@@ -51,6 +54,8 @@ app.use('*', sessionMiddleware);
 app.use('*', csrfMiddleware);
 
 app.get('/', homeController.index);
+// Pilot style-guide page — 404s outside development (see dev-kit controller)
+app.get('/dev/kit', devKitController.index);
 app.get('/login', authController.loginForm);
 app.post('/login', rateLimit(10, 60000), authController.login);
 app.get('/register', authController.registerForm);

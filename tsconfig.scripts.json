@@ -4,6 +4,12 @@
     "outDir": "./dist/scripts",
     "rootDir": "./scripts"
   },
-  "include": ["scripts/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "scripts/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts/dev-refund.ts"
+  ]
 }

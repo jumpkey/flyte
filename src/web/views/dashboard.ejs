@@ -1,15 +1,28 @@
-<div>
-  <h1>Dashboard</h1>
+<div class="container py-4">
+  <h1 class="h2 mb-1">Dashboard</h1>
   <% if (typeof user !== 'undefined' && user) { %>
-  <p>Welcome back, <strong><%= user.displayName %></strong>!</p>
-  <p>Email: <%= user.email %></p>
-  <p>Member since: <%= user.createdAt.toLocaleDateString() %></p>
-  <% if (user.lastLoginAt) { %>
-  <p>Last login: <%= user.lastLoginAt.toLocaleString() %></p>
-  <% } %>
-  <% } %>
-
-  <div style="margin-top: 2rem;">
-    <a href="/profile" role="button" class="outline">Edit Profile</a>
+  <p class="text-muted mb-4">Welcome back, <strong><%= user.displayName %></strong></p>
+  <div class="row g-4">
+    <div class="col-12 col-md-6">
+      <div class="panel h-100">
+        <p class="caption-label mb-3">Account</p>
+        <div class="receipt">
+          <div class="row-line"><span class="k">Email</span><span class="v"><%= user.email %></span></div>
+          <div class="row-line"><span class="k">Member since</span><span class="v"><%= user.createdAt.toLocaleDateString() %></span></div>
+          <% if (user.lastLoginAt) { %>
+          <div class="row-line"><span class="k">Last login</span><span class="v"><%= user.lastLoginAt.toLocaleString() %></span></div>
+          <% } %>
+        </div>
+        <a href="/profile" class="btn btn-outline-secondary btn-sm mt-3">Edit profile</a>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="panel h-100">
+        <p class="caption-label mb-3">Events</p>
+        <p class="text-muted">Browse upcoming events and grab your spot.</p>
+        <a href="/" class="btn btn-primary btn-sm">Browse events</a>
+      </div>
+    </div>
   </div>
+  <% } %>
 </div>
