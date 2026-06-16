@@ -13,6 +13,34 @@ testbed, and exercised end to end by the owner.
   `design/WEBKIT-STANDARDS.md` are the specs; `design/VIEWS-AND-ANALYTICS-ADDENDUM.md`
   and `design/DROP-DAY-LIVE-OPS.md` are addenda.
 
+## Baseline & fork model
+This branch is the **Flyte Events domain** elaboration — the event-booking site
+(catalog, checkout, registrations, admin, refunds). It is *not* the generic
+foundation. The reusable foundation is the `pilot-derisk` tip
+(`ba7786b`): proven auth lifecycle, the Stripe payment engine (manual capture,
+webhooks, reconciliation, `RefundService`), and the approved Bootstrap WebKit
+(tokens, self-hosted Inter + HTMX, tightened CSP) — and **nothing
+domain-specific**. That commit is published as branch **`baseline/v1`** for
+discoverability; the owner can additionally apply the semantic tag with:
+
+```bash
+git tag flyte-baseline-v1.0 ba7786b && git push origin flyte-baseline-v1.0
+```
+
+The fork model going forward:
+
+```
+baseline/v1  (= pilot-derisk@ba7786b, tag flyte-baseline-v1.0)
+   ├── ui-elaboration   (this work — the event-booking domain)
+   └── [future site]    (fork from baseline when a new domain needs auth + payments + shell)
+```
+
+The event elaboration is a domain *branch* of the baseline, not a change to it —
+the baseline stays clean and reusable. (Per the spike spec, `pilot-derisk`'s
+throwaway harness — `dev-kit`, `dev-refund.ts`, `seed-events.ts` — rides along
+as dev tooling on the baseline but is not domain code; real increments
+re-implement structurally per `UI-IMPLEMENTATION-PLAN.md`.)
+
 ## The pilot reference (do NOT merge it)
 The `pilot-derisk` branch (tag **`pilot-1`**, deployed at https://flyte.fly.dev) is a
 throwaway spike that validated the Bootstrap look-and-feel, color scheme, typography,
