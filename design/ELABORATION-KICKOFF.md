@@ -57,6 +57,21 @@ relevant increments rather than leaving them for later.
 - **#22** — `/api/check-email` enumeration oracle; `is_admin` never enforced. Enforce
   admin authorization as the admin surfaces (I5+) come online.
 
+## Deploying & verifying from this branch (read before deploying)
+- **No auto-deploy here.** The `Fly Deploy` GitHub Action triggers only on push to
+  `main` (`.github/workflows/fly-deploy.yml`). `ui-elaboration` will **not** deploy on
+  push. To put work on the `flyte` testbed, run a **manual** `flyctl deploy --remote-only`
+  (as the pilot did). That needs `FLY_API_TOKEN` in *this* environment — the Action's
+  repo secret does not reach an ad-hoc agent run. Restore baseline anytime by deploying `main`.
+- **No browser in the Fly container.** The deployed image has no Chromium/Playwright;
+  the committed automated suite is HTTP/DB-level (in-process `app.fetch`), not browser-driven.
+  For UI self-verification, install a headless browser **in this build/sandbox** per
+  `STRIPE-LIVE-SANDBOX-TEST-GUIDE.md` Appendix D.1 (`@playwright/test` +
+  `npx playwright install --with-deps chromium`) — do not add it to the production image.
+- Seeding test events + DB access on the testbed: use the pilot harness
+  (`scripts/seed-events.ts`) in-container via `flyctl ssh console -C
+  "node dist/scripts/seed-events.js"` (the interactive `flyctl postgres connect` hangs).
+
 ## Already confirmed covered by the design (no action beyond building it)
 - Logged-in users seeing their registrations: dashboard "Your upcoming events" panel +
   My Registrations (WF-06, `/account/registrations`), increment I7.
