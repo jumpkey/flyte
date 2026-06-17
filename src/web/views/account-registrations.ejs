@@ -17,7 +17,12 @@
             <td><%= dateLong(r.event_date) %></td>
             <td><%- include('partials/status-pill', { status: displayStatus({ status: r.status, refunded_amount_cents: r.refunded_amount_cents }) }) %></td>
             <td class="text-end money"><%= money(r.gross_amount_cents) %></td>
-            <td class="text-end"><a class="text-decoration-none" href="/account/registrations/<%= r.registration_id %>">View →</a></td>
+            <td class="text-end">
+              <a class="text-decoration-none" href="/account/registrations/<%= r.registration_id %>">View →</a>
+              <% if (r.can_request_refund) { %>
+              <a class="text-decoration-none small d-block" href="/registration/<%= r.registration_id %>/refund-request">Request a refund</a>
+              <% } %>
+            </td>
           </tr>
           <% }); %>
         </tbody>
@@ -36,7 +41,15 @@
             <td><a class="text-decoration-none fw-semibold" href="/events/<%= w.event_id %>"><%= w.event_name %></a></td>
             <td><%= dateLong(w.event_date) %></td>
             <td>#<%= w.position %></td>
-            <td class="text-end"><a class="text-decoration-none" href="/waitlist/<%= w.waitlist_entry_id %>">View →</a></td>
+            <td class="text-end">
+              <a class="text-decoration-none" href="/waitlist/<%= w.waitlist_entry_id %>">View →</a>
+              <span class="text-muted">·</span>
+              <form method="post" action="/account/waitlist/<%= w.waitlist_entry_id %>/remove" class="d-inline"
+                    onsubmit="return confirm('Remove yourself from this waitlist?');">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-link btn-sm text-decoration-none p-0 text-danger">Remove</button>
+              </form>
+            </td>
           </tr>
           <% }); %>
         </tbody>

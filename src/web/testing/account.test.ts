@@ -19,6 +19,8 @@ async function cleanup() {
   if (ids.length) {
     await testSql`DELETE FROM registrations WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM waitlist_entries WHERE user_id = ANY(${ids})`;
+    await testSql`DELETE FROM login_events WHERE user_id = ANY(${ids})`;
+    await testSql`DELETE FROM user_action_events WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM sessions WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM users WHERE id = ANY(${ids})`;
   }
@@ -200,6 +202,61 @@ async function runTests() {
       body: new URLSearchParams({ email: 'nobody@example.com', _csrf: csrf }).toString(),
     });
     assert((await resp.text()).includes('Check your email'), 'uniform ack');
+  });
+
+  await test('W11: My Registrations row links to refund-request when eligible, hides it otherwise', async () => {
+    await truncateTables();
+    const ev = await createEvent('Refund Link Fest');
+    const confirmed = await createReg(ev, a.id, 'CONFIRMED');
+    let body = await (await get('/account/registrations', a.cookie)).text();
+    assert(body.includes(`/registration/${confirmed}/refund-request`), 'refund-request link present for eligible CONFIRMED row');
+
+    // An open request makes the row ineligible → link disappears.
+    await testSql`INSERT INTO refund_requests (registration_id, status, reason) VALUES (${confirmed}, 'REQUESTED', 'x')`;
+    body = await (await get('/account/registrations', a.cookie)).text();
+    assert(!body.includes(`/registration/${confirmed}/refund-request`), 'link gone once a request is open');
+    await testSql`DELETE FROM refund_requests WHERE registration_id = ${confirmed}::UUID`;
+
+    // A non-CONFIRMED registration never shows the link.
+    await truncateTables();
+    const ev2 = await createEvent('Failed Pay Fest');
+    const failedReg = await createReg(ev2, a.id, 'PAYMENT_FAILED');
+    body = await (await get('/account/registrations', a.cookie)).text();
+    assert(!body.includes(`/registration/${failedReg}/refund-request`), 'no link for non-CONFIRMED row');
+  });
+
+  await test('W12: a user can remove their own waitlist entry; a non-owner cannot', async () => {
+    await truncateTables();
+    const ev = await createEvent('Removable Gig');
+    const own = await testSql`INSERT INTO waitlist_entries (event_id, user_id, email, first_name, last_name) VALUES (${ev}, ${a.id}, ${EMAILS[0]}, 'Acct', 'A') RETURNING waitlist_entry_id`;
+    const ownId = own[0].waitlist_entry_id as string;
+
+    const { app } = await import('../app.js');
+    // Bootstrap a CSRF token bound to user a's session via a GET.
+    const page = await app.request('http://localhost/account/registrations', { headers: { Cookie: a.cookie } });
+    const csrf = (await page.text()).match(/name="_csrf" value="([^"]+)"/)?.[1] ?? '';
+    assert(!!csrf, 'csrf token available from the account page');
+
+    // Ownership: user b posting a's entry id removes nothing.
+    const bPage = await app.request('http://localhost/account/registrations', { headers: { Cookie: b.cookie } });
+    const bCsrf = (await bPage.text()).match(/name="_csrf" value="([^"]+)"/)?.[1] ?? '';
+    const notOwner = await app.request(`http://localhost/account/waitlist/${ownId}/remove`, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: b.cookie },
+      body: new URLSearchParams({ _csrf: bCsrf }).toString(),
+    });
+    assert(notOwner.status === 302 || notOwner.status === 303, `non-owner redirected (got ${notOwner.status})`);
+    let count = (await testSql`SELECT count(*)::int AS c FROM waitlist_entries WHERE waitlist_entry_id = ${ownId}::UUID`)[0].c as number;
+    assertEqual(count, 1, 'non-owner POST did not delete the row');
+
+    // Owner removes their own entry.
+    const owner = await app.request(`http://localhost/account/waitlist/${ownId}/remove`, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: a.cookie },
+      body: new URLSearchParams({ _csrf: csrf }).toString(),
+    });
+    assert(owner.status === 302 || owner.status === 303, `owner redirected (got ${owner.status})`);
+    assertEqual(owner.headers.get('location'), '/account/registrations', 'redirects back to My Registrations');
+    count = (await testSql`SELECT count(*)::int AS c FROM waitlist_entries WHERE waitlist_entry_id = ${ownId}::UUID`)[0].c as number;
+    assertEqual(count, 0, 'owner POST removed the row');
   });
 
   await truncateTables();

@@ -137,6 +137,7 @@ app.get('/dashboard', authGuard, dashboardController.index);
 // My Registrations (I7) — ownership-checked account pages.
 app.get('/account/registrations', authGuard, accountController.registrations);
 app.get('/account/registrations/:id', authGuard, accountController.registrationDetail);
+app.post('/account/waitlist/:id/remove', authGuard, accountController.removeWaitlist);
 app.get('/profile', authGuard, profileController.editForm);
 app.post('/profile', authGuard, profileController.update);
 app.post('/logout', authGuard, authController.logout);

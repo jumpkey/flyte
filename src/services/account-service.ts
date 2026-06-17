@@ -95,4 +95,18 @@ export const accountService = {
     `;
     return (rows[0] as Record<string, unknown>) ?? null;
   },
+
+  /**
+   * Remove a waitlist entry the user owns (W12). The DELETE is ownership-scoped
+   * (R3) so a non-owner's id simply affects no rows. Returns true when a row was
+   * removed.
+   */
+  async removeWaitlistEntry(waitlistEntryId: string, userId: string): Promise<boolean> {
+    const rows = await sql`
+      DELETE FROM waitlist_entries
+      WHERE waitlist_entry_id = ${waitlistEntryId}::UUID AND user_id = ${userId}
+      RETURNING waitlist_entry_id
+    `;
+    return rows.length > 0;
+  },
 };
