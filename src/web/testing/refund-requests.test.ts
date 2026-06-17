@@ -153,6 +153,37 @@ async function runTests() {
     assert(body.includes('Cust Omer') && body.includes('please refund'), 'request shown in queue');
   });
 
+  // ── C2: queue renders a table (not cards) and approve/deny still work ──
+  await test('queue renders a table (not cards) with approve/deny actions', async () => {
+    await truncateTables();
+    const id = await createReg('CONFIRMED');
+    await refundRequestsService.createRequest(id, null, 'please refund');
+    const body = await (await get('/admin/refund-requests', admin.cookie)).text();
+    assert(body.includes('<table'), 'a table is rendered');
+    assert(body.includes('<th>Customer</th>') && body.includes('Refundable'), 'table has the expected columns');
+    assert(body.includes('data-open-dialog="#approve-') && body.includes('data-open-dialog="#deny-'), 'approve + deny dialogs present');
+  });
+
+  await test('C2: approve from the table still posts and resolves', async () => {
+    await truncateTables();
+    const id = await createReg('CONFIRMED');
+    await refundRequestsService.createRequest(id, null, 'r');
+    const reqId = (await testSql`SELECT request_id FROM refund_requests WHERE registration_id=${id}::UUID`)[0].request_id as string;
+    await refundRequestsService.resolve(reqId, 'APPROVED', admin.id, 'Approved — refund issued');
+    assertEqual(await reqStatus(id), 'APPROVED', 'resolves via the table flow');
+  });
+
+  await test('C2: queue paginates at 25/page with >25 open requests', async () => {
+    await truncateTables();
+    for (let i = 0; i < 30; i++) {
+      const id = await createReg('CONFIRMED');
+      await refundRequestsService.createRequest(id, null, `r${i}`);
+    }
+    const body = await (await get('/admin/refund-requests', admin.cookie)).text();
+    assert(body.includes('Page 1 of'), 'page indicator shown');
+    assert(/Page 1 of [2-9]/.test(body), 'at least two pages for 30 requests at 25/page');
+  });
+
   // ── Approve: Stripe failure / unavailability never silently resolves (AC-I6 ③) ──
   await test('approve leaves the request open when the refund cannot be made', async () => {
     await truncateTables();

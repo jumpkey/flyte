@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { renderView } from '../../render.js';
+import { renderView, renderFragment } from '../../render.js';
 import { refundRequestsService } from '../../../services/refund-requests-service.js';
 import { RefundService } from '../../../registration/services/RefundService.js';
 import { NotificationService } from '../../../registration/services/NotificationService.js';
@@ -35,13 +35,19 @@ async function getRefundService(): Promise<RefundService> {
 }
 
 export const adminRefundsController = {
-  /** GET /admin/refund-requests — the queue (WF-15). Tabs: open / resolved. */
+  /** GET /admin/refund-requests — the queue (WF-15). Tabs: open / resolved. HTMX-paginated. */
   async queue(c: Context): Promise<Response> {
     const tab = c.req.query('tab') === 'resolved' ? 'resolved' : 'open';
-    const requests = await refundRequestsService.listQueue(tab);
-    return renderView(c, 'admin/refund-requests', {
-      title: 'Refund requests', activeNav: 'refunds', tab, requests,
-    }, { layout: 'admin' });
+    const page = parseInt(c.req.query('page') ?? '1', 10) || 1;
+    const result = await refundRequestsService.listQueue(tab, page, 25);
+    const data = {
+      title: 'Refund requests', activeNav: 'refunds', tab,
+      requests: result.rows, ...result,
+    };
+    if (c.req.header('HX-Request') === 'true') {
+      return renderFragment(c, 'admin/partials/refund-queue', data);
+    }
+    return renderView(c, 'admin/refund-requests', data, { layout: 'admin' });
   },
 
   /**

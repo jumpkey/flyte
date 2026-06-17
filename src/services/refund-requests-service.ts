@@ -72,10 +72,24 @@ export const refundRequestsService = {
     }
   },
 
-  /** Queue rows for the admin (WF-15). tab = 'open' (REQUESTED) or 'resolved'. */
-  async listQueue(tab: 'open' | 'resolved'): Promise<Array<Record<string, unknown>>> {
+  /** Queue rows for the admin (WF-15). tab = 'open' (REQUESTED) or 'resolved'. Paginated. */
+  async listQueue(tab: 'open' | 'resolved', page = 1, perPage = 25): Promise<{
+    rows: Array<Record<string, unknown>>;
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+  }> {
+    const pp = Math.min(Math.max(perPage, 1), 100);
+    const pg = Math.max(page, 1);
+    const offset = (pg - 1) * pp;
+
     const statusClause = tab === 'open' ? sql`rr.status = 'REQUESTED'` : sql`rr.status IN ('APPROVED', 'DENIED')`;
     const order = tab === 'open' ? sql`rr.requested_at ASC` : sql`rr.resolved_at DESC`;
+
+    const countRows = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM refund_requests rr WHERE ${statusClause}`;
+    const total = countRows[0]?.n ?? 0;
+
     const rows = await sql`
       SELECT rr.request_id, rr.status, rr.reason, rr.requested_at, rr.resolved_at, rr.resolution_note,
              r.registration_id, r.first_name, r.last_name, r.email,
@@ -86,9 +100,13 @@ export const refundRequestsService = {
       JOIN events e ON e.event_id = r.event_id
       WHERE ${statusClause}
       ORDER BY ${order}
-      LIMIT 200
+      LIMIT ${pp} OFFSET ${offset}
     `;
-    return rows as unknown as Array<Record<string, unknown>>;
+    return {
+      rows: rows as unknown as Array<Record<string, unknown>>,
+      total, page: pg, perPage: pp,
+      totalPages: Math.max(Math.ceil(total / pp), 1),
+    };
   },
 
   async countOpen(): Promise<number> {

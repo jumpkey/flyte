@@ -1,6 +1,7 @@
 <h1 class="h3 mb-4">Users</h1>
 
-<form class="row g-2 align-items-end mb-4" method="get" action="/admin/users">
+<form class="row g-2 align-items-end mb-4" method="get" action="/admin/users"
+      hx-get="/admin/users" hx-target="#users-table" hx-swap="innerHTML" hx-push-url="true">
   <div class="col-12 col-md-5">
     <label class="form-label" for="q">Search</label>
     <input class="form-control" type="search" id="q" name="q" value="<%= filters.q %>" placeholder="Email or name">
@@ -27,24 +28,6 @@
   </div>
 </form>
 
-<% if (!users || users.length === 0) { %>
-  <%- include('../partials/empty-state', { title: 'No users match', message: 'Try a different search.' }) %>
-<% } else { %>
-<div class="table-responsive">
-  <table class="table align-middle">
-    <thead><tr><th>Email</th><th>Name</th><th>Account</th><th>Locked</th><th class="text-end">Registrations</th><th>Joined</th></tr></thead>
-    <tbody>
-      <% users.forEach(function (u) { %>
-      <tr class="admin-row" data-href="/admin/users/<%= u.id %>">
-        <td><a class="text-decoration-none fw-semibold" href="/admin/users/<%= u.id %>"><%= u.email %></a><% if (u.is_admin) { %> <span class="pill pill-info">admin</span><% } %></td>
-        <td><%= u.display_name %></td>
-        <td><%- include('../partials/status-pill', { status: u.account_status }) %></td>
-        <td><% if (u.is_locked) { %><%- include('../partials/status-pill', { status: 'LOCKED' }) %><% } else { %><span class="text-secondary">—</span><% } %></td>
-        <td class="text-end"><%= u.registration_count %></td>
-        <td><%= dateLong(u.created_at) %></td>
-      </tr>
-      <% }); %>
-    </tbody>
-  </table>
+<div id="users-table">
+  <%- include('partials/users-table', { users: users, page: page, totalPages: totalPages, total: total, filters: filters, sort: sort }) %>
 </div>
-<% } %>

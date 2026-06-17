@@ -128,6 +128,35 @@ async function runTests() {
     assert(p1.includes('Page 1 of'), 'paginated');
   });
 
+  // ── C1: users list pagination + sortable headers ──
+  await test('users list paginates at 25/page and offers sortable headers', async () => {
+    // Seed >25 users so the list spans multiple pages.
+    const seeded: string[] = [];
+    for (let i = 0; i < 30; i++) seeded.push(await makeUser(`c1-user-${String(i).padStart(2, '0')}@example.com`));
+    EMAILS.push(...seeded.map((_, i) => `c1-user-${String(i).padStart(2, '0')}@example.com`));
+
+    const p1 = await (await get('/admin/users?q=c1-user', adminCookie)).text();
+    assert(p1.includes('Page 1 of'), 'page indicator shown');
+    assert(/Page 1 of [2-9]/.test(p1), 'at least two pages for 30 users at 25/page');
+    // A clickable sort link with sort+dir is present.
+    assert(p1.includes('sort=email') && p1.includes('dir='), 'sortable header links present');
+  });
+
+  await test('?sort=email&dir=asc orders rows ascending by email', async () => {
+    const body = await (await get('/admin/users?q=c1-user&sort=email&dir=asc', adminCookie)).text();
+    // First seeded email c1-user-00 sorts first ascending; c1-user-29 should NOT
+    // appear on page 1 (it's last alphabetically, on page 2).
+    const i00 = body.indexOf('c1-user-00@example.com');
+    const i01 = body.indexOf('c1-user-01@example.com');
+    assert(i00 !== -1 && i01 !== -1 && i00 < i01, 'ascending email order: 00 before 01');
+    assert(!body.includes('c1-user-29@example.com'), 'last email is on page 2, not page 1');
+  });
+
+  await test('existing user filters still work after pagination change', async () => {
+    const list = await (await get('/admin/users?q=target-i8&status=active', adminCookie)).text();
+    assert(list.includes('target-i8@example.com') && !list.includes('shadow-i8@example.com'), 'search + active filter still composes');
+  });
+
   await cleanup();
   console.log(`\n=== Admin Users: ${passed} passed, ${failed} failed ===`);
   await testSql.end();

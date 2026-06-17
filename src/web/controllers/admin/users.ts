@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
-import { renderView } from '../../render.js';
+import { renderView, renderFragment } from '../../render.js';
 import { adminUsersService } from '../../../services/admin-users-service.js';
+import { resolveSort } from '../../utils/table-sort.js';
 import { userService } from '../../../services/user-service.js';
 import { eventService } from '../../../services/event-service.js';
 import { destroyUserSessions } from '../../middleware/session.js';
@@ -15,13 +16,22 @@ function flash(c: Context, message: string): void {
 }
 
 export const adminUsersController = {
-  /** GET /admin/users — search/filter list (WF-13). */
+  /** GET /admin/users — search/filter list (WF-13). HTMX-paginated + sortable. */
   async list(c: Context): Promise<Response> {
     const q = c.req.query('q') ?? '';
     const status = c.req.query('status') ?? '';
     const locked = c.req.query('locked') ?? '';
-    const users = await adminUsersService.list({ q, status, locked });
-    return renderView(c, 'admin/users-list', { title: 'Users', activeNav: 'users', users, filters: { q, status, locked } }, { layout: 'admin' });
+    const page = parseInt(c.req.query('page') ?? '1', 10) || 1;
+    const sort = resolveSort(c.req.query('sort'), c.req.query('dir'), ['email', 'name', 'registrations', 'joined'], 'joined');
+    const result = await adminUsersService.list({ q, status, locked, page, sort });
+    const data = {
+      title: 'Users', activeNav: 'users',
+      users: result.rows, ...result, filters: { q, status, locked },
+    };
+    if (c.req.header('HX-Request') === 'true') {
+      return renderFragment(c, 'admin/partials/users-table', data);
+    }
+    return renderView(c, 'admin/users-list', data, { layout: 'admin' });
   },
 
   /** GET /admin/users/:id — profile + purchases + history (WF-14). */
