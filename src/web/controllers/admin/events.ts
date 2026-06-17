@@ -161,15 +161,16 @@ export const adminEventsController = {
     const event = await eventAdminService.getById(eventId);
     if (!event) return c.notFound();
 
-    const [roster, waitlist, stats] = await Promise.all([
+    const [roster, waitlist, stats, perf] = await Promise.all([
       eventAdminService.getRoster(eventId),
       eventAdminService.getWaitlist(eventId),
       eventAdminService.getStats(eventId),
+      analyticsService.getEventPerformance(eventId),
     ]);
 
     return renderView(c, 'admin/event-detail', {
       title: event.name, activeNav: 'events',
-      event, roster, waitlist, stats,
+      event, roster, waitlist, stats, perf,
     }, { layout: 'admin' });
   },
 

@@ -39,6 +39,21 @@
   <%- stat('Refunded', money(stats.refundedCents)) %>
 </div>
 
+<%# WF-10 compact performance strip — sparkline + projection headline + velocity.
+    Numbers in text too (WK-A11Y-3). %>
+<% if (perf) { %>
+<div class="panel py-2 mb-4">
+  <div class="d-flex align-items-center flex-wrap gap-3">
+    <span aria-hidden="true"><%- sparkline(perf.dailyBookings) %></span>
+    <div class="flex-grow-1">
+      <div class="small"><%= perf.projection.headline %></div>
+      <div class="text-secondary small"><%= perf.views %> views · velocity <%= (Math.round(perf.currentVelocity * 10) / 10) %>/day</div>
+    </div>
+    <a class="text-decoration-none small" href="/admin/events/<%= event.event_id %>/performance">Performance →</a>
+  </div>
+</div>
+<% } %>
+
 <%# Roster %>
 <div class="d-flex justify-content-between align-items-center mb-2">
   <h2 class="h5 mb-0">Roster</h2>

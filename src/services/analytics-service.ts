@@ -19,22 +19,29 @@ export interface SalesDashboard {
   rangeDays: number;
   kpis: SalesKpis;
   dailyRevenue: number[];           // net cents per day
-  paymentFunnel: { stages: Array<{ label: string; count: number }>; lostExpiredCents: number; lostFailedCents: number };
+  paymentFunnel: { stages: Array<{ label: string; count: number }>; conversions: number[]; lostExpiredCents: number; lostFailedCents: number };
   perEvent: Array<Record<string, unknown>>;
   customers: { newBuyers: number; returningBuyers: number; repeatRatePct: number; activationRatePct: number; top: Array<Record<string, unknown>> };
 }
 
-async function periodTotals(fromDays: number, toDays: number): Promise<{ gross: number; net: number; refunded: number; count: number }> {
-  const rows = await sql<{ gross: string | null; net: string | null; refunded: string | null; count: number }[]>`
-    SELECT COALESCE(SUM(gross_amount_cents) FILTER (WHERE status='CONFIRMED'),0) AS gross,
-           COALESCE(SUM(net_amount_cents)   FILTER (WHERE status='CONFIRMED'),0) AS net,
+/**
+ * W17 — gross and refunds over the SAME population: registrations confirmed in
+ * the period (confirmed_at in window, regardless of current status). A
+ * fully-refunded sale is now CANCELLED but keeps confirmed_at set, so it counts
+ * toward both gross and refunds. refunded_amount_cents is always ≤ gross, so
+ * net = gross − refunded ≥ 0 and refund-rate = refunded/gross ≤ 100%.
+ */
+async function periodTotals(fromDays: number, toDays: number): Promise<{ gross: number; refunded: number; count: number }> {
+  const rows = await sql<{ gross: string | null; refunded: string | null; count: number }[]>`
+    SELECT COALESCE(SUM(gross_amount_cents),0) AS gross,
            COALESCE(SUM(refunded_amount_cents),0) AS refunded,
-           COUNT(*) FILTER (WHERE status='CONFIRMED')::int AS count
+           COUNT(*)::int AS count
     FROM registrations
-    WHERE created_at >= now() - (${toDays}||' days')::interval
-      AND created_at <  now() - (${fromDays}||' days')::interval`;
+    WHERE confirmed_at IS NOT NULL
+      AND confirmed_at >= now() - (${toDays}||' days')::interval
+      AND confirmed_at <  now() - (${fromDays}||' days')::interval`;
   const r = rows[0];
-  return { gross: +(r?.gross ?? 0), net: +(r?.net ?? 0), refunded: +(r?.refunded ?? 0), count: r?.count ?? 0 };
+  return { gross: +(r?.gross ?? 0), refunded: +(r?.refunded ?? 0), count: r?.count ?? 0 };
 }
 
 export const analyticsService = {
@@ -80,39 +87,67 @@ export const analyticsService = {
       grossDeltaPct: prev.gross > 0 ? Math.round(((cur.gross - prev.gross) / prev.gross) * 1000) / 10 : null,
     };
 
-    // Daily revenue series (confirmed gross per day), oldest → newest, gap-filled.
+    // W19 — Daily net revenue series, oldest → newest, gap-filled. Net per day =
+    // confirmed-or-was-confirmed gross captured that day minus refunds dated that
+    // day (refund_log.amount_cents on that calendar day).
     const dailyRows = await sql<{ net: string }[]>`
-      SELECT COALESCE(SUM(r.gross_amount_cents), 0)::text AS net
+      SELECT (COALESCE(g.gross, 0) - COALESCE(rl.refunded, 0))::text AS net
       FROM generate_series(date_trunc('day', now()) - (${rangeDays - 1}||' days')::interval,
-                           date_trunc('day', now()), '1 day') AS g(day)
-      LEFT JOIN registrations r
-        ON r.status = 'CONFIRMED' AND date_trunc('day', r.confirmed_at) = g.day
-      GROUP BY g.day ORDER BY g.day ASC`;
+                           date_trunc('day', now()), '1 day') AS series(day)
+      LEFT JOIN LATERAL (
+        SELECT date_trunc('day', r.confirmed_at) AS day, SUM(r.gross_amount_cents) AS gross
+        FROM registrations r
+        WHERE r.confirmed_at IS NOT NULL
+          AND (r.status = 'CONFIRMED' OR r.confirmed_at IS NOT NULL)
+          AND date_trunc('day', r.confirmed_at) = series.day
+        GROUP BY 1
+      ) g ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT date_trunc('day', l.created_at) AS day, SUM(l.amount_cents) AS refunded
+        FROM refund_log l
+        WHERE date_trunc('day', l.created_at) = series.day
+        GROUP BY 1
+      ) rl ON TRUE
+      ORDER BY series.day ASC`;
     const dailyRevenue = dailyRows.map((r) => +r.net);
 
-    // Payment funnel (registrations created in range).
-    const funnelRows = await sql<{ status: string; n: number; fee: string }[]>`
-      SELECT status, count(*)::int AS n, COALESCE(SUM(gross_amount_cents),0)::text AS fee
+    // W19 — Payment funnel (registrations created in range) + a top Views stage.
+    const views = await this.viewsInRange(rangeDays);
+    const funnelRows = await sql<{ status: string; n: number; fee: string; captured: number; authorized: number }[]>`
+      SELECT status, count(*)::int AS n, COALESCE(SUM(gross_amount_cents),0)::text AS fee,
+             count(*) FILTER (WHERE confirmed_at IS NOT NULL)::int AS captured,
+             count(*) FILTER (WHERE status IN ('PENDING_CAPTURE','CONFIRMED') OR confirmed_at IS NOT NULL)::int AS authorized
       FROM registrations WHERE created_at >= now() - (${rangeDays}||' days')::interval
       GROUP BY status`;
     const byStatus = (s: string) => funnelRows.find((r) => r.status === s)?.n ?? 0;
     const feeOf = (s: string) => +(funnelRows.find((r) => r.status === s)?.fee ?? 0);
     const initiated = funnelRows.reduce((a, r) => a + r.n, 0);
+    const authorized = funnelRows.reduce((a, r) => a + r.authorized, 0);
+    const captured = funnelRows.reduce((a, r) => a + r.captured, 0);
+    const stages = [
+      { label: 'Views', count: views },
+      { label: 'Initiated', count: initiated },
+      { label: 'Authorized', count: authorized },
+      { label: 'Captured', count: captured },
+      { label: 'Confirmed', count: byStatus('CONFIRMED') },
+    ];
+    const conversions = stages.slice(1).map((s, i) => {
+      const prev = stages[i].count;
+      return prev > 0 ? Math.round((s.count / prev) * 100) : 0;
+    });
     const paymentFunnel = {
-      stages: [
-        { label: 'Initiated', count: initiated },
-        { label: 'Authorized', count: byStatus('PENDING_CAPTURE') + byStatus('CONFIRMED') },
-        { label: 'Confirmed', count: byStatus('CONFIRMED') },
-      ],
+      stages,
+      conversions,
       lostExpiredCents: feeOf('EXPIRED') + feeOf('PENDING_PAYMENT'),
       lostFailedCents: feeOf('PAYMENT_FAILED'),
     };
 
-    // Per-event table.
+    // Per-event table. W17 — gross AND refunded over the same confirmed-or-was-
+    // confirmed population so the row's refund% can never exceed 100%.
     const perEvent = await sql`
       SELECT e.event_id, e.name, e.status, e.total_capacity, e.confirmed_count,
-             COALESCE(SUM(r.gross_amount_cents) FILTER (WHERE r.status='CONFIRMED'),0)::int AS gross,
-             COALESCE(SUM(r.refunded_amount_cents),0)::int AS refunded,
+             COALESCE(SUM(r.gross_amount_cents) FILTER (WHERE r.status='CONFIRMED' OR r.confirmed_at IS NOT NULL),0)::int AS gross,
+             COALESCE(SUM(r.refunded_amount_cents) FILTER (WHERE r.status='CONFIRMED' OR r.confirmed_at IS NOT NULL),0)::int AS refunded,
              e.opened_at
       FROM events e LEFT JOIN registrations r ON r.event_id = e.event_id
       WHERE e.status <> 'DRAFT'
@@ -167,6 +202,8 @@ export const analyticsService = {
     currentVelocity: number;
     waitlistDepth: number;
     refundsCount: number;
+    views: number;
+    revenue: { grossCents: number; refundedCents: number; netCents: number };
   } | null> {
     const evRows = await sql`SELECT * FROM events WHERE event_id = ${eventId}::UUID`;
     if (evRows.length === 0) return null;
@@ -214,9 +251,21 @@ export const analyticsService = {
     const wl = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM waitlist_entries WHERE event_id=${eventId}::UUID`;
     const rf = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM refund_log WHERE event_id=${eventId}::UUID`;
 
+    // W21 — lifetime views + event revenue (gross AND refunded over the same
+    // confirmed-or-was-confirmed population → net ≥ 0).
+    const views = await this.viewsByEvent(eventId);
+    const revRows = await sql<{ gross: string | null; refunded: string | null }[]>`
+      SELECT COALESCE(SUM(gross_amount_cents) FILTER (WHERE status='CONFIRMED' OR confirmed_at IS NOT NULL),0)::text AS gross,
+             COALESCE(SUM(refunded_amount_cents) FILTER (WHERE status='CONFIRMED' OR confirmed_at IS NOT NULL),0)::text AS refunded
+      FROM registrations WHERE event_id = ${eventId}::UUID`;
+    const grossCents = +(revRows[0]?.gross ?? 0);
+    const refundedCents = +(revRows[0]?.refunded ?? 0);
+
     return {
       event: ev, projection, cumulative, dailyBookings, movingAvg,
       currentVelocity, waitlistDepth: wl[0]?.n ?? 0, refundsCount: rf[0]?.n ?? 0,
+      views,
+      revenue: { grossCents, refundedCents, netCents: grossCents - refundedCents },
     };
   },
 };

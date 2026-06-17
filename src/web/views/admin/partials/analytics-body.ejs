@@ -17,15 +17,18 @@
 <div class="row g-4 mb-4">
   <div class="col-12 col-lg-7">
     <div class="panel">
-      <p class="caption-label mb-2">Daily revenue</p>
+      <p class="caption-label mb-2">Daily net revenue</p>
       <%- barChart(dailyRevenue.map(function (c) { return c / 100; }), { line: dailyRevenue.map(function(c){return c/100;}) }) %>
-      <p class="text-secondary small mb-0 mt-1">Total <%= money(kpis.grossCents) %> over <%= rangeDays %> days.</p>
+      <p class="text-secondary small mb-0 mt-1">Net <%= money(kpis.netCents) %> over <%= rangeDays %> days.</p>
     </div>
   </div>
   <div class="col-12 col-lg-5">
     <div class="panel">
       <p class="caption-label mb-2">Payment funnel</p>
       <%- funnel(paymentFunnel.stages) %>
+      <p class="text-secondary small mb-0 mt-2">
+        <% paymentFunnel.conversions.forEach(function (pct, i) { %><% if (i > 0) { %> · <% } %><%= paymentFunnel.stages[i].label %>→<%= paymentFunnel.stages[i + 1].label %> <%= pct %>%<% }); %>
+      </p>
       <p class="text-secondary small mb-0 mt-2">
         Lost: <%= money(paymentFunnel.lostExpiredCents) %> abandoned · <%= money(paymentFunnel.lostFailedCents) %> declined.
       </p>

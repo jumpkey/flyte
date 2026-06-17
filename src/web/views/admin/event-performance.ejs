@@ -34,9 +34,23 @@
   </div>
 </div>
 
-<div class="row g-3">
-  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Waitlist depth</div><div class="fs-5"><%= waitlistDepth %></div></div></div>
-  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Refunds</div><div class="fs-5"><%= refundsCount %></div></div></div>
-  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Available</div><div class="fs-5"><%= event.available_slots %></div></div></div>
-  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Exports</div><a class="text-decoration-none" href="/admin/events/<%= event.event_id %>/roster.csv">Roster CSV</a></div></div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3 col-lg-2"><div class="panel py-2"><div class="caption-label">Views</div><div class="fs-5"><%= views %></div></div></div>
+  <div class="col-6 col-md-3 col-lg-2"><div class="panel py-2"><div class="caption-label">Waitlist depth</div><div class="fs-5"><%= waitlistDepth %></div></div></div>
+  <div class="col-6 col-md-3 col-lg-2"><div class="panel py-2"><div class="caption-label">Refunds</div><div class="fs-5"><%= refundsCount %></div></div></div>
+  <div class="col-6 col-md-3 col-lg-2"><div class="panel py-2"><div class="caption-label">Available</div><div class="fs-5"><%= event.available_slots %></div></div></div>
+  <div class="col-6 col-md-3 col-lg-4"><div class="panel py-2"><div class="caption-label">Exports</div>
+    <a class="text-decoration-none" href="/admin/events/<%= event.event_id %>/roster.csv">Roster CSV</a> ·
+    <a class="text-decoration-none" href="/admin/events/<%= event.event_id %>/waitlist.csv">Waitlist CSV</a>
+  </div></div>
+</div>
+
+<%# Event revenue (A2) — gross/refunded/net, net ≥ 0 (W21). %>
+<div class="panel">
+  <p class="caption-label mb-2">Revenue</p>
+  <div class="row g-3">
+    <div class="col-4"><div class="caption-label">Gross</div><div class="fs-5 money"><%= money(revenue.grossCents) %></div></div>
+    <div class="col-4"><div class="caption-label">Refunded</div><div class="fs-5 money"><%= money(revenue.refundedCents) %></div></div>
+    <div class="col-4"><div class="caption-label">Net</div><div class="fs-5 money"><%= money(revenue.netCents) %></div></div>
+  </div>
 </div>

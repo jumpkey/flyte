@@ -13,6 +13,7 @@ import { testSql, truncateTables, assert, assertEqual } from '../../registration
 import { authService } from '../../services/auth-service.js';
 import { createSession } from '../middleware/session.js';
 import { computeProjection } from '../../services/analytics-projection.js';
+import { analyticsService } from '../../services/analytics-service.js';
 import { barChart, funnel, bookingCurve, sparkline } from '../utils/svg-charts.js';
 
 const ADMIN_EMAIL = 'admin-i10@example.com';
@@ -118,6 +119,66 @@ async function runTests() {
     const body = await (await get('/admin/events', adminCookie)).text();
     assert(/Ahead|On pace|At risk|Sold out/.test(body), 'pace band present');
     assert(body.includes(`/admin/events/${ev}/performance`), 'pace links to performance');
+  });
+
+  // ── W17 — net/refund math reconciles over the same population ──
+  // Add a third sale that was confirmed in-period then fully refunded: it flips to
+  // CANCELLED but keeps confirmed_at and refunded_amount_cents = gross. Previously
+  // gross (CONFIRMED-only) excluded it while refunds counted it, so net could go
+  // negative and refund-rate exceed 100%.
+  const refundedRegId = (await testSql`INSERT INTO registrations (event_id,email,first_name,last_name,gross_amount_cents,net_amount_cents,refunded_amount_cents,payment_intent_id,status,confirmed_at,cancelled_at)
+    VALUES (${ev},'refunded-i10@example.com','R','Funded',2500,0,2500,'pi_ref','CANCELLED',now()-interval '1 days',now()) RETURNING registration_id`)[0].registration_id as string;
+  await testSql`INSERT INTO refund_log (registration_id,event_id,stripe_refund_id,refund_type,amount_cents,reason,created_at)
+    VALUES (${refundedRegId},${ev},'re_test','FULL',2500,'test_refund',now()-interval '1 days')`;
+
+  await test('W17: net ≥ 0 and refund rate ≤ 100% over same population', async () => {
+    const d = await analyticsService.getSalesDashboard(90);
+    assert(d.kpis.refundedCents > 0, 'refunds counted');
+    assert(d.kpis.netCents >= 0, `net ≥ 0 (got ${d.kpis.netCents})`);
+    assert(d.kpis.refundRatePct <= 100, `refund rate ≤ 100% (got ${d.kpis.refundRatePct})`);
+    // 3 confirmed-in-period sales × $25 gross = $75; refunded $25 → net $50.
+    assertEqual(d.kpis.grossCents, 7500, 'gross over same population');
+    assertEqual(d.kpis.netCents, 5000, 'net = gross − refunded');
+  });
+
+  // ── W19 — A1 funnel (5 stages + views) + truly-net daily revenue ──
+  // Record storefront views so the top Views stage ≥ Initiated (browse-only),
+  // matching the real funnel shape; the seed has 4 created registrations.
+  for (let i = 0; i < 6; i++) await analyticsService.recordEventView(ev);
+
+  await test('W19: funnel has Views/Initiated/Authorized/Captured/Confirmed, monotone, conversions ≤ 100', async () => {
+    const d = await analyticsService.getSalesDashboard(90);
+    const labels = d.paymentFunnel.stages.map((s) => s.label);
+    assertEqual(labels.join(','), 'Views,Initiated,Authorized,Captured,Confirmed', 'stage labels');
+    const counts = d.paymentFunnel.stages.map((s) => s.count);
+    for (let i = 1; i < counts.length; i++) assert(counts[i] <= counts[i - 1], `monotone non-increasing at ${i}`);
+    assertEqual(d.paymentFunnel.conversions.length, 4, 'conversions length = stages-1');
+    d.paymentFunnel.conversions.forEach((p) => assert(p <= 100, `conversion ≤ 100 (got ${p})`));
+  });
+
+  await test('W19: dashboard renders "Daily net revenue"', async () => {
+    const body = await (await get('/admin/analytics', adminCookie)).text();
+    assert(body.includes('Daily net revenue'), 'daily net revenue label');
+  });
+
+  // ── W21 — A2 event performance views + revenue, WF-10 strip ──
+  await analyticsService.recordEventView(ev);
+  await analyticsService.recordEventView(ev);
+
+  await test('W21: getEventPerformance returns views and net revenue ≥ 0', async () => {
+    const perf = await analyticsService.getEventPerformance(ev);
+    assert(perf !== null, 'perf present');
+    assert(perf!.views >= 2, `views recorded (got ${perf!.views})`);
+    assert(perf!.revenue.netCents >= 0, `net ≥ 0 (got ${perf!.revenue.netCents})`);
+    assert(perf!.revenue.refundedCents > 0, 'refunds reflected');
+  });
+
+  await test('W21: admin event detail shows WF-10 strip (sparkline + projection + Performance link)', async () => {
+    const perf = await analyticsService.getEventPerformance(ev);
+    const body = await (await get(`/admin/events/${ev}`, adminCookie)).text();
+    assert(body.includes('<svg'), 'sparkline svg present');
+    assert(body.includes(`/admin/events/${ev}/performance`), 'Performance link');
+    assert(body.includes(perf!.projection.headline), 'projection headline text');
   });
 
   await truncateTables();
