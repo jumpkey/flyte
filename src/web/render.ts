@@ -6,6 +6,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { SessionData } from './middleware/session.js';
 import type { User } from '../services/user-service.js';
 import { viewHelpers } from './view-helpers.js';
+import { svgCharts } from './utils/svg-charts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,7 @@ export async function renderView(
     // template and partial as bare locals — the single source of truth for the
     // WK §5 status mapping and money formatting lives in view-helpers.ts.
     ...viewHelpers,
+    ...svgCharts,
     ...data,
     csrfToken: session.csrfToken ?? '',
     flashMessage,
@@ -61,6 +63,7 @@ export async function renderFragment(c: Context, view: string, data: Record<stri
   const session = (c.get('session') as SessionData | undefined) ?? {};
   const viewData = {
     ...viewHelpers,
+    ...svgCharts,
     ...data,
     csrfToken: session.csrfToken ?? '',
     user: (c.get('user') as User | undefined) ?? null,

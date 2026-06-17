@@ -1,0 +1,15 @@
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <h1 class="h3 mb-0">Analytics</h1>
+  <%# Range toggle — HTMX swaps the body, range in the query string. %>
+  <div class="btn-group" role="group" aria-label="Date range">
+    <% [[30,'30d'],[90,'90d'],[365,'1y'],[3650,'All']].forEach(function (r) { %>
+      <a class="btn btn-sm <%= rangeDays === r[0] ? 'btn-primary' : 'btn-outline-secondary' %>"
+         href="/admin/analytics?range=<%= r[0] %>"
+         hx-get="/admin/analytics?range=<%= r[0] %>" hx-target="#analytics-body" hx-swap="innerHTML" hx-push-url="true"><%= r[1] %></a>
+    <% }); %>
+  </div>
+</div>
+
+<div id="analytics-body">
+  <%- include('partials/analytics-body', { kpis: kpis, dailyRevenue: dailyRevenue, paymentFunnel: paymentFunnel, perEvent: perEvent, customers: customers, rangeDays: rangeDays }) %>
+</div>

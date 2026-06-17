@@ -10,7 +10,7 @@
   <table class="table align-middle">
     <thead>
       <tr>
-        <th>Name</th><th>Date</th><th>Status</th>
+        <th>Name</th><th>Date</th><th>Status</th><th>Pace</th>
         <th class="text-end">Confirmed</th><th class="text-end">Available</th><th class="text-end">Revenue</th>
       </tr>
     </thead>
@@ -20,6 +20,12 @@
         <td><a class="text-decoration-none fw-semibold" href="/admin/events/<%= ev.event_id %>"><%= ev.name %></a></td>
         <td><%= dateLong(ev.event_date) %></td>
         <td><%- include('../partials/status-pill', { status: ev.status }) %></td>
+        <td>
+          <% if (ev.pace_band) { var pl = {SOLD_OUT:'Sold out',AHEAD:'Ahead',ON_PACE:'On pace',AT_RISK:'At risk'}[ev.pace_band];
+             var pc = {SOLD_OUT:'pill-info',AHEAD:'pill-success',ON_PACE:'pill-success',AT_RISK:'pill-warning'}[ev.pace_band]; %>
+            <a class="text-decoration-none" href="/admin/events/<%= ev.event_id %>/performance"><span class="pill <%= pc %>"><%= pl %></span></a>
+          <% } else { %><span class="text-secondary">—</span><% } %>
+        </td>
         <td class="text-end money"><%= ev.confirmed_count %> / <%= ev.total_capacity %></td>
         <td class="text-end money"><%= ev.available_slots %></td>
         <td class="text-end money"><%= money(ev.gross_revenue_cents || 0) %></td>

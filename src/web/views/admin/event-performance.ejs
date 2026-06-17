@@ -1,0 +1,42 @@
+<% var bandLabel = { SOLD_OUT:'Sold out', AHEAD:'Ahead', ON_PACE:'On pace', AT_RISK:'At risk' }[projection.band];
+   var bandClass = { SOLD_OUT:'pill-info', AHEAD:'pill-success', ON_PACE:'pill-success', AT_RISK:'pill-warning' }[projection.band];
+   var projSeries = [ cumulative.length ? cumulative[cumulative.length-1] : 0, projection.projectedFill ]; %>
+
+<div class="mb-3">
+  <a class="text-decoration-none small" href="/admin/events/<%= event.event_id %>">← <%= event.name %></a>
+  <h1 class="h3 mb-1 mt-1">Performance <span class="pill <%= bandClass %>"><%= bandLabel %></span></h1>
+</div>
+
+<%# Projection callout — the headline is the data (§3.1). %>
+<div class="panel mb-4">
+  <p class="fs-5 mb-1"><%= projection.headline %></p>
+  <p class="text-secondary small mb-0">
+    <%= event.confirmed_count %> of <%= event.total_capacity %> confirmed ·
+    velocity <%= (Math.round(currentVelocity * 10) / 10) %>/day<% if (projection.paceIndex !== null) { %> ·
+    pace index <%= (Math.round(projection.paceIndex * 100) / 100) %><% } %>
+  </p>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-7">
+    <div class="panel">
+      <p class="caption-label mb-2">Booking curve</p>
+      <%- bookingCurve({ cumulative: cumulative, capacity: event.total_capacity, projection: projSeries }) %>
+      <p class="text-secondary small mb-0 mt-1">Cumulative confirmations vs the <%= event.total_capacity %>-seat ceiling (dashed); dotted line projects current pace.</p>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="panel">
+      <p class="caption-label mb-2">Daily bookings &amp; 7-day average</p>
+      <%- barChart(dailyBookings, { line: movingAvg }) %>
+      <p class="text-secondary small mb-0 mt-1">Current velocity <strong><%= (Math.round(currentVelocity * 10) / 10) %></strong> registrations/day.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Waitlist depth</div><div class="fs-5"><%= waitlistDepth %></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Refunds</div><div class="fs-5"><%= refundsCount %></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Available</div><div class="fs-5"><%= event.available_slots %></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Exports</div><a class="text-decoration-none" href="/admin/events/<%= event.event_id %>/roster.csv">Roster CSV</a></div></div>
+</div>

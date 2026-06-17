@@ -20,6 +20,7 @@ import { adminRegistrationsController } from './controllers/admin/registrations.
 import { adminRefundsController } from './controllers/admin/refunds.js';
 import { adminUsersController } from './controllers/admin/users.js';
 import { adminActivityController } from './controllers/admin/activity.js';
+import { adminAnalyticsController } from './controllers/admin/analytics.js';
 import { refundRequestController } from './controllers/refund-request.js';
 import { accountController } from './controllers/account.js';
 import { findRegistrationController } from './controllers/find-registration.js';
@@ -127,6 +128,10 @@ app.get('/admin/users/:id', adminGuard, adminUsersController.detail);
 app.post('/admin/users/:id/lock', adminGuard, adminUsersController.lock);
 app.post('/admin/users/:id/unlock', adminGuard, adminUsersController.unlock);
 app.get('/admin/activity', adminGuard, adminActivityController.list);
+
+// Analytics (I10).
+app.get('/admin/analytics', adminGuard, adminAnalyticsController.dashboard);
+app.get('/admin/events/:id/performance', adminGuard, adminAnalyticsController.eventPerformance);
 
 app.get('/dashboard', authGuard, dashboardController.index);
 // My Registrations (I7) — ownership-checked account pages.

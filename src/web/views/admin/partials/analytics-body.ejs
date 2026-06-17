@@ -1,0 +1,70 @@
+<%# A1 dashboard body (HTMX-swappable on range change). Charts are garnish — the
+    numbers are always in text too (WK-A11Y-3). %>
+<div class="row g-3 mb-4">
+  <% function kpi(label, value, sub) { %>
+    <div class="col-6 col-lg-3"><div class="panel py-2">
+      <div class="caption-label"><%= label %></div>
+      <div class="fs-4 money"><%= value %></div>
+      <% if (sub) { %><div class="text-secondary small"><%= sub %></div><% } %>
+    </div></div>
+  <% } %>
+  <%- kpi('Gross revenue', money(kpis.grossCents), kpis.grossDeltaPct === null ? '' : (kpis.grossDeltaPct >= 0 ? '▲ ' : '▼ ') + Math.abs(kpis.grossDeltaPct) + '% vs prior') %>
+  <%- kpi('Net (after refunds)', money(kpis.netCents), '') %>
+  <%- kpi('Avg order', money(kpis.aovCents), kpis.confirmedCount + ' confirmed') %>
+  <%- kpi('Refund rate', kpis.refundRatePct + '%', money(kpis.refundedCents) + ' refunded') %>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-7">
+    <div class="panel">
+      <p class="caption-label mb-2">Daily revenue</p>
+      <%- barChart(dailyRevenue.map(function (c) { return c / 100; }), { line: dailyRevenue.map(function(c){return c/100;}) }) %>
+      <p class="text-secondary small mb-0 mt-1">Total <%= money(kpis.grossCents) %> over <%= rangeDays %> days.</p>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="panel">
+      <p class="caption-label mb-2">Payment funnel</p>
+      <%- funnel(paymentFunnel.stages) %>
+      <p class="text-secondary small mb-0 mt-2">
+        Lost: <%= money(paymentFunnel.lostExpiredCents) %> abandoned · <%= money(paymentFunnel.lostFailedCents) %> declined.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <h2 class="h5 mb-2">Events</h2>
+    <% if (perEvent.length === 0) { %><p class="text-secondary">No events yet.</p><% } else { %>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Event</th><th>Status</th><th class="text-end">Fill</th><th class="text-end">Gross</th><th class="text-end">Refund %</th></tr></thead>
+      <tbody><% perEvent.forEach(function (e) {
+        var fill = e.total_capacity > 0 ? Math.round((e.confirmed_count / e.total_capacity) * 100) : 0;
+        var rr = e.gross > 0 ? Math.round((e.refunded / e.gross) * 1000) / 10 : 0; %>
+        <tr>
+          <td><a class="text-decoration-none" href="/admin/events/<%= e.event_id %>/performance"><%= e.name %></a></td>
+          <td><%- include('../../partials/status-pill', { status: e.status }) %></td>
+          <td class="text-end"><%= fill %>%</td>
+          <td class="text-end money"><%= money(e.gross) %></td>
+          <td class="text-end"><%= rr %>%</td>
+        </tr>
+      <% }); %></tbody>
+    </table></div>
+    <% } %>
+  </div>
+  <div class="col-12 col-lg-5">
+    <h2 class="h5 mb-2">Customers</h2>
+    <div class="panel mb-3">
+      <div class="d-flex justify-content-between"><span class="text-secondary">New buyers</span><span><%= customers.newBuyers %></span></div>
+      <div class="d-flex justify-content-between"><span class="text-secondary">Returning</span><span><%= customers.returningBuyers %> (<%= customers.repeatRatePct %>%)</span></div>
+      <div class="d-flex justify-content-between"><span class="text-secondary">Activated buyers (shadow→active)</span><span><%= customers.activationRatePct %>%</span></div>
+    </div>
+    <% if (customers.top.length > 0) { %>
+    <p class="caption-label mb-1">Top customers</p>
+    <ul class="list-unstyled mb-0">
+      <% customers.top.forEach(function (t) { %><li class="d-flex justify-content-between"><span class="small"><%= t.email %></span><span class="money small"><%= money(t.lifetime_net) %></span></li><% }); %>
+    </ul>
+    <% } %>
+  </div>
+</div>

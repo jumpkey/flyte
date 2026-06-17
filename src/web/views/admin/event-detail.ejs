@@ -13,6 +13,7 @@
     <p class="text-secondary mb-0"><%= dateLong(event.event_date) %><% if (event.location) { %> · <%= event.location %><% } %></p>
   </div>
   <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/admin/events/<%= event.event_id %>/performance">Performance</a>
     <a class="btn btn-outline-secondary" href="/admin/events/<%= event.event_id %>/edit">Edit</a>
     <% if (event.status !== 'CANCELLED') { %>
       <button class="btn btn-outline-danger" data-open-dialog="#cancel-dialog">Cancel event</button>

@@ -2,6 +2,8 @@ import type { Context } from 'hono';
 import { renderView } from '../../render.js';
 import { eventAdminService } from '../../../services/event-admin-service.js';
 import { validateEventForm, isAllowedTransition } from '../../validators/event-form.js';
+import { analyticsService } from '../../../services/analytics-service.js';
+import { computeProjection } from '../../../services/analytics-projection.js';
 import { RefundService } from '../../../registration/services/RefundService.js';
 import { NotificationService } from '../../../registration/services/NotificationService.js';
 import { getStripe } from '../../../registration/stripe-factory.js';
@@ -39,7 +41,20 @@ async function getRefundService(): Promise<RefundService> {
 export const adminEventsController = {
   async list(c: Context): Promise<Response> {
     const events = await eventAdminService.listForAdmin();
-    return renderView(c, 'admin/events-list', { title: 'Events', activeNav: 'events', events }, { layout: 'admin' });
+    // Pace column (A3): compute a band per OPEN/FULL event from trailing velocity.
+    const velocities = await analyticsService.velocityByEvent();
+    const withPace = events.map((e) => {
+      let band: string | null = null;
+      if (e.status === 'OPEN' || e.status === 'FULL') {
+        band = computeProjection({
+          openedAt: e.opened_at, eventDate: e.event_date,
+          capacity: e.total_capacity, confirmed: e.confirmed_count,
+          availableSlots: e.available_slots, velocity: velocities[e.event_id] ?? 0,
+        }).band;
+      }
+      return { ...e, pace_band: band };
+    });
+    return renderView(c, 'admin/events-list', { title: 'Events', activeNav: 'events', events: withPace }, { layout: 'admin' });
   },
 
   async newForm(c: Context): Promise<Response> {

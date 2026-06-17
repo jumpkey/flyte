@@ -20,6 +20,7 @@ const TEST_FILES = [
   'account.test.ts',
   'admin-users.test.ts',
   'polish.test.ts',
+  'analytics.test.ts',
 ];
 
 async function runFile(file: string): Promise<{ file: string; passed: boolean; output: string }> {
