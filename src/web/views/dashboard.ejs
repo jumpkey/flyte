@@ -4,6 +4,28 @@
   <p class="text-muted mb-4">Welcome back, <strong><%= user.displayName %></strong></p>
   <div class="row g-4">
     <div class="col-12 col-md-6">
+      <%# Your upcoming events (I7) — next confirmed registrations. %>
+      <div class="panel h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <p class="caption-label mb-0">Your upcoming events</p>
+          <a class="text-decoration-none small" href="/account/registrations">All registrations →</a>
+        </div>
+        <% if (!upcoming || upcoming.length === 0) { %>
+          <p class="text-muted mb-2">No upcoming registrations.</p>
+          <a href="/events" class="btn btn-primary btn-sm">Browse events</a>
+        <% } else { %>
+          <ul class="list-unstyled mb-0">
+            <% upcoming.forEach(function (r) { %>
+            <li class="mb-2 d-flex justify-content-between align-items-center">
+              <a class="text-decoration-none fw-semibold" href="/account/registrations/<%= r.registration_id %>"><%= r.event_name %></a>
+              <span class="text-secondary small"><%= dateLong(r.event_date) %></span>
+            </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
       <div class="panel h-100">
         <p class="caption-label mb-3">Account</p>
         <div class="receipt">
@@ -14,13 +36,6 @@
           <% } %>
         </div>
         <a href="/profile" class="btn btn-outline-secondary btn-sm mt-3">Edit profile</a>
-      </div>
-    </div>
-    <div class="col-12 col-md-6">
-      <div class="panel h-100">
-        <p class="caption-label mb-3">Events</p>
-        <p class="text-muted">Browse upcoming events and grab your spot.</p>
-        <a href="/" class="btn btn-primary btn-sm">Browse events</a>
       </div>
     </div>
   </div>

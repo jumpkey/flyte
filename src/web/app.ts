@@ -17,6 +17,7 @@ import { adminEventsController } from './controllers/admin/events.js';
 import { adminRegistrationsController } from './controllers/admin/registrations.js';
 import { adminRefundsController } from './controllers/admin/refunds.js';
 import { refundRequestController } from './controllers/refund-request.js';
+import { accountController } from './controllers/account.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { adminGuard } from './middleware/admin-guard.js';
 import { loadUser } from './middleware/load-user.js';
@@ -114,6 +115,9 @@ app.post('/admin/refund-requests/:id/approve', adminGuard, adminRefundsControlle
 app.post('/admin/refund-requests/:id/deny', adminGuard, adminRefundsController.deny);
 
 app.get('/dashboard', authGuard, dashboardController.index);
+// My Registrations (I7) — ownership-checked account pages.
+app.get('/account/registrations', authGuard, accountController.registrations);
+app.get('/account/registrations/:id', authGuard, accountController.registrationDetail);
 app.get('/profile', authGuard, profileController.editForm);
 app.post('/profile', authGuard, profileController.update);
 app.post('/logout', authGuard, authController.logout);

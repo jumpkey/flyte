@@ -1,0 +1,46 @@
+<div class="container py-4">
+  <h1 class="h3 mb-4">My registrations</h1>
+
+  <% if ((!registrations || registrations.length === 0) && (!waitlist || waitlist.length === 0)) { %>
+    <%- include('partials/empty-state', { title: 'No registrations yet', message: 'When you book an event it shows up here — including anything you bought as a guest.', ctaHref: '/events', ctaLabel: 'Browse events' }) %>
+  <% } else { %>
+
+    <% if (registrations && registrations.length > 0) { %>
+    <div class="table-responsive mb-4">
+      <table class="table align-middle">
+        <thead><tr><th>Event</th><th>When</th><th>Status</th><th class="text-end">Amount</th><th></th></tr></thead>
+        <tbody>
+          <% registrations.forEach(function (r) { %>
+          <tr>
+            <td><a class="text-decoration-none fw-semibold" href="/account/registrations/<%= r.registration_id %>"><%= r.event_name %></a></td>
+            <td><%= dateLong(r.event_date) %></td>
+            <td><%- include('partials/status-pill', { status: displayStatus({ status: r.status, refunded_amount_cents: r.refunded_amount_cents }) }) %></td>
+            <td class="text-end money"><%= money(r.gross_amount_cents) %></td>
+            <td class="text-end"><a class="text-decoration-none" href="/account/registrations/<%= r.registration_id %>">View →</a></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <% if (waitlist && waitlist.length > 0) { %>
+    <h2 class="h5 mb-2">Waitlists</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Event</th><th>When</th><th></th></tr></thead>
+        <tbody>
+          <% waitlist.forEach(function (w) { %>
+          <tr>
+            <td><a class="text-decoration-none fw-semibold" href="/events/<%= w.event_id %>"><%= w.event_name %></a></td>
+            <td><%= dateLong(w.event_date) %></td>
+            <td class="text-end"><a class="text-decoration-none" href="/waitlist/<%= w.waitlist_entry_id %>">Position →</a></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+  <% } %>
+</div>

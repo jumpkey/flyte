@@ -1,0 +1,38 @@
+<div class="container py-4">
+  <div class="panel checkout-panel">
+    <a class="text-decoration-none small" href="/account/registrations">← My registrations</a>
+    <h1 class="h3 mb-1 mt-2">
+      <%= reg.event_name %>
+      <%- include('partials/status-pill', { status: displayStatus({ status: reg.status, refunded_amount_cents: reg.refunded_amount_cents }) }) %>
+    </h1>
+    <p class="text-muted mb-4"><%= dateLong(reg.event_date) %><% if (reg.location) { %> · <%= reg.location %><% } %></p>
+
+    <div class="receipt text-start mb-4">
+      <div class="row-line"><span class="k">Name</span><span class="v"><%= reg.first_name %> <%= reg.last_name %></span></div>
+      <div class="row-line"><span class="k">Email</span><span class="v"><%= reg.email %></span></div>
+      <div class="row-line"><span class="k">Amount paid</span><span class="v money"><%= money(reg.gross_amount_cents) %></span></div>
+      <% if (reg.refunded_amount_cents > 0) { %>
+      <div class="row-line"><span class="k">Refunded</span><span class="v money"><%= money(reg.refunded_amount_cents) %></span></div>
+      <% } %>
+      <div class="row-line"><span class="k">Registration ID</span><span class="v" style="font-size:.8rem;"><%= reg.registration_id %></span></div>
+    </div>
+
+    <% if (reg.refund_request_status === 'REQUESTED') { %>
+      <div class="alert alert-flyte" role="status">Your refund request is under review.</div>
+    <% } else if (reg.refund_request_status === 'APPROVED') { %>
+      <div class="alert alert-flyte" role="status">Your refund has been approved.</div>
+    <% } else if (reg.refund_request_status === 'DENIED') { %>
+      <div class="alert alert-flyte alert-flyte-error" role="status">Your previous refund request was declined.</div>
+    <% } %>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <% if (reg.event_date > new Date()) { %>
+        <a class="btn btn-outline-secondary" href="/registration/<%= reg.registration_id %>/calendar.ics">Add to calendar</a>
+      <% } %>
+      <% if (reg.can_request_refund) { %>
+        <a class="btn btn-outline-secondary" href="/registration/<%= reg.registration_id %>/refund-request">Request a refund</a>
+      <% } %>
+      <a class="btn btn-outline-secondary" href="/events/<%= reg.event_id %>">View event</a>
+    </div>
+  </div>
+</div>

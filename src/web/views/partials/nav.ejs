@@ -4,6 +4,7 @@
     <div class="navbar-nav ms-auto align-items-center gap-2">
       <% if (typeof user !== 'undefined' && user) { %>
         <a class="nav-link" href="/dashboard">Dashboard</a>
+        <a class="nav-link" href="/account/registrations">My registrations</a>
         <a class="nav-link" href="/profile">Profile</a>
         <form action="/logout" method="post" class="m-0">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
