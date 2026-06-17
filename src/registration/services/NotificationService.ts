@@ -1,14 +1,35 @@
 import nodemailer from 'nodemailer';
+import pino from 'pino';
 import { config } from '../../config.js';
 import type { INotificationService } from '../interfaces.js';
 import type { RegistrationRecord, WaitlistEntry } from '../types.js';
 import { wrapEmail } from './email-template.js';
 
-const transporter = nodemailer.createTransport({
+const logger = pino({ level: 'info' });
+
+const mailer = nodemailer.createTransport({
   host: config.smtp.host,
   port: config.smtp.port,
   auth: config.smtp.user ? { user: config.smtp.user, pass: config.smtp.pass } : undefined,
 });
+
+/**
+ * Single choke point for outbound mail (#23). Every send failure is logged with
+ * the recipient and subject before the error is rethrown, so a silent bounce on
+ * a paid registration is never invisible to ops. Call sites keep their
+ * best-effort `catch` — the difference is the failure now leaves a trail.
+ */
+async function sendMail(message: nodemailer.SendMailOptions): Promise<void> {
+  try {
+    await mailer.sendMail(message);
+  } catch (err) {
+    logger.error(
+      { to: message.to, subject: message.subject, err: err instanceof Error ? err.message : String(err) },
+      'email send failed',
+    );
+    throw err;
+  }
+}
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -43,7 +64,7 @@ export class NotificationService implements INotificationService {
         ${row('Registration ID', registration.registrationId)}
       </table>
       <p style="${P}">Plans changed? You can request a refund any time before the event from your confirmation page.</p>`;
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: registration.email,
       subject: `Registration confirmed: ${eventName}`,
@@ -58,7 +79,7 @@ export class NotificationService implements INotificationService {
       <p style="${P}">Dear ${escapeHtml(entry.firstName)} ${escapeHtml(entry.lastName)},</p>
       <p style="${P}">You are <strong>#${position}</strong> on the waitlist for <strong>${escapeHtml(eventName)}</strong>.</p>
       <p style="${P}">If a spot opens up we'll email you. No payment is required at this time.</p>`;
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: entry.email,
       subject: `You're on the waitlist: ${eventName}`,
@@ -73,7 +94,7 @@ export class NotificationService implements INotificationService {
       <p style="${P}">Dear ${escapeHtml(registration.firstName)} ${escapeHtml(registration.lastName)},</p>
       <p style="${P}">A refund of <strong>${amount}</strong> has been issued for your registration to <strong>${escapeHtml(eventName)}</strong>.</p>
       <p style="${P}">Registration ID: ${registration.registrationId}. Please allow 5–10 business days for it to appear on your statement.</p>`;
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: registration.email,
       subject: `Refund processed: ${eventName}`,
@@ -89,7 +110,7 @@ export class NotificationService implements INotificationService {
       <p style="${P}">Dear ${escapeHtml(registration.firstName)} ${escapeHtml(registration.lastName)},</p>
       <p style="${P}">We've received your refund request for <strong>${escapeHtml(eventName)}</strong> and will review it shortly. You'll get another email once it's processed.</p>
       <p style="${P}">Registration ID: ${registration.registrationId}</p>`;
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: registration.email,
       subject: `Refund request received: ${eventName}`,
@@ -105,7 +126,7 @@ export class NotificationService implements INotificationService {
       <p style="${P}"><strong>Customer:</strong> ${escapeHtml(registration.firstName)} ${escapeHtml(registration.lastName)} (${escapeHtml(registration.email)})</p>
       <p style="${P}"><strong>Reason:</strong> ${reason ? escapeHtml(reason) : '<em>none given</em>'}</p>
       <p style="${P}"><strong>Registration ID:</strong> ${registration.registrationId}</p>`;
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: config.adminEmail,
       subject: `New refund request: ${eventName}`,
@@ -118,7 +139,7 @@ export class NotificationService implements INotificationService {
   async sendRegistrationLinks(email: string, items: Array<{ eventName: string; url: string }>): Promise<void> {
     const listHtml = items.map((i) => `<p style="${P}"><strong>${escapeHtml(i.eventName)}</strong><br><a href="${i.url}" style="color:#C2410C;">${i.url}</a></p>`).join('');
     const listText = items.map((i) => `${i.eventName}: ${i.url}`).join('\n');
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: email,
       subject: 'Your Flyte registrations',
@@ -134,7 +155,7 @@ export class NotificationService implements INotificationService {
       <p style="${P}">After review, we're unable to approve your refund request for <strong>${escapeHtml(eventName)}</strong>.</p>
       <p style="${P}"><strong>Note from our team:</strong> ${escapeHtml(note)}</p>
       <p style="${P}">If you have questions, just reply to this email.</p>`;
-    await transporter.sendMail({
+    await sendMail({
       from: config.smtp.from,
       to: registration.email,
       subject: `Update on your refund request: ${eventName}`,

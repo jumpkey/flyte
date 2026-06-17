@@ -30,4 +30,13 @@ COPY --from=builder /app/db ./db
 COPY public ./public
 COPY crontab ./crontab
 EXPOSE 3000
+
+# Drop root (#21): run the web server, the supercronic worker, and the
+# reconciliation runner as the unprivileged `node` user the base image ships.
+# Nothing under /app is written at runtime (state lives in Postgres), so node
+# only needs read/execute; supercronic is world-executable and port 3000 is
+# unprivileged, so both processes start unchanged.
+RUN chown -R node:node /app
+USER node
+
 CMD ["node", "dist/index.js"]
