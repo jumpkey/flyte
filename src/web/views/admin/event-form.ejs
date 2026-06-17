@@ -1,0 +1,110 @@
+<% var v = values || {}; var errs = errors || {}; %>
+<% var action = mode === 'edit' ? ('/admin/events/' + eventId) : '/admin/events'; %>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0"><%= mode === 'edit' ? 'Edit event' : 'New event' %></h1>
+  <a class="text-decoration-none" href="/admin/events">← All events</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <form method="post" action="<%= action %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="mb-3">
+        <label class="form-label" for="name">Name</label>
+        <input class="form-control<%= errs.name ? ' is-invalid' : '' %>" id="name" name="name" value="<%= v.name || '' %>" required>
+        <% if (errs.name) { %><div class="invalid-feedback"><%= errs.name %></div><% } %>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-sm-6 mb-3">
+          <label class="form-label" for="eventDate">Date &amp; time</label>
+          <input class="form-control<%= errs.eventDate ? ' is-invalid' : '' %>" type="datetime-local" id="eventDate" name="eventDate" value="<%= v.eventDateRaw || '' %>" required>
+          <% if (errs.eventDate) { %><div class="invalid-feedback"><%= errs.eventDate %></div><% } %>
+        </div>
+        <div class="col-12 col-sm-6 mb-3">
+          <label class="form-label" for="location">Location</label>
+          <input class="form-control<%= errs.location ? ' is-invalid' : '' %>" id="location" name="location" value="<%= v.location || '' %>">
+          <% if (errs.location) { %><div class="invalid-feedback"><%= errs.location %></div><% } %>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="description">Description</label>
+        <textarea class="form-control<%= errs.description ? ' is-invalid' : '' %>" id="description" name="description" rows="4"><%= v.description || '' %></textarea>
+        <% if (errs.description) { %><div class="invalid-feedback"><%= errs.description %></div><% } %>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-6 mb-3">
+          <label class="form-label" for="capacity">Capacity</label>
+          <input class="form-control<%= errs.capacity ? ' is-invalid' : '' %>" type="number" min="1" id="capacity" name="capacity" value="<%= v.totalCapacity != null ? v.totalCapacity : '' %>" required>
+          <% if (errs.capacity) { %><div class="invalid-feedback"><%= errs.capacity %></div>
+          <% } else if (mode === 'edit' && typeof confirmedCount !== 'undefined') { %><div class="form-text"><%= confirmedCount %> confirmed — can't go lower.</div><% } %>
+        </div>
+        <div class="col-6 mb-3">
+          <label class="form-label" for="feeDollars">Fee (USD)</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input class="form-control<%= errs.feeDollars ? ' is-invalid' : '' %>" id="feeDollars" name="feeDollars" value="<%= v.feeDollars || '' %>" inputmode="decimal" required>
+            <% if (errs.feeDollars) { %><div class="invalid-feedback"><%= errs.feeDollars %></div><% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="imageUrl">Image URL <span class="text-secondary">(https, optional)</span></label>
+        <input class="form-control<%= errs.imageUrl ? ' is-invalid' : '' %>" id="imageUrl" name="imageUrl" value="<%= v.imageUrl || '' %>" placeholder="https://…">
+        <% if (errs.imageUrl) { %><div class="invalid-feedback"><%= errs.imageUrl %></div>
+        <% } else { %><div class="form-text">Leave blank to use the styled fallback card.</div><% } %>
+      </div>
+
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="waitlistEnabled" name="waitlistEnabled" <%= v.waitlistEnabled !== false ? 'checked' : '' %>>
+        <label class="form-check-label" for="waitlistEnabled">Offer a waitlist when sold out</label>
+      </div>
+
+      <% if (mode === 'edit') { %>
+        <% var allowed = ({ DRAFT:['DRAFT','OPEN'], OPEN:['OPEN','CLOSED'], CLOSED:['CLOSED','OPEN'], FULL:['FULL','CLOSED'], CANCELLED:['CANCELLED'] })[currentStatus] || [currentStatus]; %>
+        <div class="mb-4">
+          <label class="form-label" for="status">Status</label>
+          <select class="form-select<%= errs.status ? ' is-invalid' : '' %>" id="status" name="status">
+            <% allowed.forEach(function (s) { %>
+              <option value="<%= s %>" <%= s === currentStatus ? 'selected' : '' %>><%= s %></option>
+            <% }); %>
+          </select>
+          <% if (errs.status) { %><div class="invalid-feedback"><%= errs.status %></div><% } %>
+        </div>
+      <% } else { %>
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" id="openImmediately" name="openImmediately">
+          <label class="form-check-label" for="openImmediately">Open immediately <span class="text-secondary">(otherwise saved as a hidden draft)</span></label>
+        </div>
+      <% } %>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><%= mode === 'edit' ? 'Save changes' : 'Create event' %></button>
+        <a class="btn btn-outline-secondary" href="<%= mode === 'edit' ? ('/admin/events/' + eventId) : '/admin/events' %>">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <%# Live storefront-card preview (WF-09) — app.js mirrors the inputs into it. %>
+  <div class="col-12 col-lg-5">
+    <p class="caption-label mb-2">Storefront preview</p>
+    <div class="event-card" id="event-preview" style="max-width: 22rem;">
+      <div class="event-media">
+        <div class="event-fallback">
+          <span class="initials" data-preview="initials">EV</span>
+          <span class="when" data-preview="badge"></span>
+        </div>
+        <img data-preview="img" alt="" style="display:none;">
+      </div>
+      <div class="event-body">
+        <p class="event-title" data-preview="title">Event name</p>
+        <p class="event-meta" data-preview="meta"></p>
+        <span class="event-price money" data-preview="price">$0.00</span>
+      </div>
+    </div>
+  </div>
+</div>

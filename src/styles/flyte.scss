@@ -388,6 +388,16 @@ $focus-ring-width: .15rem;
   .admin-content { padding: 1.25rem; }
 }
 
+// Native dialog (CSP-safe modals)
+.flyte-dialog {
+  border: 0; border-radius: $border-radius-lg; padding: 1.5rem;
+  max-width: 32rem; width: calc(100% - 2rem);
+  box-shadow: 0 24px 64px rgba($fl-ink, .28);
+  &::backdrop { background: rgba($fl-ink, .45); }
+}
+.admin-row { cursor: pointer; }
+.admin-row:hover { background: $fl-surface; }
+
 // Focus visibility everywhere (WK-A11Y-1)
 :focus-visible { outline: 2px solid $fl-flare; outline-offset: 2px; }
 

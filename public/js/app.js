@@ -13,6 +13,61 @@ document.addEventListener('error', function (e) {
   }
 }, true);
 
+// Native <dialog> opener/closer (CSP-safe modals, no Bootstrap JS needed).
+document.addEventListener('click', function (e) {
+  const opener = e.target.closest('[data-open-dialog]');
+  if (opener) {
+    const dlg = document.querySelector(opener.getAttribute('data-open-dialog'));
+    if (dlg && typeof dlg.showModal === 'function') { e.preventDefault(); dlg.showModal(); }
+  }
+  const closer = e.target.closest('[data-close-dialog]');
+  if (closer) { const dlg = closer.closest('dialog'); if (dlg) { e.preventDefault(); dlg.close(); } }
+});
+
+// Admin row click-through: a table row with data-href navigates to it.
+document.addEventListener('click', function (e) {
+  const row = e.target.closest('.admin-row[data-href]');
+  if (row && e.target.tagName !== 'A') { window.location.href = row.getAttribute('data-href'); }
+});
+
+// Admin event-form live preview (WF-09): mirror inputs into the storefront card.
+(function () {
+  const preview = document.getElementById('event-preview');
+  if (!preview) return;
+  const $ = function (sel) { return preview.querySelector('[data-preview="' + sel + '"]'); };
+  const nameEl = document.getElementById('name');
+  const feeEl = document.getElementById('feeDollars');
+  const dateEl = document.getElementById('eventDate');
+  const locEl = document.getElementById('location');
+  const imgEl = document.getElementById('imageUrl');
+
+  function initials(name) {
+    return (name || 'EV').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() || 'EV';
+  }
+  function render() {
+    const name = nameEl ? nameEl.value : '';
+    $('title').textContent = name || 'Event name';
+    $('initials').textContent = initials(name);
+    const fee = feeEl ? parseFloat(feeEl.value) : NaN;
+    $('price').textContent = '$' + (isNaN(fee) ? '0.00' : fee.toFixed(2));
+    if (dateEl && dateEl.value) {
+      const d = new Date(dateEl.value);
+      if (!isNaN(d.getTime())) {
+        const badge = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+        $('badge').textContent = badge;
+        $('meta').textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + (locEl && locEl.value ? ' · ' + locEl.value : '');
+      }
+    } else {
+      $('meta').textContent = locEl && locEl.value ? locEl.value : '';
+    }
+    const img = $('img');
+    if (imgEl && /^https:\/\//i.test(imgEl.value)) { img.src = imgEl.value; img.style.display = 'block'; }
+    else { img.removeAttribute('src'); img.style.display = 'none'; }
+  }
+  [nameEl, feeEl, dateEl, locEl, imgEl].forEach(function (el) { if (el) el.addEventListener('input', render); });
+  render();
+})();
+
 // Bootstrap/HTMX coexistence seam (WK §11.1 rule 5): re-init JS-driven
 // widgets inside swapped fragments here if we ever put any there.
 document.addEventListener('htmx:afterSwap', function () { /* no-op for now */ });

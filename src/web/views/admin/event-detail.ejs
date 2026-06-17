@@ -1,0 +1,92 @@
+<%
+  function toLocalInput(d) {
+    var dt = new Date(d); var p = function (n) { return String(n).padStart(2, '0'); };
+    return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()) + 'T' + p(dt.getHours()) + ':' + p(dt.getMinutes());
+  }
+  var feeDollars = (event.registration_fee_cents / 100).toFixed(2);
+  var cancellable = event.status !== 'CANCELLED' && event.status !== 'CLOSED';
+%>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <a class="text-decoration-none small" href="/admin/events">← All events</a>
+    <h1 class="h3 mb-1 mt-1"><%= event.name %> <%- include('../partials/status-pill', { status: event.status }) %></h1>
+    <p class="text-secondary mb-0"><%= dateLong(event.event_date) %><% if (event.location) { %> · <%= event.location %><% } %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/admin/events/<%= event.event_id %>/edit">Edit</a>
+    <% if (event.status !== 'CANCELLED') { %>
+      <button class="btn btn-outline-danger" data-open-dialog="#cancel-dialog">Cancel event</button>
+    <% } %>
+  </div>
+</div>
+
+<%# Stats strip %>
+<div class="row g-3 mb-4">
+  <% function stat(label, value) { %>
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="panel py-2">
+        <div class="caption-label"><%= label %></div>
+        <div class="fs-5 money"><%= value %></div>
+      </div>
+    </div>
+  <% } %>
+  <%- stat('Capacity', event.total_capacity) %>
+  <%- stat('Confirmed', event.confirmed_count) %>
+  <%- stat('Available', event.available_slots) %>
+  <%- stat('Waitlist', stats.waitlistCount) %>
+  <%- stat('Gross', money(stats.grossRevenueCents)) %>
+  <%- stat('Refunded', money(stats.refundedCents)) %>
+</div>
+
+<%# Roster %>
+<h2 class="h5 mb-2">Roster</h2>
+<% if (!roster || roster.length === 0) { %>
+  <p class="text-secondary">No registrations yet.</p>
+<% } else { %>
+<div class="table-responsive mb-4">
+  <table class="table align-middle">
+    <thead><tr><th>Name</th><th>Email</th><th>Status</th><th class="text-end">Amount</th><th>Registered</th></tr></thead>
+    <tbody>
+      <% roster.forEach(function (r) { %>
+      <tr>
+        <td><%= r.first_name %> <%= r.last_name %></td>
+        <td><%= r.email %></td>
+        <td><%- include('../partials/status-pill', { status: displayStatus({ status: r.status, refunded_amount_cents: r.refunded_amount_cents }) }) %></td>
+        <td class="text-end money"><%= money(r.gross_amount_cents) %></td>
+        <td><%= dateLong(r.created_at) %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<%# Waitlist %>
+<h2 class="h5 mb-2">Waitlist <span class="text-secondary">(<%= waitlist.length %>)</span></h2>
+<% if (!waitlist || waitlist.length === 0) { %>
+  <p class="text-secondary">No one on the waitlist.</p>
+<% } else { %>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+    <tbody>
+      <% waitlist.forEach(function (w, i) { %>
+      <tr><td><%= i + 1 %></td><td><%= w.first_name %> <%= w.last_name %></td><td><%= w.email %></td><td><%= dateLong(w.created_at) %></td></tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<%# Cancel modal — states the blast radius (WF-10). %>
+<dialog id="cancel-dialog" class="flyte-dialog">
+  <form method="post" action="/admin/events/<%= event.event_id %>/cancel">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="h5">Cancel “<%= event.name %>”?</h2>
+    <p>This refunds all <strong><%= event.confirmed_count %></strong> confirmed registration<%= event.confirmed_count === 1 ? '' : 's' %> (<strong><%= money(stats.grossRevenueCents) %></strong>) and marks the event cancelled. The event is cancelled only if every refund succeeds.</p>
+    <div class="d-flex gap-2 justify-content-end">
+      <button type="button" class="btn btn-outline-secondary" data-close-dialog>Keep event</button>
+      <button type="submit" class="btn btn-danger">Refund all &amp; cancel</button>
+    </div>
+  </form>
+</dialog>

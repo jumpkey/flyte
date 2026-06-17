@@ -13,6 +13,7 @@ import { catalogController } from './controllers/catalog.js';
 import { staticController } from './controllers/static-pages.js';
 import { webhookController } from './controllers/webhook.js';
 import { adminController } from './controllers/admin.js';
+import { adminEventsController } from './controllers/admin/events.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { adminGuard } from './middleware/admin-guard.js';
 import { loadUser } from './middleware/load-user.js';
@@ -85,6 +86,15 @@ app.post('/reset-password', rateLimit(10, 60000), authController.resetPassword);
 // Admin surface (R1/S1). adminGuard answers 404 for every non-admin; the
 // placeholder index is replaced by the WF-07 dashboard in I5.
 app.get('/admin', adminGuard, adminController.index);
+
+// Admin events (I4). All gated by adminGuard; POSTs CSRF-protected by middleware.
+app.get('/admin/events', adminGuard, adminEventsController.list);
+app.get('/admin/events/new', adminGuard, adminEventsController.newForm);
+app.post('/admin/events', adminGuard, adminEventsController.create);
+app.get('/admin/events/:id', adminGuard, adminEventsController.detail);
+app.get('/admin/events/:id/edit', adminGuard, adminEventsController.editForm);
+app.post('/admin/events/:id', adminGuard, adminEventsController.update);
+app.post('/admin/events/:id/cancel', adminGuard, adminEventsController.cancel);
 
 app.get('/dashboard', authGuard, dashboardController.index);
 app.get('/profile', authGuard, profileController.editForm);
