@@ -7,7 +7,9 @@
     "build": "tsc && tsc -p tsconfig.scripts.json && cp -r src/web/views dist/web/views",
     "start": "node dist/index.js",
     "migrate": "tsx scripts/migrate.ts",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx src/registration/testing/run-all-tests.ts && tsx src/web/testing/run-web-tests.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

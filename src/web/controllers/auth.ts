@@ -33,6 +33,11 @@ export const authController = {
     const user = await userService.findByEmail(email);
 
     if (!user) {
+      // Burn the same time a real bcrypt comparison costs (via the NULL-hash
+      // dummy-compare path) so a non-existent email is indistinguishable from a
+      // wrong password or a shadow account — closes the login enumeration oracle
+      // by timing, not just by response shape (S6).
+      await authService.verifyPassword(password, null);
       await eventService.logLogin({ emailAttempted: email, success: false, failureReason: 'user_not_found', ipAddress: ip, userAgent });
       return renderView(c, 'login', { title: 'Sign In', error: 'Invalid email or password' });
     }

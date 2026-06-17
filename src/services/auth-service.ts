@@ -3,6 +3,13 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { config } from '../config.js';
 
+// A throwaway bcrypt hash generated once at startup, at the configured cost
+// factor. It exists solely so the NULL-password_hash branch of verifyPassword
+// can burn the same CPU time as a real comparison — shadow accounts (and any
+// other row with a NULL hash) must be indistinguishable from a wrong password,
+// with no timing oracle and no thrown error (S6). The plaintext never matters.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), config.bcryptRounds);
+
 const transporter = nodemailer.createTransport({
   host: config.smtp.host,
   port: config.smtp.port,
@@ -14,7 +21,15 @@ export const authService = {
     return bcrypt.hash(password, config.bcryptRounds);
   },
 
-  async verifyPassword(password: string, hash: string): Promise<boolean> {
+  async verifyPassword(password: string, hash: string | null): Promise<boolean> {
+    // Fail closed on a NULL/empty hash (shadow accounts have no password), but
+    // run a dummy compare first so the rejection costs the same as a real one.
+    // This is the single chokepoint every login/auth path goes through, so the
+    // shadow-account anti-enumeration guarantee lives here, not in callers.
+    if (!hash) {
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+      return false;
+    }
     return bcrypt.compare(password, hash);
   },
 

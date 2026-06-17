@@ -10,7 +10,9 @@ import { dashboardController } from './controllers/dashboard.js';
 import { profileController } from './controllers/profile.js';
 import { registrationController } from './controllers/registration.js';
 import { webhookController } from './controllers/webhook.js';
+import { adminController } from './controllers/admin.js';
 import { authGuard } from './middleware/auth-guard.js';
+import { adminGuard } from './middleware/admin-guard.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import type { SessionData } from './middleware/session.js';
 import type { User } from '../services/user-service.js';
@@ -61,6 +63,10 @@ app.get('/forgot-password', authController.forgotPasswordForm);
 app.post('/forgot-password', rateLimit(10, 60000), authController.forgotPassword);
 app.get('/reset-password', authController.resetPasswordForm);
 app.post('/reset-password', rateLimit(10, 60000), authController.resetPassword);
+
+// Admin surface (R1/S1). adminGuard answers 404 for every non-admin; the
+// placeholder index is replaced by the WF-07 dashboard in I5.
+app.get('/admin', adminGuard, adminController.index);
 
 app.get('/dashboard', authGuard, dashboardController.index);
 app.get('/profile', authGuard, profileController.editForm);

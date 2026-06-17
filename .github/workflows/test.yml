@@ -1,0 +1,54 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - ui-elaboration
+
+jobs:
+  test:
+    name: Lint, typecheck & test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: flyte
+          POSTGRES_PASSWORD: flyte
+          POSTGRES_DB: flyte
+        ports:
+          - 5432:5432
+        # Wait until Postgres is accepting connections before the job starts.
+        options: >-
+          --health-cmd "pg_isready -U flyte"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://flyte:flyte@localhost:5432/flyte
+      TEST_DATABASE_URL: postgres://flyte:flyte@localhost:5432/flyte
+      SESSION_SECRET: ci-session-secret-at-least-32-characters-long
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Apply migrations
+        run: npm run migrate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (registration + web suites)
+        run: npm test

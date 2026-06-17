@@ -4,7 +4,8 @@ import { config } from '../config.js';
 export interface User {
   id: string;
   email: string;
-  passwordHash: string;
+  passwordHash: string | null;
+  accountStatus: 'shadow' | 'active';
   displayName: string;
   isVerified: boolean;
   isAdmin: boolean;
@@ -23,7 +24,8 @@ function mapUser(row: Record<string, unknown>): User {
   return {
     id: row.id as string,
     email: row.email as string,
-    passwordHash: row.password_hash as string,
+    passwordHash: row.password_hash as string | null,
+    accountStatus: (row.account_status as 'shadow' | 'active' | undefined) ?? 'active',
     displayName: row.display_name as string,
     isVerified: row.is_verified as boolean,
     isAdmin: row.is_admin as boolean,
