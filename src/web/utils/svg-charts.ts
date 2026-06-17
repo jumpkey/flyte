@@ -25,29 +25,56 @@ export function sparkline(values: number[], opts: { width?: number; height?: num
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-hidden="true"><polyline fill="none" stroke="${NAVY}" stroke-width="1.5" points="${pts}"/></svg>`;
 }
 
-/** Vertical bar chart with an optional overlaid moving-average line. */
-export function barChart(values: number[], opts: { width?: number; height?: number; line?: number[]; labels?: string[] } = {}): string {
-  const w = opts.width ?? 480; const h = opts.height ?? 160;
-  const pad = 24;
-  const innerW = w - pad * 2; const innerH = h - pad * 2;
+/**
+ * Vertical bar chart. Bars are the data; an optional moving-average `line` can be
+ * overlaid (event performance uses it — the sales dashboard does not). With
+ * `scale: true` a right-side y-axis (0 / mid / max, gridlines, `yUnit` prefix) is
+ * drawn, and `xLabel` writes a centered axis caption underneath.
+ */
+export function barChart(values: number[], opts: { width?: number; height?: number; line?: number[]; labels?: string[]; scale?: boolean; xLabel?: string; yUnit?: string } = {}): string {
+  const w = opts.width ?? 480; const h = opts.height ?? 170;
+  const padL = 24;
+  const padR = opts.scale ? 54 : 24;   // room for right-side y-axis labels
+  const padT = 12;
+  const padB = opts.xLabel ? 32 : 22;  // room for the x-axis caption
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const baseY = padT + innerH;
   const max = Math.max(...values, ...(opts.line ?? []), 1);
   const n = values.length || 1;
-  const bw = (innerW / n) * 0.7;
-  const gap = (innerW / n) * 0.3;
+  const slot = innerW / n;
+  const bw = slot * 0.7;
+
+  // Right-side scale: 0 / mid / max with faint gridlines.
+  let scale = '';
+  if (opts.scale) {
+    const fmt = (val: number) => (opts.yUnit ?? '') + Math.round(val).toLocaleString();
+    scale = [0, max / 2, max].map((t) => {
+      const y = baseY - (t / max) * innerH;
+      return `<line x1="${padL}" y1="${px(y)}" x2="${px(padL + innerW)}" y2="${px(y)}" stroke="${GRID}" opacity="0.6"/>` +
+        `<text x="${px(padL + innerW + 6)}" y="${px(y + 3)}" font-size="10" fill="${MUTED}">${fmt(t)}</text>`;
+    }).join('');
+  }
+
   const bars = values.map((v, i) => {
     const bh = (v / max) * innerH;
-    const x = pad + i * (innerW / n) + gap / 2;
-    const y = pad + innerH - bh;
+    const x = padL + i * slot + (slot - bw) / 2;
+    const y = baseY - bh;
     return `<rect x="${px(x)}" y="${px(y)}" width="${px(bw)}" height="${px(bh)}" fill="${NAVY}" opacity="0.85" rx="1"/>`;
   }).join('');
+
   let line = '';
   if (opts.line && opts.line.length > 1) {
     const step = innerW / (opts.line.length - 1);
-    const pts = opts.line.map((v, i) => `${px(pad + i * step)},${px(pad + innerH - (v / max) * innerH)}`).join(' ');
+    const pts = opts.line.map((v, i) => `${px(padL + i * step)},${px(baseY - (v / max) * innerH)}`).join(' ');
     line = `<polyline fill="none" stroke="${FLARE}" stroke-width="2" points="${pts}"/>`;
   }
-  const baseline = `<line x1="${pad}" y1="${pad + innerH}" x2="${w - pad}" y2="${pad + innerH}" stroke="${GRID}"/>`;
-  return `<svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-hidden="true">${baseline}${bars}${line}</svg>`;
+
+  const baseline = `<line x1="${padL}" y1="${px(baseY)}" x2="${px(padL + innerW)}" y2="${px(baseY)}" stroke="${GRID}"/>`;
+  const xLabel = opts.xLabel
+    ? `<text x="${px(padL + innerW / 2)}" y="${h - 6}" font-size="11" fill="${MUTED}" text-anchor="middle">${escapeXml(opts.xLabel)}</text>`
+    : '';
+  return `<svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-hidden="true">${scale}${baseline}${bars}${line}${xLabel}</svg>`;
 }
 
 /** Booking curve: cumulative line, dashed capacity ceiling, dotted projection, today marker. */

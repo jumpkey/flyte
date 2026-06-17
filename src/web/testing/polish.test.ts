@@ -38,11 +38,14 @@ async function runTests() {
 
   await test('wrapEmail renders exactly one CTA button when given, none otherwise', () => {
     const withCta = wrapEmail({ heading: 'H', bodyHtml: '<p>x</p>', cta: { label: 'Go', url: 'https://x.test/y' } });
-    const buttons = (withCta.match(/background-color:#C2410C/g) ?? []).length;
-    assertEqual(buttons, 1, 'one flare-deep CTA button');
+    // The CTA is now a bordered button — orange text on white with a 1px flare
+    // border (#13 recolor). That border is unique to the CTA; the navy header's
+    // "Flyte." dot also uses the flare color, so we key off the border.
+    const buttons = (withCta.match(/border:1px solid #C2410C/g) ?? []).length;
+    assertEqual(buttons, 1, 'one bordered CTA button');
     assert(withCta.includes('href="https://x.test/y"'), 'CTA links to url');
     const noCta = wrapEmail({ heading: 'H', bodyHtml: '<p>x</p>' });
-    assertEqual((noCta.match(/background-color:#C2410C/g) ?? []).length, 0, 'no button without cta');
+    assertEqual((noCta.match(/border:1px solid #C2410C/g) ?? []).length, 0, 'no button without cta');
   });
 
   await test('wrapEmail passes through caller-escaped content verbatim (no double-escaping)', () => {

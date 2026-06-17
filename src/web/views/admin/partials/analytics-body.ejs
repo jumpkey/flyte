@@ -14,16 +14,18 @@
   <%- kpi('Refund rate', kpis.refundRatePct + '%', money(kpis.refundedCents) + ' refunded') %>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-12 col-lg-7">
-    <div class="panel">
+<div class="row g-4 mb-4 align-items-stretch">
+  <div class="col-12 col-lg-6">
+    <div class="panel h-100">
       <p class="caption-label mb-2">Daily net revenue</p>
-      <%- barChart(dailyRevenue.map(function (c) { return c / 100; }), { line: dailyRevenue.map(function(c){return c/100;}) }) %>
+      <%# Bars only (the overlaid line read as noise, #6); right-side $ scale and
+          a "Days" x-axis caption so the chart is readable on its own. %>
+      <%- barChart(dailyRevenue.map(function (c) { return c / 100; }), { scale: true, yUnit: '$', xLabel: 'Days (oldest → newest)' }) %>
       <p class="text-secondary small mb-0 mt-1">Net <%= money(kpis.netCents) %> over <%= rangeDays %> days.</p>
     </div>
   </div>
-  <div class="col-12 col-lg-5">
-    <div class="panel">
+  <div class="col-12 col-lg-6">
+    <div class="panel h-100">
       <p class="caption-label mb-2">Payment funnel</p>
       <%- funnel(paymentFunnel.stages) %>
       <p class="text-secondary small mb-0 mt-2">
