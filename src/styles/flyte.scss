@@ -318,6 +318,13 @@ $focus-ring-width: .15rem;
   .total { font-weight: 800; color: $fl-ink; }
 }
 
+// Roomier data tables (W8) — comfortable column spacing so cells don't crowd.
+.table-roomy {
+  th, td { padding: .75rem 1rem; }
+  th:first-child, td:first-child { padding-left: 0; }
+  th:last-child, td:last-child { padding-right: 0; }
+}
+
 // Receipt rows (WF-05)
 .receipt {
   .row-line {

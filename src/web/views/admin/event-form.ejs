@@ -25,7 +25,8 @@
         <div class="col-12 col-sm-6 mb-3">
           <label class="form-label" for="location">Location</label>
           <input class="form-control<%= errs.location ? ' is-invalid' : '' %>" id="location" name="location" value="<%= v.location || '' %>">
-          <% if (errs.location) { %><div class="invalid-feedback"><%= errs.location %></div><% } %>
+          <% if (errs.location) { %><div class="invalid-feedback"><%= errs.location %></div>
+          <% } else { %><div class="form-text">Use a full street address so the storefront can link a map. Vague values (Online, TBD, …) skip the map link.</div><% } %>
         </div>
       </div>
 

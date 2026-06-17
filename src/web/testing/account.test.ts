@@ -69,6 +69,19 @@ async function runTests() {
     assert(body.includes('Waitlists') && body.includes('Waitlisted Gig'), 'waitlist section shown');
   });
 
+  await test('W8: My Registrations shows a "Registrations" heading and roomy tables', async () => {
+    await truncateTables();
+    const ev = await createEvent('Heading Concert');
+    await createReg(ev, a.id, 'CONFIRMED');
+    const evWl = await createEvent('Heading Gig');
+    await testSql`INSERT INTO waitlist_entries (event_id, user_id, email, first_name, last_name) VALUES (${evWl}, ${a.id}, 'buyer@example.com', 'Buy', 'Er')`;
+    const body = await (await get('/account/registrations', a.cookie)).text();
+    assert(body.includes('<h2 class="h5 mb-2">Registrations</h2>'), 'Registrations heading present (parity with Waitlists)');
+    assert(body.includes('<h2 class="h5 mb-2">Waitlists</h2>'), 'Waitlists heading still present');
+    assertEqual((body.match(/table table-roomy/g) ?? []).length, 2, 'both tables use the roomy spacing class');
+    await testSql`DELETE FROM waitlist_entries WHERE event_id = ${evWl}`;
+  });
+
   await test('empty state when the user has nothing', async () => {
     await truncateTables();
     const body = await (await get('/account/registrations', b.cookie)).text();

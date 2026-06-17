@@ -306,6 +306,88 @@ async function runTests() {
     assert(r.body.includes('see policy') && r.body.includes('href="/terms"'), 'refund policy line links /terms');
   });
 
+  // ── W6: guest-vs-logged-in checkout copy on the OPEN detail CTA ──
+  await test('W6: guest sees "No account needed", logged-in user sees their email', async () => {
+    await truncateTables();
+    const id = await createEvent({ status: 'OPEN', availableSlots: 8 });
+    const guest = await get(`/events/${id}`);
+    assert(guest.body.includes('No account needed'), 'guest copy shown');
+    assert(!guest.body.includes('checking out as yourself'), 'no logged-in copy for guest');
+
+    const email = 'catalog-w6@example.com';
+    await testSql`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email=${email})`;
+    await testSql`DELETE FROM users WHERE email=${email}`;
+    const hash = await authService.hashPassword('pw');
+    const u = await testSql`INSERT INTO users (email, password_hash, display_name, is_verified, account_status) VALUES (${email}, ${hash}, 'Wendy Six', TRUE, 'active') RETURNING id`;
+    const userId = u[0].id as string;
+    const { signedSid } = await createSession({ userId }, userId);
+    const loggedIn = await get(`/events/${id}`, `sid=${signedSid}`);
+    assert(loggedIn.body.includes('checking out as yourself'), 'logged-in copy shown');
+    assert(loggedIn.body.includes(email), 'logged-in email shown');
+    assert(!loggedIn.body.includes('No account needed — check out as a guest'), 'no guest copy for logged-in user');
+
+    await testSql`DELETE FROM sessions WHERE user_id = ${userId}`;
+    await testSql`DELETE FROM users WHERE id = ${userId}`;
+  });
+
+  // ── W7: logged-in registration form prefills First/Last from display_name ──
+  await test('W7: register form prefills First/Last for a logged-in user', async () => {
+    await truncateTables();
+    const id = await createEvent({ status: 'OPEN', availableSlots: 8 });
+    const email = 'catalog-w7@example.com';
+    await testSql`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email=${email})`;
+    await testSql`DELETE FROM users WHERE email=${email}`;
+    const hash = await authService.hashPassword('pw');
+    const u = await testSql`INSERT INTO users (email, password_hash, display_name, is_verified, account_status) VALUES (${email}, ${hash}, 'Ada Grace Lovelace', TRUE, 'active') RETURNING id`;
+    const userId = u[0].id as string;
+    const { signedSid } = await createSession({ userId }, userId);
+
+    const r = await get(`/events/${id}/register`, `sid=${signedSid}`);
+    assertEqual(r.status, 200, 'register form renders');
+    assert(r.body.includes('name="firstName" value="Ada"'), 'first name prefilled');
+    assert(r.body.includes('name="lastName" value="Grace Lovelace"'), 'last name = remainder');
+
+    // Guest sees empty name fields.
+    const guest = await get(`/events/${id}/register`);
+    assert(guest.body.includes('name="firstName" value=""'), 'guest first name empty');
+
+    await testSql`DELETE FROM sessions WHERE user_id = ${userId}`;
+    await testSql`DELETE FROM users WHERE id = ${userId}`;
+  });
+
+  // ── W9: month filter is a dropdown of YYYY-MM options ──
+  await test('W9: /events month filter renders a select with YYYY-MM options', async () => {
+    await truncateTables();
+    await createEvent({ status: 'OPEN' });
+    const r = await get('/events');
+    assert(r.body.includes('<select class="form-select" id="month" name="month">'), 'month is a select');
+    assert(r.body.includes('Any month'), 'has Any month option');
+    assert(/<option value="\d{4}-\d{2}"/.test(r.body), 'YYYY-MM option values');
+    assert(!r.body.includes('type="month"'), 'no native month input');
+
+    // Selecting a month is preserved.
+    const now = new Date();
+    const val = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const r2 = await get(`/events?month=${val}`);
+    assert(r2.body.includes(`value="${val}" selected`), 'selected month preserved');
+  });
+
+  // ── W10: Map link only for real physical locations ──
+  await test('W10: Map link suppressed for vague/non-physical locations, kept for real ones', async () => {
+    await truncateTables();
+    const real = await createEvent({ location: '123 Main Street, Springfield' });
+    const rReal = await get(`/events/${real}`);
+    assert(rReal.body.includes('Map ↗'), 'real address keeps the map link');
+    assert(rReal.body.includes('123 Main Street, Springfield'), 'location text shown');
+
+    for (const loc of ['Online', 'Virtual event', 'TBD', 'Zoom', 'Remote']) {
+      const id = await createEvent({ location: loc });
+      const r = await get(`/events/${id}`);
+      assert(r.body.includes(loc), `${loc}: location text kept`);
+      assert(!r.body.includes('Map ↗'), `${loc}: no map link`);
+    }
+  });
+
   await truncateTables();
   console.log(`\n=== Catalog: ${passed} passed, ${failed} failed ===`);
   await testSql.end();

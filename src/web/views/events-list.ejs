@@ -20,7 +20,18 @@
     </div>
     <div class="col-8 col-sm-4 col-md-3">
       <label class="form-label" for="month">Month</label>
-      <input class="form-control" type="month" id="month" name="month" value="<%= month %>">
+      <%# Next ~12 months as YYYY-MM options (catalog-service expects that format),
+          plus an "Any month" escape hatch. Preserve the current selection. %>
+      <% var _now = new Date(); %>
+      <select class="form-select" id="month" name="month">
+        <option value="">Any month</option>
+        <% for (var _i = 0; _i < 12; _i++) {
+             var _d = new Date(_now.getFullYear(), _now.getMonth() + _i, 1);
+             var _val = _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0');
+             var _label = _d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); %>
+          <option value="<%= _val %>" <%= month === _val ? 'selected' : '' %>><%= _label %></option>
+        <% } %>
+      </select>
     </div>
     <div class="col-4 col-sm-2 col-md-2">
       <button class="btn btn-primary w-100" type="submit">Filter</button>

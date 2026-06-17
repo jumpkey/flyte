@@ -6,8 +6,9 @@
   <% } else { %>
 
     <% if (registrations && registrations.length > 0) { %>
+    <h2 class="h5 mb-2">Registrations</h2>
     <div class="table-responsive mb-4">
-      <table class="table align-middle">
+      <table class="table table-roomy align-middle">
         <thead><tr><th>Event</th><th>When</th><th>Status</th><th class="text-end">Amount</th><th></th></tr></thead>
         <tbody>
           <% registrations.forEach(function (r) { %>
@@ -27,7 +28,7 @@
     <% if (waitlist && waitlist.length > 0) { %>
     <h2 class="h5 mb-2">Waitlists</h2>
     <div class="table-responsive">
-      <table class="table align-middle">
+      <table class="table table-roomy align-middle">
         <thead><tr><th>Event</th><th>When</th><th>Position</th><th></th></tr></thead>
         <tbody>
           <% waitlist.forEach(function (w) { %>

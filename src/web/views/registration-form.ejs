@@ -18,16 +18,21 @@
 
     <div id="registration-step-1">
       <div id="form-error" class="alert alert-flyte alert-flyte-error" style="display:none;" role="alert"></div>
+      <%# Logged-in: split the account display name into First/Last as editable
+          defaults (mirrors the prefilled email below). Guest: empty. %>
+      <% var _nameParts = (user ? (user.displayName || '').trim() : '').split(/\s+/).filter(Boolean);
+         var _firstName = _nameParts.length ? _nameParts[0] : '';
+         var _lastName = _nameParts.length > 1 ? _nameParts.slice(1).join(' ') : ''; %>
       <form id="participant-form">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="row g-3 mb-3">
           <div class="col-12 col-sm-6">
             <label class="form-label" for="firstName">First name</label>
-            <input class="form-control" type="text" id="firstName" name="firstName" required>
+            <input class="form-control" type="text" id="firstName" name="firstName" value="<%= _firstName %>" required>
           </div>
           <div class="col-12 col-sm-6">
             <label class="form-label" for="lastName">Last name</label>
-            <input class="form-control" type="text" id="lastName" name="lastName" required>
+            <input class="form-control" type="text" id="lastName" name="lastName" value="<%= _lastName %>" required>
           </div>
         </div>
         <div class="mb-3">
