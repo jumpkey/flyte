@@ -1,4 +1,16 @@
-<h1 class="h3 mb-4">Transactions</h1>
+<%
+  var csvQ = new URLSearchParams();
+  if (filters.eventId) csvQ.set('eventId', filters.eventId);
+  if (filters.status) csvQ.set('status', filters.status);
+  if (filters.email) csvQ.set('email', filters.email);
+  if (filters.from) csvQ.set('from', filters.from);
+  if (filters.to) csvQ.set('to', filters.to);
+  var csvHref = '/admin/registrations.csv' + (csvQ.toString() ? '?' + csvQ.toString() : '');
+%>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Transactions</h1>
+  <a class="btn btn-outline-secondary btn-sm" href="<%= csvHref %>">Export CSV</a>
+</div>
 
 <form class="row g-2 align-items-end mb-4" method="get" action="/admin/registrations"
       hx-get="/admin/registrations" hx-target="#transactions-table" hx-swap="innerHTML" hx-push-url="true">

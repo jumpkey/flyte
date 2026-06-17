@@ -86,6 +86,20 @@ export const adminRegistrationsService = {
     };
   },
 
+  /** All matching transactions (no pagination) for the CSV export (A7). Capped. */
+  async exportTransactions(f: TransactionFilters): Promise<TransactionRow[]> {
+    const page = await this.listTransactions({ ...f, page: 1, perPage: 100 });
+    if (page.total <= 100) return page.rows;
+    // Pull the rest in pages of 100 (cap at 10k rows to bound memory).
+    const all = [...page.rows];
+    const maxPages = Math.min(page.totalPages, 100);
+    for (let p = 2; p <= maxPages; p++) {
+      const next = await this.listTransactions({ ...f, page: p, perPage: 100 });
+      all.push(...next.rows);
+    }
+    return all;
+  },
+
   /** Full payment record + linked user + refund-log timeline (WF-12). */
   async getDetail(registrationId: string): Promise<{
     registration: Record<string, unknown>;

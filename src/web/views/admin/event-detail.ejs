@@ -39,7 +39,10 @@
 </div>
 
 <%# Roster %>
-<h2 class="h5 mb-2">Roster</h2>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Roster</h2>
+  <% if (roster && roster.length > 0) { %><a class="btn btn-outline-secondary btn-sm" href="/admin/events/<%= event.event_id %>/roster.csv">Roster CSV</a><% } %>
+</div>
 <% if (!roster || roster.length === 0) { %>
   <p class="text-secondary">No registrations yet.</p>
 <% } else { %>
@@ -62,7 +65,10 @@
 <% } %>
 
 <%# Waitlist %>
-<h2 class="h5 mb-2">Waitlist <span class="text-secondary">(<%= waitlist.length %>)</span></h2>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Waitlist <span class="text-secondary">(<%= waitlist.length %>)</span></h2>
+  <% if (waitlist && waitlist.length > 0) { %><a class="btn btn-outline-secondary btn-sm" href="/admin/events/<%= event.event_id %>/waitlist.csv">Waitlist CSV</a><% } %>
+</div>
 <% if (!waitlist || waitlist.length === 0) { %>
   <p class="text-secondary">No one on the waitlist.</p>
 <% } else { %>

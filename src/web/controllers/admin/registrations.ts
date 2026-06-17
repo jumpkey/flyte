@@ -7,6 +7,7 @@ import { getStripe } from '../../../registration/stripe-factory.js';
 import { eventService } from '../../../services/event-service.js';
 import { eventAdminService } from '../../../services/event-admin-service.js';
 import { getClientIp } from '../../utils/get-client-ip.js';
+import { toCsv, csvResponse } from '../../utils/csv.js';
 import { config } from '../../../config.js';
 import type { SessionData } from '../../middleware/session.js';
 import type { User } from '../../../services/user-service.js';
@@ -58,6 +59,28 @@ export const adminRegistrationsController = {
       return renderFragment(c, 'admin/partials/transactions-table', data);
     }
     return renderView(c, 'admin/registrations-list', data, { layout: 'admin' });
+  },
+
+  /** GET /admin/registrations.csv — the transaction log as CSV, honoring filters (A7). */
+  async exportCsv(c: Context): Promise<Response> {
+    const f = {
+      eventId: c.req.query('eventId') ?? '',
+      status: c.req.query('status') ?? '',
+      email: c.req.query('email') ?? '',
+      from: c.req.query('from') ?? '',
+      to: c.req.query('to') ?? '',
+    };
+    const rows = await adminRegistrationsService.exportTransactions(f);
+    const csv = toCsv(
+      ['Created', 'Event', 'First name', 'Last name', 'Email', 'Status', 'Gross', 'Net', 'Refunded'],
+      rows.map((r) => [
+        r.created_at, r.event_name, r.first_name, r.last_name, r.email, r.status,
+        (r.gross_amount_cents / 100).toFixed(2),
+        r.net_amount_cents != null ? (r.net_amount_cents / 100).toFixed(2) : '',
+        (r.refunded_amount_cents / 100).toFixed(2),
+      ]),
+    );
+    return csvResponse('transactions.csv', csv);
   },
 
   /** GET /admin/registrations/:id — payment detail + timeline (WF-12). */

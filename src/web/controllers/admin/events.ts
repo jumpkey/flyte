@@ -7,6 +7,7 @@ import { NotificationService } from '../../../registration/services/Notification
 import { getStripe } from '../../../registration/stripe-factory.js';
 import { eventService } from '../../../services/event-service.js';
 import { getClientIp } from '../../utils/get-client-ip.js';
+import { toCsv, csvResponse } from '../../utils/csv.js';
 import type { SessionData } from '../../middleware/session.js';
 import type { User } from '../../../services/user-service.js';
 
@@ -155,6 +156,36 @@ export const adminEventsController = {
       title: event.name, activeNav: 'events',
       event, roster, waitlist, stats,
     }, { layout: 'admin' });
+  },
+
+  /** GET /admin/events/:id/roster.csv — roster export (A7). */
+  async rosterCsv(c: Context): Promise<Response> {
+    const eventId = c.req.param('id');
+    if (!eventId || !UUID_RE.test(eventId)) return c.notFound();
+    const event = await eventAdminService.getById(eventId);
+    if (!event) return c.notFound();
+    const roster = await eventAdminService.getRoster(eventId);
+    const csv = toCsv(
+      ['First name', 'Last name', 'Email', 'Status', 'Gross', 'Refunded', 'Registered'],
+      roster.map((r) => [r.first_name, r.last_name, r.email, r.status,
+        ((r.gross_amount_cents as number) / 100).toFixed(2),
+        ((r.refunded_amount_cents as number) / 100).toFixed(2), r.created_at]),
+    );
+    return csvResponse('roster.csv', csv);
+  },
+
+  /** GET /admin/events/:id/waitlist.csv — waitlist export (A7). */
+  async waitlistCsv(c: Context): Promise<Response> {
+    const eventId = c.req.param('id');
+    if (!eventId || !UUID_RE.test(eventId)) return c.notFound();
+    const event = await eventAdminService.getById(eventId);
+    if (!event) return c.notFound();
+    const waitlist = await eventAdminService.getWaitlist(eventId);
+    const csv = toCsv(
+      ['Position', 'First name', 'Last name', 'Email', 'Joined'],
+      waitlist.map((w, i) => [i + 1, w.first_name, w.last_name, w.email, w.created_at]),
+    );
+    return csvResponse('waitlist.csv', csv);
   },
 
   /**

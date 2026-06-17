@@ -94,10 +94,14 @@ app.get('/admin/events/new', adminGuard, adminEventsController.newForm);
 app.post('/admin/events', adminGuard, adminEventsController.create);
 app.get('/admin/events/:id', adminGuard, adminEventsController.detail);
 app.get('/admin/events/:id/edit', adminGuard, adminEventsController.editForm);
+app.get('/admin/events/:id/roster.csv', adminGuard, adminEventsController.rosterCsv);
+app.get('/admin/events/:id/waitlist.csv', adminGuard, adminEventsController.waitlistCsv);
 app.post('/admin/events/:id', adminGuard, adminEventsController.update);
 app.post('/admin/events/:id/cancel', adminGuard, adminEventsController.cancel);
 
-// Admin transactions + refund execution (I5).
+// Admin transactions + refund execution (I5). The .csv export is registered
+// before the :id detail route so it isn't captured as a registration id.
+app.get('/admin/registrations.csv', adminGuard, adminRegistrationsController.exportCsv);
 app.get('/admin/registrations', adminGuard, adminRegistrationsController.list);
 app.get('/admin/registrations/:id', adminGuard, adminRegistrationsController.detail);
 app.post('/admin/registrations/:id/refund', adminGuard, adminRegistrationsController.refund);

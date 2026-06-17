@@ -217,6 +217,33 @@ async function runTests() {
     await testSql`DELETE FROM refund_requests WHERE registration_id=${id}::UUID`;
   });
 
+  // ── A7: CSV exports ──
+  await test('A7: transactions.csv honors filters, attachment headers, guarded', async () => {
+    await truncateTables();
+    const ev = await createEvent();
+    await createReg(ev, { status: 'CONFIRMED', email: 'csv-a@example.com', gross: 2500 });
+    await createReg(ev, { status: 'PAYMENT_FAILED', email: 'csv-b@example.com' });
+    assertEqual((await get('/admin/registrations.csv', nonAdmin.cookie)).status, 404, 'non-admin 404');
+    const resp = await get('/admin/registrations.csv?status=CONFIRMED', admin.cookie);
+    assertEqual(resp.status, 200, 'admin 200');
+    assert((resp.headers.get('content-disposition') || '').includes('attachment'), 'attachment header');
+    assert((resp.headers.get('content-type') || '').includes('text/csv'), 'csv content-type');
+    const body = await resp.text();
+    assert(body.includes('Created,Event') && body.includes('csv-a@example.com') && !body.includes('csv-b@example.com'), 'filtered rows + header');
+  });
+
+  await test('A7: roster.csv and waitlist.csv export the event lists', async () => {
+    await truncateTables();
+    const ev = await createEvent();
+    await createReg(ev, { status: 'CONFIRMED', email: 'roster1@example.com' });
+    await testSql`INSERT INTO waitlist_entries (event_id, email, first_name, last_name) VALUES (${ev}, 'wl1@example.com', 'Wait', 'One')`;
+    const roster = await get(`/admin/events/${ev}/roster.csv`, admin.cookie);
+    assertEqual(roster.status, 200, 'roster 200');
+    assert((await roster.text()).includes('roster1@example.com'), 'roster row present');
+    const wl = await get(`/admin/events/${ev}/waitlist.csv`, admin.cookie);
+    assert((await wl.text()).includes('wl1@example.com'), 'waitlist row present');
+  });
+
   await truncateTables();
   await cleanupUsers();
   console.log(`\n=== Admin Registrations: ${passed} passed, ${failed} failed ===`);
