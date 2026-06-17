@@ -1,17 +1,22 @@
 <h1 class="h3 mb-4">Dashboard</h1>
 
-<%# Attention panel (A5) — calm when there's nothing to do, which is what makes
-    it work when something appears. %>
-<% if (pendingRefundRequests > 0 || paymentFailed7d > 0) { %>
-<div class="alert alert-flyte alert-flyte-error mb-4" role="alert">
-  <strong>Needs attention:</strong>
-  <% if (pendingRefundRequests > 0) { %>
-    <a class="text-decoration-none" href="/admin/refund-requests"><%= pendingRefundRequests %> pending refund request<%= pendingRefundRequests === 1 ? '' : 's' %></a><%= paymentFailed7d > 0 ? ' · ' : '' %>
-  <% } %>
-  <% if (paymentFailed7d > 0) { %>
-    <a class="text-decoration-none" href="/admin/registrations?status=PAYMENT_FAILED"><%= paymentFailed7d %> failed payment<%= paymentFailed7d === 1 ? '' : 's' %> (7d)</a>
-  <% } %>
+<%# Attention panel (A5) — a prioritized, deep-linked trigger list. Calm when
+    there's nothing to do, which is what makes it land when something appears. %>
+<% if (attention && attention.length > 0) { %>
+<div class="panel mb-4">
+  <div class="caption-label mb-2">Needs attention</div>
+  <ul class="list-unstyled mb-0 d-flex flex-wrap gap-2">
+    <% attention.forEach(function (a) { %>
+    <li>
+      <a class="text-decoration-none" href="<%= a.href %>">
+        <span class="pill pill-<%= a.severity %>"><%= a.text %></span>
+      </a>
+    </li>
+    <% }); %>
+  </ul>
 </div>
+<% } else { %>
+<p class="text-secondary mb-4">All clear — nothing needs attention right now.</p>
 <% } %>
 
 <div class="row g-3 mb-4">

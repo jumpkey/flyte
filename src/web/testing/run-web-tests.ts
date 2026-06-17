@@ -11,6 +11,7 @@ const TEST_FILES = [
   'status-pill.test.ts',
   'shadow-login.test.ts',
   'admin-guard.test.ts',
+  'admin-dashboard.test.ts',
   'load-user.test.ts',
   'rate-limit.test.ts',
   'catalog.test.ts',
