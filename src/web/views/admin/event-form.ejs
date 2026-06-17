@@ -7,7 +7,7 @@
 
 <div class="row g-4">
   <div class="col-12 col-lg-7">
-    <form method="post" action="<%= action %>">
+    <form method="post" action="<%= action %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
       <div class="mb-3">
@@ -58,6 +58,25 @@
         <input class="form-control<%= errs.imageUrl ? ' is-invalid' : '' %>" id="imageUrl" name="imageUrl" value="<%= v.imageUrl || '' %>" placeholder="https://…">
         <% if (errs.imageUrl) { %><div class="invalid-feedback"><%= errs.imageUrl %></div>
         <% } else { %><div class="form-text">Leave blank to use the styled fallback card.</div><% } %>
+      </div>
+
+      <%# Uploaded graphic (D1) — stored as a DB blob, takes precedence over the URL. %>
+      <div class="mb-3">
+        <label class="form-label" for="imageFile">Upload a graphic</label>
+        <input class="form-control<%= errs.imageFile ? ' is-invalid' : '' %>" type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp">
+        <% if (errs.imageFile) { %><div class="invalid-feedback d-block"><%= errs.imageFile %></div><% } %>
+        <div class="form-text">Upload a graphic (PNG/JPG/GIF/WebP, max 2 MB) — used instead of the URL above.</div>
+        <% if (mode === 'edit' && typeof hasImageBlob !== 'undefined' && hasImageBlob) { %>
+          <div class="mt-3">
+            <img src="/events/<%= eventId %>/image" alt="Current uploaded graphic" class="img-thumbnail" style="max-height: 8rem;">
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="removeImage" name="removeImage">
+              <label class="form-check-label text-danger" for="removeImage">
+                Remove image — removing deletes the uploaded graphic; you'll need to upload again.
+              </label>
+            </div>
+          </div>
+        <% } %>
       </div>
 
       <div class="form-check mb-3">

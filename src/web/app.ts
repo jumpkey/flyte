@@ -78,6 +78,8 @@ app.use('*', csrfMiddleware);
 app.get('/', homeController.index);
 // Public storefront catalog + detail (I2). Detail 404s for DRAFT/CANCELLED.
 app.get('/events', catalogController.list);
+// Public uploaded-graphic serve (D1) — registered before :eventId detail.
+app.get('/events/:eventId/image', adminEventsController.image);
 app.get('/events/:eventId', catalogController.detail);
 // Static prose pages (V6)
 app.get('/about', staticController.about);

@@ -8,6 +8,7 @@ import { RefundService } from '../../../registration/services/RefundService.js';
 import { NotificationService } from '../../../registration/services/NotificationService.js';
 import { getStripe } from '../../../registration/stripe-factory.js';
 import { eventService } from '../../../services/event-service.js';
+import { validateImageUpload, MAX_IMAGE_BYTES } from '../../../services/image-upload.js';
 import { getClientIp } from '../../utils/get-client-ip.js';
 import { toCsv, csvResponse } from '../../utils/csv.js';
 import type { SessionData } from '../../middleware/session.js';
@@ -27,6 +28,37 @@ function flash(c: Context, message: string): void {
 
 async function getBody(c: Context): Promise<Record<string, string | File>> {
   return (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
+}
+
+/** Did the admin tick the "Remove image" checkbox? */
+function wantsRemoveImage(body: Record<string, string | File>): boolean {
+  return body['removeImage'] === 'on' || body['removeImage'] === 'true';
+}
+
+/**
+ * Pull an uploaded graphic out of the parsed (multipart) body and validate it
+ * (size cap + magic-byte sniff). Returns:
+ *   { kind: 'none' }     — no file was chosen
+ *   { kind: 'error', .. } — a file was chosen but failed validation
+ *   { kind: 'ok', .. }    — a valid image buffer + server-derived mime
+ * The client Content-Type is never trusted; the stored mime comes from the sniff.
+ */
+type ImageUpload =
+  | { kind: 'none' }
+  | { kind: 'error'; error: string }
+  | { kind: 'ok'; buffer: Buffer; mime: string };
+
+async function readImageUpload(body: Record<string, string | File>): Promise<ImageUpload> {
+  const file = body['imageFile'];
+  if (!(file instanceof File) || file.size === 0) return { kind: 'none' };
+  // Reject by declared size first to avoid buffering huge uploads needlessly.
+  if (file.size > MAX_IMAGE_BYTES) {
+    return { kind: 'error', error: 'Image is too large — uploads must be 2 MB or smaller.' };
+  }
+  const buf = Buffer.from(await file.arrayBuffer());
+  const result = validateImageUpload(buf);
+  if (!result.ok) return { kind: 'error', error: result.error };
+  return { kind: 'ok', buffer: result.buffer, mime: result.mime };
 }
 
 let _refundService: RefundService | null = null;
@@ -67,14 +99,24 @@ export const adminEventsController = {
   async create(c: Context): Promise<Response> {
     const body = await getBody(c);
     const result = validateEventForm(body as Record<string, unknown>);
-    if (!result.ok) {
+    const upload = await readImageUpload(body);
+
+    const errors: Record<string, string> = result.ok ? {} : { ...result.errors };
+    if (upload.kind === 'error') errors.imageFile = upload.error;
+
+    if (!result.ok || Object.keys(errors).length > 0) {
       return renderView(c, 'admin/event-form', {
         title: 'New event', activeNav: 'events',
-        mode: 'create', errors: result.errors, values: result.values,
+        mode: 'create', errors, values: result.ok ? result.values : result.values,
       }, { layout: 'admin' });
     }
     const openImmediately = body['openImmediately'] === 'on' || body['openImmediately'] === 'true';
     const eventId = await eventAdminService.create(result.values, openImmediately);
+    // A stored blob is the one source of truth — write it after create. (The
+    // create proc/INSERT doesn't take image columns, so we follow up.)
+    if (upload.kind === 'ok') {
+      await eventAdminService.setImageBlob(eventId, upload.buffer, upload.mime);
+    }
     flash(c, openImmediately ? 'Event created and opened.' : 'Event created as a draft.');
     return c.redirect(`/admin/events/${eventId}`);
   },
@@ -90,6 +132,7 @@ export const adminEventsController = {
       mode: 'edit', eventId, errors: {},
       currentStatus: event.status,
       confirmedCount: event.confirmed_count,
+      hasImageBlob: event.has_image,
       values: {
         name: event.name,
         eventDateRaw: toLocalInput(event.event_date),
@@ -111,6 +154,8 @@ export const adminEventsController = {
 
     const body = await getBody(c);
     const result = validateEventForm(body as Record<string, unknown>, { minCapacity: event.confirmed_count });
+    const upload = await readImageUpload(body);
+    const removeImage = wantsRemoveImage(body);
 
     // Status transition validation (CANCELLED never comes through here).
     const requestedStatus = String(body['status'] ?? event.status);
@@ -118,6 +163,7 @@ export const adminEventsController = {
     if (requestedStatus !== 'CANCELLED' && !isAllowedTransition(event.status, requestedStatus)) {
       errors.status = `Cannot change status from ${event.status} to ${requestedStatus}.`;
     }
+    if (upload.kind === 'error') errors.imageFile = upload.error;
 
     if (!result.ok || Object.keys(errors).length > 0) {
       return renderView(c, 'admin/event-form', {
@@ -125,6 +171,7 @@ export const adminEventsController = {
         mode: 'edit', eventId, errors,
         currentStatus: event.status,
         confirmedCount: event.confirmed_count,
+        hasImageBlob: event.has_image,
         values: result.ok
           ? { ...result.values, feeDollars: centsToDollars(result.values.registrationFeeCents), eventDateRaw: toLocalInput(result.values.eventDate) }
           : result.values,
@@ -135,6 +182,15 @@ export const adminEventsController = {
     // it FULL via a hidden field, the transition table already forbids invalid
     // moves; we only ever write the requested allowed status.
     await eventAdminService.update(eventId, result.values, requestedStatus, event.opened_at);
+
+    // Image (D1): a new upload wins and clears image_url (one source of truth);
+    // otherwise the "Remove image" checkbox deletes the stored graphic, leaving
+    // image_url as the admin set it. Upload takes precedence over a stray remove.
+    if (upload.kind === 'ok') {
+      await eventAdminService.setImageBlob(eventId, upload.buffer, upload.mime);
+    } else if (removeImage) {
+      await eventAdminService.clearImageBlob(eventId);
+    }
 
     // Audit metadata for the I10 booking curve: record capacity and status
     // changes against the acting admin (best-effort, never blocks the update).
@@ -172,6 +228,31 @@ export const adminEventsController = {
       title: event.name, activeNav: 'events',
       event, roster, waitlist, stats, perf,
     }, { layout: 'admin' });
+  },
+
+  /**
+   * GET /events/:eventId/image — serve an event's uploaded graphic (D1). Public
+   * (storefront cards and the admin edit form both point here). The Content-Type
+   * is the SERVER-derived mime stored at upload time, never a client value;
+   * X-Content-Type-Options: nosniff blocks browser MIME-guessing, and a long
+   * cache is safe because the URL changes meaning only when the admin re-uploads.
+   */
+  async image(c: Context): Promise<Response> {
+    const eventId = c.req.param('eventId');
+    if (!eventId || !UUID_RE.test(eventId)) return c.notFound();
+    const img = await eventAdminService.getImageBlob(eventId);
+    if (!img) return c.notFound();
+    // Buffer/Uint8Array aren't BodyInit under this lib's DOM types; copy the
+    // bytes into a standalone ArrayBuffer, which is.
+    const ab = img.blob.buffer.slice(img.blob.byteOffset, img.blob.byteOffset + img.blob.byteLength) as ArrayBuffer;
+    return new Response(ab, {
+      headers: {
+        'Content-Type': img.mime,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'public, max-age=3600',
+        'Content-Length': String(img.blob.length),
+      },
+    });
   },
 
   /** GET /admin/events/:id/roster.csv — roster export (A7). */

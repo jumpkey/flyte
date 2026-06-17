@@ -82,13 +82,18 @@ export const catalogController = {
     // og:type is `event` for richer unfurls on platforms that key off it.
     const origin = new URL(c.req.url).origin;
     const firstLine = (event.description ?? '').split('\n')[0].slice(0, 200);
-    const hasOwnImage = !!event.image_url;
+    // D1: an uploaded blob is served from our own route; it counts as the event's
+    // own art for OG just like a remote image_url does. Blob takes precedence.
+    const ownImageUrl = event.has_image
+      ? `${origin}/events/${event.event_id}/image`
+      : event.image_url;
+    const hasOwnImage = !!ownImageUrl;
     const og = {
       title: event.name,
       description: firstLine || `${new Date(event.event_date).toDateString()}${event.location ? ' · ' + event.location : ''}`,
       type: 'event',
       url: `${origin}/events/${event.event_id}`,
-      image: event.image_url ?? `${origin}/public/og-default.svg`,
+      image: ownImageUrl ?? `${origin}/public/og-default.svg`,
       // Only the real raster art warrants a large Twitter card; the SVG brand
       // fallback isn't rendered large by Twitter, so it stays a summary card.
       largeImage: hasOwnImage,

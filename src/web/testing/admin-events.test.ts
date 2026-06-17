@@ -63,6 +63,37 @@ async function postForm(path: string, fields: Record<string, string>, cookie?: s
   });
 }
 
+/**
+ * Multipart POST: build a FormData with text fields + an optional file part and
+ * let app.request set the multipart boundary itself (DON'T set Content-Type).
+ */
+async function postMultipart(
+  path: string,
+  fields: Record<string, string>,
+  file: { name: string; type: string; bytes: Buffer } | null,
+  cookie?: string,
+) {
+  const { app } = await import('../app.js');
+  const fd = new FormData();
+  fd.set('_csrf', CSRF);
+  for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+  if (file) {
+    const blob = new Blob([new Uint8Array(file.bytes)], { type: file.type });
+    fd.set('imageFile', blob, file.name);
+  }
+  return app.request(`http://localhost${path}`, {
+    method: 'POST',
+    headers: { ...(cookie ? { Cookie: cookie } : {}) },
+    body: fd,
+  });
+}
+
+// Smallest valid PNG (1x1 transparent) — starts with the 89 50 4E 47 magic.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64',
+);
+
 async function runTests() {
   let passed = 0; let failed = 0;
   async function test(name: string, fn: () => Promise<void> | void) {
@@ -188,6 +219,67 @@ async function runTests() {
     const result = await svc.refundEvent({ eventId: id, refundType: 'FULL', reason: 'event_cancelled' });
     assert(result.totalFailed >= 1, 'a refund failed');
     assertEqual((await testSql`SELECT status FROM events WHERE event_id = ${id}::UUID`)[0].status, 'OPEN', 'event NOT cancelled on failure');
+  });
+
+  // ── D1: uploaded event graphic (blob) ──
+  await test('D1: uploading a valid PNG on create stores the blob and serves it with nosniff', async () => {
+    await truncateTables();
+    const resp = await postMultipart('/admin/events',
+      { name: 'Blobby', eventDate: '2030-07-01T10:00', capacity: '10', feeDollars: '20', openImmediately: 'on' },
+      { name: 'art.png', type: 'image/png', bytes: TINY_PNG }, admin.cookie);
+    assertEqual(resp.status, 302, 'create with upload redirects');
+    const id = (resp.headers.get('location') || '').split('/').pop()!;
+    const row = await testSql`SELECT image_blob, image_mime FROM events WHERE event_id = ${id}::UUID`;
+    assert(row[0].image_blob != null, 'blob stored');
+    assertEqual(row[0].image_mime, 'image/png', 'mime derived from sniff');
+
+    const img = await get(`/events/${id}/image`);
+    assertEqual(img.status, 200, 'image served 200');
+    assertEqual(img.headers.get('content-type'), 'image/png', 'server-derived content type');
+    assertEqual(img.headers.get('x-content-type-options'), 'nosniff', 'nosniff header');
+    assert((img.headers.get('cache-control') || '').includes('max-age'), 'cache-control set');
+  });
+
+  await test('D1: a non-image buffer is rejected — no blob stored, validation error shown', async () => {
+    await truncateTables();
+    const resp = await postMultipart('/admin/events',
+      { name: 'NotAnImage', eventDate: '2030-07-02T10:00', capacity: '10', feeDollars: '20' },
+      { name: 'evil.png', type: 'image/png', bytes: Buffer.from('not an image') }, admin.cookie);
+    assertEqual(resp.status, 200, 're-renders form (not a redirect)');
+    const body = await resp.text();
+    assert(body.includes('Unsupported file'), 'shows the unsupported-file error');
+    const rows = await testSql`SELECT count(*)::int AS n FROM events WHERE name = 'NotAnImage'`;
+    assertEqual(rows[0].n, 0, 'event not created on invalid upload');
+  });
+
+  await test('D1: the removeImage checkbox clears a stored blob on update', async () => {
+    await truncateTables();
+    const create = await postMultipart('/admin/events',
+      { name: 'ToClear', eventDate: '2030-07-03T10:00', capacity: '10', feeDollars: '20', openImmediately: 'on' },
+      { name: 'art.png', type: 'image/png', bytes: TINY_PNG }, admin.cookie);
+    const id = (create.headers.get('location') || '').split('/').pop()!;
+    assert((await testSql`SELECT image_blob FROM events WHERE event_id = ${id}::UUID`)[0].image_blob != null, 'blob present before remove');
+
+    const upd = await postMultipart(`/admin/events/${id}`,
+      { name: 'ToClear', eventDate: '2030-07-03T10:00', capacity: '10', feeDollars: '20', status: 'OPEN', removeImage: 'on' },
+      null, admin.cookie);
+    assertEqual(upd.status, 302, 'update redirects');
+    const row = await testSql`SELECT image_blob, image_mime FROM events WHERE event_id = ${id}::UUID`;
+    assertEqual(row[0].image_blob, null, 'blob cleared');
+    assertEqual(row[0].image_mime, null, 'mime cleared');
+    assertEqual((await get(`/events/${id}/image`)).status, 404, 'image route 404s after clear');
+  });
+
+  await test('D1: storefront card + detail point at /events/:id/image when a blob exists', async () => {
+    await truncateTables();
+    const create = await postMultipart('/admin/events',
+      { name: 'CardBlob', eventDate: '2030-07-04T10:00', capacity: '10', feeDollars: '20', openImmediately: 'on' },
+      { name: 'art.png', type: 'image/png', bytes: TINY_PNG }, admin.cookie);
+    const id = (create.headers.get('location') || '').split('/').pop()!;
+    const catalog = await (await get('/events')).text();
+    assert(catalog.includes(`/events/${id}/image`), 'card src points at the blob route');
+    const detail = await (await get(`/events/${id}`)).text();
+    assert(detail.includes(`/events/${id}/image`), 'detail img points at the blob route');
   });
 
   await truncateTables();

@@ -40,6 +40,8 @@ document.addEventListener('click', function (e) {
   const dateEl = document.getElementById('eventDate');
   const locEl = document.getElementById('location');
   const imgEl = document.getElementById('imageUrl');
+  const fileEl = document.getElementById('imageFile');
+  let objectUrl = null; // revoked before each new selection to avoid leaks
 
   function initials(name) {
     return (name || 'EV').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() || 'EV';
@@ -61,10 +63,21 @@ document.addEventListener('click', function (e) {
       $('meta').textContent = locEl && locEl.value ? locEl.value : '';
     }
     const img = $('img');
-    if (imgEl && /^https:\/\//i.test(imgEl.value)) { img.src = imgEl.value; img.style.display = 'block'; }
-    else { img.removeAttribute('src'); img.style.display = 'none'; }
+    // Precedence in the live preview mirrors the storefront: a chosen file (D1)
+    // wins over the URL, then the styled fallback shows through.
+    var file = fileEl && fileEl.files && fileEl.files[0];
+    if (file) {
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); }
+      objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl; img.style.display = 'block';
+    } else if (imgEl && /^https:\/\//i.test(imgEl.value)) {
+      img.src = imgEl.value; img.style.display = 'block';
+    } else {
+      img.removeAttribute('src'); img.style.display = 'none';
+    }
   }
   [nameEl, feeEl, dateEl, locEl, imgEl].forEach(function (el) { if (el) el.addEventListener('input', render); });
+  if (fileEl) fileEl.addEventListener('change', render);
   render();
 })();
 

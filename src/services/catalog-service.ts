@@ -18,13 +18,14 @@ export interface CatalogEvent {
   registration_fee_cents: number;
   status: string;
   image_url: string | null;
+  has_image: boolean;
   waitlist_enabled: boolean;
 }
 
 const PUBLIC_COLUMNS = sql`
   event_id, name, description, event_date, location,
   total_capacity, available_slots, registration_fee_cents,
-  status, image_url, waitlist_enabled
+  status, image_url, (image_blob IS NOT NULL) AS has_image, waitlist_enabled
 `;
 
 export interface CatalogPage {

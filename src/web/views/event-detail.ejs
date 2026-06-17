@@ -9,7 +9,10 @@
           <span class="initials"><%= eventInitials(event.name) %></span>
           <span class="when"><%= dateBadge(event.event_date) %></span>
         </div>
-        <% if (event.image_url) { %>
+        <%# Image precedence (D1): uploaded blob > image_url > styled fallback. %>
+        <% if (event.has_image) { %>
+          <img src="/events/<%= event.event_id %>/image" alt="">
+        <% } else if (event.image_url) { %>
           <img src="<%= event.image_url %>" alt="">
         <% } %>
       </div>

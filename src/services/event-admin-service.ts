@@ -19,6 +19,7 @@ export interface AdminEventRow {
   registration_fee_cents: number;
   status: string;
   image_url: string | null;
+  has_image: boolean;
   waitlist_enabled: boolean;
   opened_at: Date | null;
   gross_revenue_cents?: number;
@@ -28,7 +29,11 @@ export const eventAdminService = {
   /** Every event, all statuses, with confirmed-gross revenue, soonest first. */
   async listForAdmin(): Promise<AdminEventRow[]> {
     const rows = await sql`
-      SELECT e.*,
+      SELECT e.event_id, e.name, e.event_date, e.location, e.description,
+             e.total_capacity, e.confirmed_count, e.available_slots,
+             e.registration_fee_cents, e.status, e.image_url,
+             (e.image_blob IS NOT NULL) AS has_image,
+             e.waitlist_enabled, e.opened_at, e.created_at, e.updated_at,
              COALESCE(r.gross, 0)::int AS gross_revenue_cents
       FROM events e
       LEFT JOIN (
@@ -42,8 +47,45 @@ export const eventAdminService = {
   },
 
   async getById(eventId: string): Promise<AdminEventRow | null> {
-    const rows = await sql`SELECT * FROM events WHERE event_id = ${eventId}::UUID`;
+    // Select explicit columns + a has_image flag rather than `*` so the (potentially
+    // large) image_blob bytea is never pulled into a row used purely for rendering.
+    const rows = await sql`
+      SELECT event_id, name, event_date, location, description,
+             total_capacity, confirmed_count, available_slots,
+             registration_fee_cents, status, image_url,
+             (image_blob IS NOT NULL) AS has_image,
+             waitlist_enabled, opened_at, created_at, updated_at
+      FROM events WHERE event_id = ${eventId}::UUID`;
     return (rows[0] as unknown as AdminEventRow) ?? null;
+  },
+
+  /**
+   * Persist an uploaded graphic (D1). A stored blob is the single source of
+   * truth for the image, so setting one also clears image_url — the storefront
+   * precedence (blob > url) then has nothing to disagree with.
+   */
+  async setImageBlob(eventId: string, buffer: Buffer, mime: string): Promise<void> {
+    await sql`
+      UPDATE events
+      SET image_blob = ${buffer}, image_mime = ${mime}, image_url = NULL, updated_at = now()
+      WHERE event_id = ${eventId}::UUID`;
+  },
+
+  /** Remove an uploaded graphic, leaving image_url as the admin set it. */
+  async clearImageBlob(eventId: string): Promise<void> {
+    await sql`
+      UPDATE events
+      SET image_blob = NULL, image_mime = NULL, updated_at = now()
+      WHERE event_id = ${eventId}::UUID`;
+  },
+
+  /** Fetch the stored graphic bytes + server-derived mime for the serve route. */
+  async getImageBlob(eventId: string): Promise<{ blob: Buffer; mime: string } | null> {
+    const rows = await sql<{ image_blob: Buffer | null; image_mime: string | null }[]>`
+      SELECT image_blob, image_mime FROM events WHERE event_id = ${eventId}::UUID`;
+    const row = rows[0];
+    if (!row || !row.image_blob || !row.image_mime) return null;
+    return { blob: Buffer.from(row.image_blob), mime: row.image_mime };
   },
 
   /** Count of CONFIRMED registrations — what a bulk refund would actually act on. */
