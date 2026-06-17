@@ -8,6 +8,7 @@ import { getStripe } from '../../registration/stripe-factory.js';
 import { sql } from '../../services/db.js';
 import { config } from '../../config.js';
 import { userService } from '../../services/user-service.js';
+import { buildEventIcs } from '../utils/ics.js';
 import type { SessionData } from '../middleware/session.js';
 import type { User } from '../../services/user-service.js';
 
@@ -216,6 +217,32 @@ export const registrationController = {
       event: eventRows.length > 0 ? eventRows[0] : null,
       isShadow,
       ownerEmail: owner?.email ?? reg.email,
+    });
+  },
+
+  /** GET /registration/:registrationId/calendar.ics — add-to-calendar (V2). Capability URL. */
+  async calendarIcs(c: Context): Promise<Response> {
+    const registrationId = c.req.param('registrationId');
+    if (!registrationId || !UUID_RE.test(registrationId)) return c.text('Not found', 404);
+    const rows = await sql<{ name: string; event_date: Date; location: string | null }[]>`
+      SELECT e.name, e.event_date, e.location
+      FROM registrations r JOIN events e ON e.event_id = r.event_id
+      WHERE r.registration_id = ${registrationId}::UUID
+    `;
+    if (rows.length === 0) return c.text('Not found', 404);
+    const ev = rows[0];
+    const ics = buildEventIcs({
+      registrationId,
+      eventName: ev.name,
+      eventDate: ev.event_date,
+      location: ev.location,
+      confirmationUrl: `${config.appDomain}/registration/${registrationId}/confirmed`,
+    });
+    return new Response(ics, {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="event.ics"',
+      },
     });
   },
 

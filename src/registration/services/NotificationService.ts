@@ -113,6 +113,24 @@ export class NotificationService implements INotificationService {
     });
   }
 
+  /** Email a guest the confirmation (capability) links for their registrations (V1). */
+  async sendRegistrationLinks(email: string, items: Array<{ eventName: string; url: string }>): Promise<void> {
+    const listHtml = items.map((i) => `<li><strong>${escapeHtml(i.eventName)}</strong> — <a href="${i.url}">${i.url}</a></li>`).join('');
+    const listText = items.map((i) => `${i.eventName}: ${i.url}`).join('\n');
+    await transporter.sendMail({
+      from: config.smtp.from,
+      to: email,
+      subject: 'Your Flyte registrations',
+      html: `
+        <h2>Your Registrations</h2>
+        <p>Here are the links to the registrations associated with this email address:</p>
+        <ul>${listHtml}</ul>
+        <p>Each link opens your confirmation and lets you request a refund.</p>
+      `,
+      text: `Your Registrations\n\nHere are your registration links:\n\n${listText}\n\nEach link opens your confirmation and lets you request a refund.`,
+    });
+  }
+
   /** Notify the customer that a refund request was denied. The note is escaped (S4). */
   async sendRefundDenied(registration: RegistrationRecord, eventName: string, note: string): Promise<void> {
     await transporter.sendMail({

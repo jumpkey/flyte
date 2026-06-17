@@ -1,0 +1,21 @@
+<div class="container">
+  <div class="panel auth-panel">
+    <% if (typeof sent !== 'undefined' && sent) { %>
+      <h1 class="h3 mb-2">Check your email</h1>
+      <p class="text-muted">If that address has any registrations, we've emailed you the links. They open your confirmation and let you request a refund.</p>
+      <a href="/events" class="btn btn-outline-secondary mt-2">Browse events</a>
+    <% } else { %>
+      <h1 class="h3 mb-1">Find my registration</h1>
+      <p class="text-muted mb-4">Bought tickets as a guest? Enter your email and we'll send your registration links.</p>
+      <form action="/find-registration" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-3">
+          <label class="form-label" for="email">Email</label>
+          <input class="form-control" type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Email me my links</button>
+      </form>
+      <p class="mt-4 mb-0 text-center"><a href="/login">Back to sign in</a></p>
+    <% } %>
+  </div>
+</div>

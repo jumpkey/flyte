@@ -32,6 +32,7 @@
 
     <p class="text-muted" style="font-size:.9rem;">Plans changed? You can request a refund any time before the event.</p>
     <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="/registration/<%= registration.registrationId %>/calendar.ics" class="btn btn-outline-secondary">Add to calendar</a>
       <a href="/registration/<%= registration.registrationId %>/refund-request" class="btn btn-outline-secondary">Request a refund</a>
       <a href="/events" class="btn btn-outline-secondary">Browse more events</a>
     </div>

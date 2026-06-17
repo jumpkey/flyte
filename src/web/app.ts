@@ -18,6 +18,7 @@ import { adminRegistrationsController } from './controllers/admin/registrations.
 import { adminRefundsController } from './controllers/admin/refunds.js';
 import { refundRequestController } from './controllers/refund-request.js';
 import { accountController } from './controllers/account.js';
+import { findRegistrationController } from './controllers/find-registration.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { adminGuard } from './middleware/admin-guard.js';
 import { loadUser } from './middleware/load-user.js';
@@ -128,6 +129,11 @@ app.get('/events/:eventId/register', registrationController.showRegistrationForm
 app.post('/events/:eventId/register', rateLimit(60, 60000), registrationController.initiateRegistration);
 app.post('/registration/confirm/:paymentIntentId', rateLimit(60, 60000), registrationController.confirmRegistration);
 app.get('/registration/:registrationId/confirmed', registrationController.showConfirmed);
+// Add-to-calendar (V2) — capability URL.
+app.get('/registration/:registrationId/calendar.ics', registrationController.calendarIcs);
+// Find my registration (V1) — public guest recovery, RL(5) on submit.
+app.get('/find-registration', findRegistrationController.form);
+app.post('/find-registration', rateLimit(5, 60000), findRegistrationController.submit);
 // Refund request (J4 / I6) — capability URL from the confirmation page. RL(5) on file.
 app.get('/registration/:id/refund-request', refundRequestController.form);
 app.post('/registration/:id/refund-request', rateLimit(5, 60000), refundRequestController.create);

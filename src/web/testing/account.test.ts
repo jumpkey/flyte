@@ -121,6 +121,42 @@ async function runTests() {
     assert(resp.status === 302 || resp.status === 401 || resp.status === 404, `guarded (got ${resp.status})`);
   });
 
+  // ── V2: add-to-calendar (ICS) ──
+  await test('V2: calendar.ics returns a VEVENT for a registration; 404 for unknown', async () => {
+    await truncateTables();
+    const ev = await createEvent('ICS Fest');
+    const id = await createReg(ev, a.id, 'CONFIRMED');
+    const resp = await get(`/registration/${id}/calendar.ics`);
+    assertEqual(resp.status, 200, 'ics ok');
+    assert((resp.headers.get('content-type') || '').includes('text/calendar'), 'calendar content-type');
+    const body = await resp.text();
+    assert(body.includes('BEGIN:VEVENT') && body.includes('SUMMARY:ICS Fest') && body.includes(`UID:${id}@flyte`), 'VEVENT content');
+    assertEqual((await get('/registration/00000000-0000-0000-0000-000000000000/calendar.ics')).status, 404, 'unknown 404');
+  });
+
+  // ── V1: find my registration ──
+  await test('V1: find-registration always acks (anti-enumeration), CSRF-gated', async () => {
+    await truncateTables();
+    const { app } = await import('../app.js');
+    // Bootstrap CSRF from the form.
+    const formResp = await app.request('http://localhost/find-registration');
+    const sid = (formResp.headers.get('set-cookie') ?? '').match(/sid=([^;]+)/)?.[1] ?? '';
+    const csrf = (await formResp.text()).match(/name="_csrf" value="([^"]+)"/)?.[1] ?? '';
+    assert(!!csrf && !!sid, 'form provides csrf + session');
+    // No CSRF → 403.
+    const noCsrf = await app.request('http://localhost/find-registration', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `sid=${sid}` },
+      body: 'email=whoever@example.com',
+    });
+    assertEqual(noCsrf.status, 403, 'no csrf → 403');
+    // With CSRF → uniform ack regardless of whether the email exists.
+    const resp = await app.request('http://localhost/find-registration', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `sid=${sid}` },
+      body: new URLSearchParams({ email: 'nobody@example.com', _csrf: csrf }).toString(),
+    });
+    assert((await resp.text()).includes('Check your email'), 'uniform ack');
+  });
+
   await truncateTables();
   await cleanup();
   console.log(`\n=== Account: ${passed} passed, ${failed} failed ===`);
