@@ -217,6 +217,55 @@ async function runTests() {
     await testSql`DELETE FROM users WHERE id = ${userId}`;
   });
 
+  // ── W3: logged-in waitlist-aware detail ──
+  await test('logged-in waitlist member sees "You\'re on the waitlist (#N)" instead of Join CTA', async () => {
+    await truncateTables();
+    const email = 'catalog-waiter@example.com';
+    await testSql`DELETE FROM waitlist_entries WHERE email=${email}`;
+    await testSql`DELETE FROM login_events WHERE user_id IN (SELECT id FROM users WHERE email=${email})`;
+    await testSql`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email=${email})`;
+    await testSql`DELETE FROM users WHERE email=${email}`;
+    const hash = await authService.hashPassword('pw');
+    const u = await testSql`INSERT INTO users (email, password_hash, display_name, is_verified, account_status) VALUES (${email}, ${hash}, 'Waiter', TRUE, 'active') RETURNING id`;
+    const userId = u[0].id as string;
+    const id = await createEvent({ status: 'FULL', availableSlots: 0, waitlistEnabled: true });
+
+    // Two earlier entries put our user at position #3.
+    await testSql`INSERT INTO waitlist_entries (event_id, email, first_name, last_name, created_at) VALUES (${id}, 'first@example.com', 'A', 'A', now() - interval '2 minutes')`;
+    await testSql`INSERT INTO waitlist_entries (event_id, email, first_name, last_name, created_at) VALUES (${id}, 'second@example.com', 'B', 'B', now() - interval '1 minute')`;
+    const w = await testSql`INSERT INTO waitlist_entries (event_id, user_id, email, first_name, last_name, created_at) VALUES (${id}, ${userId}, ${email}, 'Wait', 'Er', now()) RETURNING waitlist_entry_id`;
+    const entryId = w[0].waitlist_entry_id as string;
+    const { signedSid } = await createSession({ userId }, userId);
+
+    const r = await get(`/events/${id}`, `sid=${signedSid}`);
+    assert(r.body.includes("You're on the waitlist (#3)"), 'shows waitlist position');
+    assert(r.body.includes(`/waitlist/${entryId}`), 'links the waitlist entry');
+    assert(!r.body.includes(`/events/${id}/waitlist`), 'no Join the waitlist CTA for a member');
+
+    await testSql`DELETE FROM waitlist_entries WHERE event_id = ${id}`;
+    await testSql`DELETE FROM sessions WHERE user_id = ${userId}`;
+    await testSql`DELETE FROM users WHERE id = ${userId}`;
+  });
+
+  await test('logged-in non-member of a sold-out event still sees the Join CTA', async () => {
+    await truncateTables();
+    const email = 'catalog-nonwaiter@example.com';
+    await testSql`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email=${email})`;
+    await testSql`DELETE FROM users WHERE email=${email}`;
+    const hash = await authService.hashPassword('pw');
+    const u = await testSql`INSERT INTO users (email, password_hash, display_name, is_verified, account_status) VALUES (${email}, ${hash}, 'NonWaiter', TRUE, 'active') RETURNING id`;
+    const userId = u[0].id as string;
+    const id = await createEvent({ status: 'FULL', availableSlots: 0, waitlistEnabled: true });
+    const { signedSid } = await createSession({ userId }, userId);
+
+    const r = await get(`/events/${id}`, `sid=${signedSid}`);
+    assert(r.body.includes(`/events/${id}/waitlist`), 'Join CTA present for non-member');
+    assert(!r.body.includes("You're on the waitlist"), 'no member banner');
+
+    await testSql`DELETE FROM sessions WHERE user_id = ${userId}`;
+    await testSql`DELETE FROM users WHERE id = ${userId}`;
+  });
+
   // ── Addendum V3–V6 ──
   await test('V5: /events?when=past shows only past events, in "Held on" style', async () => {
     await truncateTables();

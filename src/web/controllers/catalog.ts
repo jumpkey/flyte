@@ -60,10 +60,16 @@ export const catalogController = {
     const card = eventCardState(event);
 
     let alreadyRegistered = false;
+    let waitlist: { onWaitlist: boolean; position: number | null; waitlistEntryId: string | null } = {
+      onWaitlist: false,
+      position: null,
+      waitlistEntryId: null,
+    };
     const session = c.get('session') as SessionData | undefined;
     const user = c.get('user') as User | undefined;
     if (session?.userId && user) {
       alreadyRegistered = await catalogService.hasActiveRegistration(eventId, session.userId);
+      waitlist = await catalogService.getWaitlistMembership(eventId, session.userId);
     }
 
     // Open Graph card (V3): turn a shared link into a poster.
@@ -82,6 +88,7 @@ export const catalogController = {
       event,
       card,
       alreadyRegistered,
+      waitlist,
       og,
     });
   },

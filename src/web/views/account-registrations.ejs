@@ -28,13 +28,14 @@
     <h2 class="h5 mb-2">Waitlists</h2>
     <div class="table-responsive">
       <table class="table align-middle">
-        <thead><tr><th>Event</th><th>When</th><th></th></tr></thead>
+        <thead><tr><th>Event</th><th>When</th><th>Position</th><th></th></tr></thead>
         <tbody>
           <% waitlist.forEach(function (w) { %>
           <tr>
             <td><a class="text-decoration-none fw-semibold" href="/events/<%= w.event_id %>"><%= w.event_name %></a></td>
             <td><%= dateLong(w.event_date) %></td>
-            <td class="text-end"><a class="text-decoration-none" href="/waitlist/<%= w.waitlist_entry_id %>">Position →</a></td>
+            <td>#<%= w.position %></td>
+            <td class="text-end"><a class="text-decoration-none" href="/waitlist/<%= w.waitlist_entry_id %>">View →</a></td>
           </tr>
           <% }); %>
         </tbody>

@@ -25,6 +25,7 @@ export interface AccountWaitlistRow {
   event_name: string;
   event_date: Date;
   location: string | null;
+  position: number;
 }
 
 // A registration is refund-requestable when CONFIRMED with no open/approved
@@ -52,8 +53,13 @@ export const accountService = {
 
   /** Waitlist entries bound to this user (#29 — the account view includes these). */
   async listWaitlist(userId: string): Promise<AccountWaitlistRow[]> {
+    // `position` is the 1-based rank by created_at within each event, mirroring
+    // WaitlistService.getWaitlistPosition (computed over every entry for the event,
+    // then narrowed to this user's rows).
     const rows = await sql`
-      SELECT w.waitlist_entry_id, e.event_id, e.name AS event_name, e.event_date, e.location
+      SELECT w.waitlist_entry_id, e.event_id, e.name AS event_name, e.event_date, e.location,
+             (SELECT count(*)::int FROM waitlist_entries w2
+              WHERE w2.event_id = w.event_id AND w2.created_at <= w.created_at) AS position
       FROM waitlist_entries w JOIN events e ON e.event_id = w.event_id
       WHERE w.user_id = ${userId}
       ORDER BY e.event_date DESC

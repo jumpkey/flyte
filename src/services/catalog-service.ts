@@ -123,4 +123,24 @@ export const catalogService = {
     `;
     return rows.length > 0;
   },
+
+  /**
+   * Whether a logged-in user is already on this event's waitlist, and where they
+   * sit — drives the "You're on the waitlist (#N)" detail state instead of the
+   * "Join the waitlist" CTA. Position is the 1-based rank by `created_at ASC`
+   * within the event, mirroring WaitlistService.getWaitlistPosition.
+   */
+  async getWaitlistMembership(
+    eventId: string,
+    userId: string,
+  ): Promise<{ onWaitlist: boolean; position: number | null; waitlistEntryId: string | null }> {
+    const rows = await sql<Array<{ waitlist_entry_id: string; rn: string }>>`
+      SELECT waitlist_entry_id, rn FROM (
+        SELECT waitlist_entry_id, user_id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS rn
+        FROM waitlist_entries WHERE event_id = ${eventId}
+      ) sub WHERE user_id = ${userId}
+    `;
+    if (rows.length === 0) return { onWaitlist: false, position: null, waitlistEntryId: null };
+    return { onWaitlist: true, position: parseInt(rows[0].rn, 10), waitlistEntryId: rows[0].waitlist_entry_id };
+  },
 };

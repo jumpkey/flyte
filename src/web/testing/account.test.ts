@@ -116,6 +116,38 @@ async function runTests() {
     assert(!body.includes('Pending One'), 'non-confirmed excluded');
   });
 
+  await test('W5: My Registrations waitlist row shows the actual position number', async () => {
+    await truncateTables();
+    const ev = await createEvent('Queued Show');
+    // Two earlier entries push user a to position #3.
+    await testSql`INSERT INTO waitlist_entries (event_id, email, first_name, last_name, created_at) VALUES (${ev}, 'e1@example.com', 'E', '1', now() - interval '2 minutes')`;
+    await testSql`INSERT INTO waitlist_entries (event_id, email, first_name, last_name, created_at) VALUES (${ev}, 'e2@example.com', 'E', '2', now() - interval '1 minute')`;
+    const w = await testSql`INSERT INTO waitlist_entries (event_id, user_id, email, first_name, last_name, created_at) VALUES (${ev}, ${a.id}, ${EMAILS[0]}, 'Acct', 'A', now()) RETURNING waitlist_entry_id`;
+    const entryId = w[0].waitlist_entry_id as string;
+    const body = await (await get('/account/registrations', a.cookie)).text();
+    assert(body.includes('Queued Show'), 'waitlisted event shown');
+    assert(body.includes('#3'), 'position number rendered');
+    assert(body.includes(`/waitlist/${entryId}`), 'link to the entry kept');
+    await testSql`DELETE FROM waitlist_entries WHERE event_id = ${ev}`;
+  });
+
+  await test('W4: dashboard shows the user\'s waitlists, linked to /waitlist/:entryId', async () => {
+    await truncateTables();
+    const ev = await createEvent('Dash Waitlisted', 12);
+    const w = await testSql`INSERT INTO waitlist_entries (event_id, user_id, email, first_name, last_name) VALUES (${ev}, ${a.id}, ${EMAILS[0]}, 'Acct', 'A') RETURNING waitlist_entry_id`;
+    const entryId = w[0].waitlist_entry_id as string;
+    const body = await (await get('/dashboard', a.cookie)).text();
+    assert(body.includes('Your waitlists') && body.includes('Dash Waitlisted'), 'waitlist panel shown');
+    assert(body.includes(`/waitlist/${entryId}`), 'links the waitlist entry');
+    await testSql`DELETE FROM waitlist_entries WHERE event_id = ${ev}`;
+  });
+
+  await test('W4: dashboard omits the waitlists panel when the user has none', async () => {
+    await truncateTables();
+    const body = await (await get('/dashboard', b.cookie)).text();
+    assert(!body.includes('Your waitlists'), 'no panel without entries');
+  });
+
   await test('account pages require auth (anonymous redirected to login)', async () => {
     const resp = await get('/account/registrations');
     assert(resp.status === 302 || resp.status === 401 || resp.status === 404, `guarded (got ${resp.status})`);

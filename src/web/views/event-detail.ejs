@@ -42,7 +42,12 @@
           <button class="btn btn-secondary w-100" disabled>Registration closed</button>
 
         <% } else if (card.soldOut) { %>
-          <% if (card.waitlistOpen) { %>
+          <% if (typeof waitlist !== 'undefined' && waitlist.onWaitlist) { %>
+            <p class="mb-3 fw-semibold" style="color: var(--fl-info-text);">This event is sold out.</p>
+            <div class="alert alert-flyte mb-3" role="status"><strong>You're on the waitlist (#<%= waitlist.position %>)</strong></div>
+            <a class="btn btn-outline-secondary w-100" href="/waitlist/<%= waitlist.waitlistEntryId %>">View your waitlist entry</a>
+            <p class="text-secondary small mt-2 mb-0">We'll email you if a spot opens up.</p>
+          <% } else if (card.waitlistOpen) { %>
             <p class="mb-3 fw-semibold" style="color: var(--fl-info-text);">This event is sold out.</p>
             <a class="btn btn-primary w-100" href="/events/<%= event.event_id %>/waitlist">Join the waitlist</a>
             <p class="text-secondary small mt-2 mb-0">We'll email you if a spot opens up.</p>
@@ -70,7 +75,9 @@
 <% if (!alreadyRegistered && event.status !== 'CLOSED' && !(card.soldOut && !card.waitlistOpen)) { %>
 <div class="sticky-cta">
   <span class="event-price money fw-bold flex-grow-1"><%= money(event.registration_fee_cents) %></span>
-  <% if (card.soldOut && card.waitlistOpen) { %>
+  <% if (card.soldOut && typeof waitlist !== 'undefined' && waitlist.onWaitlist) { %>
+    <a class="btn btn-outline-secondary" href="/waitlist/<%= waitlist.waitlistEntryId %>">On waitlist (#<%= waitlist.position %>)</a>
+  <% } else if (card.soldOut && card.waitlistOpen) { %>
     <a class="btn btn-primary" href="/events/<%= event.event_id %>/waitlist">Join waitlist</a>
   <% } else { %>
     <a class="btn btn-cta" href="/events/<%= event.event_id %>/register">Register</a>
