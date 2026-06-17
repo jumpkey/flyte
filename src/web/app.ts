@@ -10,6 +10,7 @@ import { dashboardController } from './controllers/dashboard.js';
 import { profileController } from './controllers/profile.js';
 import { registrationController } from './controllers/registration.js';
 import { catalogController } from './controllers/catalog.js';
+import { staticController } from './controllers/static-pages.js';
 import { webhookController } from './controllers/webhook.js';
 import { adminController } from './controllers/admin.js';
 import { authGuard } from './middleware/auth-guard.js';
@@ -65,6 +66,11 @@ app.get('/', homeController.index);
 // Public storefront catalog + detail (I2). Detail 404s for DRAFT/CANCELLED.
 app.get('/events', catalogController.list);
 app.get('/events/:eventId', catalogController.detail);
+// Static prose pages (V6)
+app.get('/about', staticController.about);
+app.get('/contact', staticController.contact);
+app.get('/terms', staticController.terms);
+app.get('/privacy', staticController.privacy);
 app.get('/login', authController.loginForm);
 app.post('/login', rateLimit(10, 60000), authController.login);
 app.get('/register', authController.registerForm);

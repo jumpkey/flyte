@@ -5,7 +5,8 @@
     rendered underneath; a present image_url draws over it, and app.js removes a
     broken <img> on error so the fallback shows through — never a broken icon. %>
 <% const _c = eventCardState(ev); %>
-<a class="event-card h-100 d-block text-decoration-none<%= _c.state === 'closed' ? ' event-card-closed' : '' %>" href="/events/<%= ev.event_id %>">
+<% const _past = typeof past !== 'undefined' && past; %>
+<a class="event-card h-100 d-block text-decoration-none<%= (_c.state === 'closed' || _past) ? ' event-card-closed' : '' %>" href="/events/<%= ev.event_id %>">
   <div class="event-media">
     <div class="event-fallback">
       <span class="initials"><%= eventInitials(ev.name) %></span>
@@ -21,6 +22,12 @@
     <p class="event-meta">
       <%= dateLong(ev.event_date) %><% if (ev.location) { %> · <%= ev.location %><% } %>
     </p>
+    <% if (_past) { %>
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="event-price money"><%= money(ev.registration_fee_cents) %></span>
+        <span class="text-secondary small">Held on <%= dateLong(ev.event_date) %></span>
+      </div>
+    <% } else { %>
     <div class="d-flex justify-content-between align-items-center mb-2">
       <span class="event-price money"><%= money(ev.registration_fee_cents) %></span>
       <% if (_c.state === 'closed') { %>
@@ -40,6 +47,7 @@
         <div class="meter-fill" style="width: <%= _c.meterPct %>%"></div>
       </div>
       <div class="meter-label <%= _c.state === 'low' ? 'low' : '' %>"><%= ev.available_slots %> of <%= ev.total_capacity %> spots left</div>
+    <% } %>
     <% } %>
   </div>
 </a>

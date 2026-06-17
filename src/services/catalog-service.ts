@@ -53,10 +53,11 @@ export const catalogService = {
    * optional text search (name/location) and month filter, paginated. DRAFT and
    * CANCELLED never appear. `month` is 'YYYY-MM'.
    */
-  async listCatalog(opts: { q?: string; month?: string; page?: number; perPage?: number } = {}): Promise<CatalogPage> {
+  async listCatalog(opts: { q?: string; month?: string; page?: number; perPage?: number; when?: 'upcoming' | 'past' } = {}): Promise<CatalogPage> {
     const perPage = Math.min(Math.max(opts.perPage ?? 12, 1), 48);
     const page = Math.max(opts.page ?? 1, 1);
     const offset = (page - 1) * perPage;
+    const past = opts.when === 'past';
 
     const q = (opts.q ?? '').trim();
     const like = q ? `%${q}%` : null;
@@ -71,9 +72,12 @@ export const catalogService = {
       monthEnd = `${next}-01`;
     }
 
+    // Upcoming (default): future OPEN/FULL/CLOSED, soonest first. Past (V5): events
+    // whose date has passed — gives CLOSED events a dignified permanent home —
+    // most-recent first. DRAFT and CANCELLED never appear either way.
     const where = sql`
       status IN ('OPEN', 'FULL', 'CLOSED')
-      AND event_date > now()
+      AND (${past} = (event_date <= now()))
       AND (${like}::text IS NULL OR name ILIKE ${like} OR location ILIKE ${like})
       AND (${monthStart}::timestamptz IS NULL OR event_date >= ${monthStart}::timestamptz)
       AND (${monthEnd}::timestamptz IS NULL OR event_date < ${monthEnd}::timestamptz)
@@ -82,13 +86,9 @@ export const catalogService = {
     const countRows = await sql`SELECT count(*)::int AS n FROM events WHERE ${where}`;
     const total = (countRows[0]?.n as number) ?? 0;
 
-    const rows = await sql`
-      SELECT ${PUBLIC_COLUMNS}
-      FROM events
-      WHERE ${where}
-      ORDER BY event_date ASC
-      LIMIT ${perPage} OFFSET ${offset}
-    `;
+    const rows = past
+      ? await sql`SELECT ${PUBLIC_COLUMNS} FROM events WHERE ${where} ORDER BY event_date DESC LIMIT ${perPage} OFFSET ${offset}`
+      : await sql`SELECT ${PUBLIC_COLUMNS} FROM events WHERE ${where} ORDER BY event_date ASC LIMIT ${perPage} OFFSET ${offset}`;
 
     return {
       events: rows as unknown as CatalogEvent[],

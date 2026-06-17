@@ -1,10 +1,19 @@
+<% var _past = (typeof when !== 'undefined' && when === 'past'); %>
 <section class="container py-5">
-  <h1 class="h3 mb-4">Events</h1>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h1 class="h3 mb-0">Events</h1>
+    <%# Upcoming / Past toggle (V5). %>
+    <div class="btn-group" role="group" aria-label="Time filter">
+      <a class="btn btn-sm <%= _past ? 'btn-outline-secondary' : 'btn-primary' %>" href="/events">Upcoming</a>
+      <a class="btn btn-sm <%= _past ? 'btn-primary' : 'btn-outline-secondary' %>" href="/events?when=past">Past</a>
+    </div>
+  </div>
 
   <%# Filter form. With JS it swaps just #events-grid (hx-get on the form);
       without JS it is a normal GET to /events that reloads the page. %>
   <form class="row g-2 align-items-end mb-4" method="get" action="/events"
         hx-get="/events" hx-target="#events-grid" hx-swap="innerHTML" hx-push-url="true">
+    <% if (_past) { %><input type="hidden" name="when" value="past"><% } %>
     <div class="col-12 col-sm-6 col-md-5">
       <label class="form-label" for="q">Search</label>
       <input class="form-control" type="search" id="q" name="q" value="<%= q %>" placeholder="Name or location">
@@ -22,6 +31,6 @@
   </form>
 
   <div id="events-grid">
-    <%- include('partials/events-grid', { events: events, page: page, totalPages: totalPages, total: total, q: q, month: month }) %>
+    <%- include('partials/events-grid', { events: events, page: page, totalPages: totalPages, total: total, q: q, month: month, when: when }) %>
   </div>
 </section>

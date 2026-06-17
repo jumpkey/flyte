@@ -15,7 +15,10 @@
       </div>
       <h1 class="h3"><%= event.name %></h1>
       <p class="event-meta text-secondary">
-        <%= dateLong(event.event_date) %><% if (event.location) { %> · <%= event.location %><% } %>
+        <%= dateLong(event.event_date) %><% if (event.location) { %> · <%= event.location %>
+          <a class="text-decoration-none ms-1" target="_blank" rel="noopener"
+             href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(event.location) %>">Map ↗</a>
+        <% } %>
       </p>
       <% if (event.description) { %>
         <div class="mt-3"><%= event.description %></div>
@@ -56,6 +59,8 @@
           <a class="btn btn-cta w-100" href="/events/<%= event.event_id %>/register">Register — <%= money(event.registration_fee_cents) %></a>
           <p class="text-secondary small mt-2 mb-0">No account needed — check out as a guest.</p>
         <% } %>
+        <%# Refund-policy excerpt (V6) — full policy on /terms. %>
+        <p class="text-secondary small mt-3 mb-0">Refundable until the event — <a class="text-decoration-none" href="/terms">see policy</a>.</p>
       </div>
     </div>
   </div>

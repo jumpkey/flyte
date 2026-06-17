@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' ? title + ' · Flyte' : 'Flyte' %></title>
+  <%# Open Graph / Twitter cards (V3) — set by pages that pass `og`, so a pasted
+      link unfurls as a poster. Discovery for a small events site is shared links. %>
+  <% if (typeof og !== 'undefined' && og) { %>
+    <meta property="og:title" content="<%= og.title %>">
+    <% if (og.description) { %><meta property="og:description" content="<%= og.description %>"><% } %>
+    <meta property="og:type" content="<%= og.type || 'website' %>">
+    <% if (og.url) { %><meta property="og:url" content="<%= og.url %>"><link rel="canonical" href="<%= og.url %>"><% } %>
+    <% if (og.image) { %><meta property="og:image" content="<%= og.image %>"><% } %>
+    <meta name="twitter:card" content="summary<%= og.image ? '_large_image' : '' %>">
+  <% } %>
   <link rel="preload" href="/public/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/public/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/public/css/flyte.css">
@@ -26,6 +36,13 @@
   <footer class="site-footer">
     <div class="container d-flex justify-content-between flex-wrap gap-2">
       <span class="fw-bold">Flyte</span>
+      <nav class="d-flex flex-wrap gap-3" aria-label="Footer">
+        <a class="text-decoration-none" href="/events">Events</a>
+        <a class="text-decoration-none" href="/about">About</a>
+        <a class="text-decoration-none" href="/contact">Contact</a>
+        <a class="text-decoration-none" href="/terms">Terms</a>
+        <a class="text-decoration-none" href="/privacy">Privacy</a>
+      </nav>
       <span>Secure checkout · Powered by Stripe</span>
     </div>
   </footer>

@@ -217,6 +217,46 @@ async function runTests() {
     await testSql`DELETE FROM users WHERE id = ${userId}`;
   });
 
+  // ── Addendum V3–V6 ──
+  await test('V5: /events?when=past shows only past events, in "Held on" style', async () => {
+    await truncateTables();
+    await createEvent({ name: 'Future Talk', status: 'OPEN', daysOut: 10 });
+    await createEvent({ name: 'Old Talk', status: 'CLOSED', daysOut: -10 });
+    const upcoming = await get('/events');
+    assert(upcoming.body.includes('Future Talk') && !upcoming.body.includes('Old Talk'), 'upcoming excludes past');
+    const past = await get('/events?when=past');
+    assert(past.body.includes('Old Talk') && !past.body.includes('Future Talk'), 'past excludes future');
+    assert(past.body.includes('Held on'), 'past card shows Held on');
+  });
+
+  await test('V3: event detail emits Open Graph tags', async () => {
+    await truncateTables();
+    const id = await createEvent({ name: 'OG Event', imageUrl: 'https://example.com/p.jpg' });
+    const r = await get(`/events/${id}`);
+    assert(r.body.includes('property="og:title" content="OG Event"'), 'og:title');
+    assert(r.body.includes('property="og:image" content="https://example.com/p.jpg"'), 'og:image');
+    assert(r.body.includes('rel="canonical"'), 'canonical link');
+  });
+
+  await test('V4: event detail with a location shows a Map link', async () => {
+    await truncateTables();
+    const id = await createEvent({ location: 'Blue Room' });
+    const r = await get(`/events/${id}`);
+    assert(r.body.includes('google.com/maps/search') && r.body.includes('Map ↗'), 'map link present');
+  });
+
+  await test('V6: static pages render and event detail links the refund policy', async () => {
+    for (const [path, needle] of [['/about', 'About Flyte'], ['/contact', 'Contact'], ['/terms', 'Refund'], ['/privacy', 'Privacy']]) {
+      const r = await get(path);
+      assertEqual(r.status, 200, `${path} renders`);
+      assert(r.body.includes(needle), `${path} has expected content`);
+    }
+    await truncateTables();
+    const id = await createEvent({ status: 'OPEN' });
+    const r = await get(`/events/${id}`);
+    assert(r.body.includes('see policy') && r.body.includes('href="/terms"'), 'refund policy line links /terms');
+  });
+
   await truncateTables();
   console.log(`\n=== Catalog: ${passed} passed, ${failed} failed ===`);
   await testSql.end();

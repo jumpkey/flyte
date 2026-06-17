@@ -20,8 +20,9 @@ export const catalogController = {
     const q = c.req.query('q') ?? '';
     const month = c.req.query('month') ?? '';
     const page = parsePage(c.req.query('page'));
+    const when = c.req.query('when') === 'past' ? 'past' : 'upcoming';
 
-    const result = await catalogService.listCatalog({ q, month, page, perPage: 12 });
+    const result = await catalogService.listCatalog({ q, month, page, perPage: 12, when });
     const data = {
       title: 'Events',
       events: result.events,
@@ -31,6 +32,7 @@ export const catalogController = {
       totalPages: result.totalPages,
       q,
       month,
+      when,
     };
 
     // HTMX requests get only the swappable grid+pagination fragment.
@@ -64,11 +66,23 @@ export const catalogController = {
       alreadyRegistered = await catalogService.hasActiveRegistration(eventId, session.userId);
     }
 
+    // Open Graph card (V3): turn a shared link into a poster.
+    const origin = new URL(c.req.url).origin;
+    const firstLine = (event.description ?? '').split('\n')[0].slice(0, 200);
+    const og = {
+      title: event.name,
+      description: firstLine || `${new Date(event.event_date).toDateString()}${event.location ? ' · ' + event.location : ''}`,
+      type: 'website',
+      url: `${origin}/events/${event.event_id}`,
+      image: event.image_url ?? undefined,
+    };
+
     return renderView(c, 'event-detail', {
       title: event.name,
       event,
       card,
       alreadyRegistered,
+      og,
     });
   },
 };

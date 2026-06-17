@@ -3,10 +3,12 @@
     events, page, totalPages, total, q, month. Pagination links carry both a real
     href (JS-off full GET) and hx-get (JS-on fragment swap) — AC-I2 ⑤. %>
 <%
+  var _past = (typeof when !== 'undefined' && when === 'past');
   function pageUrl(p) {
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (month) params.set('month', month);
+    if (_past) params.set('when', 'past');
     params.set('page', String(p));
     return '/events?' + params.toString();
   }
@@ -18,7 +20,7 @@
   <div class="row g-4">
     <% events.forEach(function (ev) { %>
       <div class="col-12 col-md-6 col-lg-4">
-        <%- include('event-card', { ev: ev }) %>
+        <%- include('event-card', { ev: ev, past: _past }) %>
       </div>
     <% }); %>
   </div>
