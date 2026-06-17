@@ -1,0 +1,78 @@
+<h1 class="h3 mb-4">Dashboard</h1>
+
+<%# Attention panel (A5) — calm when there's nothing to do, which is what makes
+    it work when something appears. %>
+<% if (pendingRefundRequests > 0 || paymentFailed7d > 0) { %>
+<div class="alert alert-flyte alert-flyte-error mb-4" role="alert">
+  <strong>Needs attention:</strong>
+  <% if (pendingRefundRequests > 0) { %>
+    <a class="text-decoration-none" href="/admin/refund-requests"><%= pendingRefundRequests %> pending refund request<%= pendingRefundRequests === 1 ? '' : 's' %></a><%= paymentFailed7d > 0 ? ' · ' : '' %>
+  <% } %>
+  <% if (paymentFailed7d > 0) { %>
+    <a class="text-decoration-none" href="/admin/registrations?status=PAYMENT_FAILED"><%= paymentFailed7d %> failed payment<%= paymentFailed7d === 1 ? '' : 's' %> (7d)</a>
+  <% } %>
+</div>
+<% } %>
+
+<div class="row g-3 mb-4">
+  <% function kpi(label, value, href) { %>
+    <div class="col-6 col-lg-3">
+      <a class="panel d-block text-decoration-none" <%= href ? `href="${href}"` : '' %>>
+        <div class="caption-label"><%= label %></div>
+        <div class="fs-3 money"><%= value %></div>
+      </a>
+    </div>
+  <% } %>
+  <%- kpi('Revenue (30d)', money(grossRevenue30dCents), '/admin/registrations?status=CONFIRMED') %>
+  <%- kpi('Registrations (30d)', confirmedRegistrations30d, '/admin/registrations') %>
+  <%- kpi('Upcoming events', upcomingEvents, '/admin/events') %>
+  <%- kpi('Pending refunds', pendingRefundRequests, '/admin/refund-requests') %>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <h2 class="h5 mb-2">Recent transactions</h2>
+    <% if (!recentTransactions || recentTransactions.length === 0) { %>
+      <p class="text-secondary">No transactions yet.</p>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>When</th><th>Event</th><th>Customer</th><th>Status</th><th class="text-end">Amount</th></tr></thead>
+        <tbody>
+          <% recentTransactions.forEach(function (t) { %>
+          <tr class="admin-row" data-href="/admin/registrations/<%= t.registration_id %>">
+            <td><%= dateLong(t.created_at) %></td>
+            <td><%= t.event_name %></td>
+            <td><a class="text-decoration-none" href="/admin/registrations/<%= t.registration_id %>"><%= t.first_name %> <%= t.last_name %></a></td>
+            <td><%- include('../partials/status-pill', { status: t.status }) %></td>
+            <td class="text-end money"><%= money(t.gross_amount_cents) %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <h2 class="h5 mb-2">Recent sign-ins</h2>
+    <% if (!recentSignins || recentSignins.length === 0) { %>
+      <p class="text-secondary">No sign-in activity yet.</p>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>When</th><th>Email</th><th>Result</th></tr></thead>
+        <tbody>
+          <% recentSignins.forEach(function (s) { %>
+          <tr>
+            <td><%= dateLong(s.created_at) %></td>
+            <td><%= s.email_attempted %></td>
+            <td><%- include('../partials/status-pill', { status: s.success ? 'CONFIRMED' : 'DENIED' }) %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>

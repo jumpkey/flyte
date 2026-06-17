@@ -68,6 +68,18 @@ document.addEventListener('click', function (e) {
   render();
 })();
 
+// Refund modal: enable the partial-amount field only when "Partial" is chosen.
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.name === 'refundType') {
+    var amt = document.getElementById('refund-amount');
+    if (amt) {
+      var partial = e.target.value === 'partial';
+      amt.disabled = !partial;
+      if (partial) amt.focus();
+    }
+  }
+});
+
 // Bootstrap/HTMX coexistence seam (WK §11.1 rule 5): re-init JS-driven
 // widgets inside swapped fragments here if we ever put any there.
 document.addEventListener('htmx:afterSwap', function () { /* no-op for now */ });

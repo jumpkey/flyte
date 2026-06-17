@@ -1,13 +1,16 @@
 import type { Context } from 'hono';
 import { renderView } from '../render.js';
+import { adminDashboardService } from '../../services/admin-dashboard-service.js';
 
 /**
- * Placeholder admin landing (I1). The real admin dashboard (WF-07) arrives in
- * I5; for now this exists to exercise adminGuard + the admin layout shell and
- * give the security regression set a live /admin endpoint to enumerate against.
+ * Admin dashboard (WF-07) — the morning-coffee page: money in, registrations,
+ * what needs attention. KPI queries land here in I5 (the data they read now
+ * exists). The pending-refund-requests banner is wired but stays empty until I6
+ * starts creating requests.
  */
 export const adminController = {
   async index(c: Context): Promise<Response> {
-    return renderView(c, 'admin/index', { title: 'Admin', activeNav: 'dashboard' }, { layout: 'admin' });
+    const data = await adminDashboardService.getDashboard();
+    return renderView(c, 'admin/dashboard', { title: 'Dashboard', activeNav: 'dashboard', ...data }, { layout: 'admin' });
   },
 };

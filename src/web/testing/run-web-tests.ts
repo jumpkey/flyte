@@ -15,6 +15,7 @@ const TEST_FILES = [
   'catalog.test.ts',
   'checkout-shadow.test.ts',
   'admin-events.test.ts',
+  'admin-registrations.test.ts',
 ];
 
 async function runFile(file: string): Promise<{ file: string; passed: boolean; output: string }> {

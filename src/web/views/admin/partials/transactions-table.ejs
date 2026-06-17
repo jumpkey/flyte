@@ -1,0 +1,51 @@
+<%# Swappable transaction table + pagination (HTMX target #transactions-table).
+    Locals: rows, page, totalPages, total, filters. %>
+<%
+  function pageUrl(p) {
+    var q = new URLSearchParams();
+    if (filters.eventId) q.set('eventId', filters.eventId);
+    if (filters.status) q.set('status', filters.status);
+    if (filters.email) q.set('email', filters.email);
+    if (filters.from) q.set('from', filters.from);
+    if (filters.to) q.set('to', filters.to);
+    q.set('page', String(p));
+    return '/admin/registrations?' + q.toString();
+  }
+%>
+<p class="text-secondary small mb-2"><%= total %> transaction<%= total === 1 ? '' : 's' %></p>
+<% if (!rows || rows.length === 0) { %>
+  <%- include('../../partials/empty-state', { title: 'No transactions match', message: 'Adjust the filters above.' }) %>
+<% } else { %>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr><th>Created</th><th>Event</th><th>Customer</th><th>Email</th><th>Status</th><th class="text-end">Gross / Net</th><th class="text-end">Refunded</th></tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+      <tr class="admin-row" data-href="/admin/registrations/<%= r.registration_id %>">
+        <td><%= dateLong(r.created_at) %></td>
+        <td><%= r.event_name %></td>
+        <td><a class="text-decoration-none" href="/admin/registrations/<%= r.registration_id %>"><%= r.first_name %> <%= r.last_name %></a></td>
+        <td class="small"><%= r.email %></td>
+        <td><%- include('../../partials/status-pill', { status: displayStatus({ status: r.status, refunded_amount_cents: r.refunded_amount_cents }) }) %></td>
+        <td class="text-end money"><%= money(r.gross_amount_cents) %><% if (r.net_amount_cents != null && r.net_amount_cents !== r.gross_amount_cents) { %> <span class="text-secondary">/ <%= money(r.net_amount_cents) %></span><% } %></td>
+        <td class="text-end money"><%= r.refunded_amount_cents > 0 ? money(r.refunded_amount_cents) : '—' %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+
+<% if (totalPages > 1) { %>
+<nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Transaction pages">
+  <% if (page > 1) { %>
+    <a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page - 1) %>" hx-get="<%= pageUrl(page - 1) %>" hx-target="#transactions-table" hx-swap="innerHTML" hx-push-url="true">← Previous</a>
+  <% } else { %><span class="btn btn-outline-secondary btn-sm disabled">← Previous</span><% } %>
+  <span class="text-secondary small">Page <%= page %> of <%= totalPages %></span>
+  <% if (page < totalPages) { %>
+    <a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page + 1) %>" hx-get="<%= pageUrl(page + 1) %>" hx-target="#transactions-table" hx-swap="innerHTML" hx-push-url="true">Next →</a>
+  <% } else { %><span class="btn btn-outline-secondary btn-sm disabled">Next →</span><% } %>
+</nav>
+<% } %>
+<% } %>

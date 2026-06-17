@@ -14,6 +14,7 @@ import { staticController } from './controllers/static-pages.js';
 import { webhookController } from './controllers/webhook.js';
 import { adminController } from './controllers/admin.js';
 import { adminEventsController } from './controllers/admin/events.js';
+import { adminRegistrationsController } from './controllers/admin/registrations.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { adminGuard } from './middleware/admin-guard.js';
 import { loadUser } from './middleware/load-user.js';
@@ -95,6 +96,11 @@ app.get('/admin/events/:id', adminGuard, adminEventsController.detail);
 app.get('/admin/events/:id/edit', adminGuard, adminEventsController.editForm);
 app.post('/admin/events/:id', adminGuard, adminEventsController.update);
 app.post('/admin/events/:id/cancel', adminGuard, adminEventsController.cancel);
+
+// Admin transactions + refund execution (I5).
+app.get('/admin/registrations', adminGuard, adminRegistrationsController.list);
+app.get('/admin/registrations/:id', adminGuard, adminRegistrationsController.detail);
+app.post('/admin/registrations/:id/refund', adminGuard, adminRegistrationsController.refund);
 
 app.get('/dashboard', authGuard, dashboardController.index);
 app.get('/profile', authGuard, profileController.editForm);

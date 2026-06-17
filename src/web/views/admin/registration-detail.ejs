@@ -1,0 +1,77 @@
+<% var net = (reg.net_amount_cents != null) ? reg.net_amount_cents : reg.gross_amount_cents; %>
+<div class="mb-3">
+  <a class="text-decoration-none small" href="/admin/registrations">← Transactions</a>
+  <h1 class="h3 mb-1 mt-1">
+    <%= reg.first_name %> <%= reg.last_name %>
+    <%- include('../partials/status-pill', { status: displayStatus({ status: reg.status, refunded_amount_cents: reg.refunded_amount_cents }) }) %>
+  </h1>
+  <p class="text-secondary mb-0"><%= reg.email %><% if (reg.user_account_status === 'shadow') { %> · <span class="pill pill-warning">shadow account</span><% } %></p>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <%# Payment timeline reconstructed from row timestamps + refund_log %>
+    <h2 class="h5 mb-3">Payment timeline</h2>
+    <ul class="list-unstyled">
+      <li class="mb-2"><span class="caption-label">Initiated</span><br><%= dateLong(reg.created_at) %></li>
+      <% if (reg.confirmed_at) { %><li class="mb-2"><span class="caption-label">Confirmed</span><br><%= dateLong(reg.confirmed_at) %> · captured <%= money(net) %></li><% } %>
+      <% refundLog.forEach(function (rl) { %>
+        <li class="mb-2"><span class="caption-label"><%= rl.refund_type === 'FULL' ? 'Refund (full)' : 'Refund (partial)' %></span><br><%= dateLong(rl.created_at) %> · <%= money(rl.amount_cents) %> · <%= rl.reason %></li>
+      <% }); %>
+      <% if (reg.cancelled_at) { %><li class="mb-2"><span class="caption-label">Cancelled</span><br><%= dateLong(reg.cancelled_at) %></li><% } %>
+    </ul>
+
+    <% if (stripeUrl) { %>
+    <p><a class="text-decoration-none" href="<%= stripeUrl %>" target="_blank" rel="noopener">View in Stripe ↗</a> <span class="text-secondary small">(<%= reg.payment_intent_id %>)</span></p>
+    <% } %>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="panel">
+      <div class="row-line d-flex justify-content-between"><span class="text-secondary">Event</span><span><%= reg.event_name %></span></div>
+      <div class="row-line d-flex justify-content-between"><span class="text-secondary">Gross</span><span class="money"><%= money(reg.gross_amount_cents) %></span></div>
+      <div class="row-line d-flex justify-content-between"><span class="text-secondary">Captured (net)</span><span class="money"><%= money(net) %></span></div>
+      <div class="row-line d-flex justify-content-between"><span class="text-secondary">Refunded</span><span class="money"><%= money(reg.refunded_amount_cents) %></span></div>
+      <div class="row-line d-flex justify-content-between fw-bold"><span>Remaining</span><span class="money"><%= money(remainingCents) %></span></div>
+
+      <% if (refundable) { %>
+        <button class="btn btn-outline-danger w-100 mt-3" data-open-dialog="#refund-dialog">Refund…</button>
+      <% } else { %>
+        <p class="text-secondary small mt-3 mb-0">No refundable balance.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (refundable) { %>
+<dialog id="refund-dialog" class="flyte-dialog">
+  <form method="post" action="/admin/registrations/<%= reg.registration_id %>/refund">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="h5">Refund <%= reg.first_name %> <%= reg.last_name %></h2>
+    <p class="text-secondary small">Up to <strong class="money"><%= money(remainingCents) %></strong> can be refunded to the original payment method.</p>
+
+    <div class="form-check">
+      <input class="form-check-input" type="radio" name="refundType" id="rt-full" value="full" checked>
+      <label class="form-check-label" for="rt-full">Full refund (<span class="money"><%= money(remainingCents) %></span>)</label>
+    </div>
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="radio" name="refundType" id="rt-partial" value="partial">
+      <label class="form-check-label" for="rt-partial">Partial amount</label>
+    </div>
+    <div class="input-group mb-3" id="partial-amount-group" style="max-width: 12rem;">
+      <span class="input-group-text">$</span>
+      <input class="form-control" name="amount" id="refund-amount" inputmode="decimal" placeholder="0.00" disabled>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="refund-reason">Reason <span class="text-secondary">(optional)</span></label>
+      <input class="form-control" name="reason" id="refund-reason" maxlength="200">
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+      <button type="button" class="btn btn-outline-secondary" data-close-dialog>Cancel</button>
+      <button type="submit" class="btn btn-danger">Issue refund</button>
+    </div>
+  </form>
+</dialog>
+<% } %>
