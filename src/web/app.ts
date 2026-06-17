@@ -127,6 +127,7 @@ app.post('/admin/refund-requests/:id/deny', adminGuard, adminRefundsController.d
 // Admin users & activity (I8).
 app.get('/admin/users', adminGuard, adminUsersController.list);
 app.get('/admin/users/:id', adminGuard, adminUsersController.detail);
+app.get('/admin/users/:id/timeline', adminGuard, adminUsersController.timeline);
 app.post('/admin/users/:id/lock', adminGuard, adminUsersController.lock);
 app.post('/admin/users/:id/unlock', adminGuard, adminUsersController.unlock);
 app.get('/admin/activity', adminGuard, adminActivityController.list);

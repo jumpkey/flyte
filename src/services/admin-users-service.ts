@@ -100,4 +100,69 @@ export const adminUsersService = {
       actionHistory: actionHistory as unknown as Array<Record<string, unknown>>,
     };
   },
+
+  /**
+   * Unified, paginated activity timeline (Batch D2): one chronological feed —
+   * newest first — unioning account creation, logins, registrations, refunds,
+   * waitlist joins, and admin/user actions for a single user. Replaces the old
+   * unbounded login + action history lists. Everything is parameterized on
+   * ${userId}; the UNION ALL branches line up column types via explicit casts.
+   */
+  async getTimeline(userId: string, page: number, perPage: number): Promise<{
+    rows: Array<Record<string, unknown>>;
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+  }> {
+    const pp = Math.min(Math.max(perPage, 1), 100);
+    const pg = Math.max(page, 1);
+    const offset = (pg - 1) * pp;
+
+    // The common UNION shape used by both the count and the page query.
+    const union = sql`
+      SELECT u.created_at AS at, 'account' AS kind, 'Account created' AS title,
+             u.email::text AS detail, NULL::int AS amount_cents, u.account_status::text AS status
+        FROM users u WHERE u.id = ${userId}::UUID
+      UNION ALL
+      SELECT le.created_at, 'login',
+             CASE WHEN le.success THEN 'Signed in' ELSE 'Failed sign-in' END,
+             COALESCE(le.ip_address::text, ''), NULL::int, COALESCE(le.failure_reason, '')
+        FROM login_events le WHERE le.user_id = ${userId}::UUID
+      UNION ALL
+      SELECT r.created_at, 'registration', e.name::text, r.status::text,
+             r.gross_amount_cents, r.status::text
+        FROM registrations r JOIN events e ON e.event_id = r.event_id
+        WHERE r.user_id = ${userId}::UUID
+      UNION ALL
+      SELECT rl.created_at, 'refund', e.name::text, rl.refund_type::text,
+             rl.amount_cents, NULL::text
+        FROM refund_log rl
+        JOIN registrations r ON r.registration_id = rl.registration_id
+        JOIN events e ON e.event_id = rl.event_id
+        WHERE r.user_id = ${userId}::UUID
+      UNION ALL
+      SELECT w.created_at, 'waitlist', e.name::text, 'Joined waitlist', NULL::int, NULL::text
+        FROM waitlist_entries w JOIN events e ON e.event_id = w.event_id
+        WHERE w.user_id = ${userId}::UUID
+      UNION ALL
+      SELECT ae.created_at, 'action', ae.action::text, '', NULL::int, NULL::text
+        FROM user_action_events ae WHERE ae.user_id = ${userId}::UUID
+    `;
+
+    const countRows = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM (${union}) t`;
+    const total = countRows[0]?.n ?? 0;
+
+    const rows = await sql`
+      SELECT * FROM (${union}) t
+      ORDER BY t.at DESC
+      LIMIT ${pp} OFFSET ${offset}
+    `;
+
+    return {
+      rows: rows as unknown as Array<Record<string, unknown>>,
+      total, page: pg, perPage: pp,
+      totalPages: Math.max(Math.ceil(total / pp), 1),
+    };
+  },
 };

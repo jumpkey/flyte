@@ -1,0 +1,53 @@
+<%# Unified activity timeline (Batch D2) — HTMX target #user-timeline.
+    Locals: userId, rows, page, totalPages, total, perPage. Always a fragment. %>
+<%
+  function pageUrl(p) {
+    return '/admin/users/' + userId + '/timeline?page=' + p;
+  }
+  // Per-kind pill variant so colour reinforces the kind. Label is always the
+  // kind word, so colour is never the sole carrier.
+  var KIND_PILL = {
+    account: 'pill pill-info',
+    login: 'pill pill-neutral',
+    registration: 'pill pill-success',
+    refund: 'pill pill-warning',
+    waitlist: 'pill pill-info',
+    action: 'pill pill-neutral',
+  };
+%>
+<p class="text-secondary small mb-2"><%= total %> event<%= total === 1 ? '' : 's' %></p>
+<% if (!rows || rows.length === 0) { %>
+  <p class="text-secondary">No activity yet.</p>
+<% } else { %>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead><tr><th>When</th><th>Activity</th><th>What happened</th><th class="text-end">Amount</th></tr></thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+      <tr>
+        <td class="small text-secondary"><%= dateLong(r.at) %></td>
+        <td><span class="<%= KIND_PILL[r.kind] || 'pill pill-neutral' %>"><%= r.kind %></span></td>
+        <td>
+          <span class="fw-semibold"><%= r.title %></span>
+          <% if (r.detail) { %> <span class="text-secondary small">· <%= r.detail %></span><% } %>
+          <% if (r.kind !== 'registration' && r.status) { %> <span class="text-secondary small">· <%= r.status %></span><% } %>
+        </td>
+        <td class="text-end money"><%= r.amount_cents != null ? money(r.amount_cents) : '—' %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+
+<% if (totalPages > 1) { %>
+<nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Activity pages">
+  <% if (page > 1) { %>
+    <a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page - 1) %>" hx-get="<%= pageUrl(page - 1) %>" hx-target="#user-timeline" hx-swap="innerHTML">← Previous</a>
+  <% } else { %><span class="btn btn-outline-secondary btn-sm disabled">← Previous</span><% } %>
+  <span class="text-secondary small">Page <%= page %> of <%= totalPages %></span>
+  <% if (page < totalPages) { %>
+    <a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page + 1) %>" hx-get="<%= pageUrl(page + 1) %>" hx-target="#user-timeline" hx-swap="innerHTML">Next →</a>
+  <% } else { %><span class="btn btn-outline-secondary btn-sm disabled">Next →</span><% } %>
+</nav>
+<% } %>
+<% } %>

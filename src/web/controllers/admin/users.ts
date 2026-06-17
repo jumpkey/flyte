@@ -9,6 +9,7 @@ import { getClientIp } from '../../utils/get-client-ip.js';
 import type { User } from '../../../services/user-service.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TIMELINE_PER_PAGE = 20;
 
 function flash(c: Context, message: string): void {
   const session = c.get('session') as { flashMessage?: string } | undefined;
@@ -41,8 +42,20 @@ export const adminUsersController = {
     const profile = await adminUsersService.getProfile(id);
     if (!profile) return c.notFound();
     const detail = await adminUsersService.getDetail(id);
+    const timeline = await adminUsersService.getTimeline(id, 1, TIMELINE_PER_PAGE);
     const self = (c.get('user') as User).id === id;
-    return renderView(c, 'admin/user-detail', { title: profile.display_name as string, activeNav: 'users', profile, ...detail, self }, { layout: 'admin' });
+    return renderView(c, 'admin/user-detail', { title: profile.display_name as string, activeNav: 'users', profile, ...detail, timeline, self }, { layout: 'admin' });
+  },
+
+  /** GET /admin/users/:id/timeline — HTMX-paged activity timeline fragment (Batch D2). */
+  async timeline(c: Context): Promise<Response> {
+    const id = c.req.param('id');
+    if (!id || !UUID_RE.test(id)) return c.notFound();
+    const profile = await adminUsersService.getProfile(id);
+    if (!profile) return c.notFound();
+    const page = parseInt(c.req.query('page') ?? '1', 10) || 1;
+    const timeline = await adminUsersService.getTimeline(id, page, TIMELINE_PER_PAGE);
+    return renderFragment(c, 'admin/partials/user-timeline', { userId: id, ...timeline });
   },
 
   /** POST /admin/users/:id/lock — lock + revoke live sessions (S7). Cannot lock self. */

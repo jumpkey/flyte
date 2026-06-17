@@ -32,7 +32,7 @@
   <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Last login</div><div><%= profile.last_login_at ? dateLong(profile.last_login_at) : '—' %></div></div></div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 mb-4">
   <div class="col-12 col-lg-6">
     <h2 class="h5 mb-2">Purchases</h2>
     <% if (purchases.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
@@ -45,32 +45,18 @@
       <% }); %></tbody>
     </table></div>
     <% } %>
-
-    <% if (waitlist.length > 0) { %>
-    <h2 class="h5 mb-2 mt-3">Waitlist</h2>
-    <ul class="list-unstyled"><% waitlist.forEach(function (w) { %><li><%= w.event_name %> <span class="text-secondary small">· <%= dateLong(w.created_at) %></span></li><% }); %></ul>
-    <% } %>
   </div>
 
   <div class="col-12 col-lg-6">
-    <h2 class="h5 mb-2">Login history</h2>
-    <% if (loginHistory.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
-    <div class="table-responsive"><table class="table align-middle">
-      <thead><tr><th>When</th><th>Result</th><th>IP</th></tr></thead>
-      <tbody><% loginHistory.forEach(function (l) { %>
-        <tr><td><%= dateLong(l.created_at) %></td>
-        <td><%- include('../partials/status-pill', { status: l.success ? 'CONFIRMED' : 'DENIED' }) %><% if (!l.success && l.failure_reason) { %> <span class="text-secondary small"><%= l.failure_reason %></span><% } %></td>
-        <td class="small"><%= l.ip_address %></td></tr>
-      <% }); %></tbody>
-    </table></div>
-    <% } %>
-
-    <h2 class="h5 mb-2 mt-3">Action history</h2>
-    <% if (actionHistory.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
-    <ul class="list-unstyled"><% actionHistory.forEach(function (a) { %><li class="mb-1"><span class="fw-semibold"><%= a.action %></span> <span class="text-secondary small">· <%= dateLong(a.created_at) %></span></li><% }); %></ul>
+    <h2 class="h5 mb-2">Waitlist</h2>
+    <% if (waitlist.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
+    <ul class="list-unstyled"><% waitlist.forEach(function (w) { %><li><%= w.event_name %> <span class="text-secondary small">· <%= dateLong(w.created_at) %></span></li><% }); %></ul>
     <% } %>
   </div>
 </div>
+
+<h2 class="h5 mb-2">Activity timeline</h2>
+<div id="user-timeline"><%- include('partials/user-timeline', { userId: profile.id, rows: timeline.rows, page: timeline.page, totalPages: timeline.totalPages, total: timeline.total, perPage: timeline.perPage }) %></div>
 
 <% if (!profile.is_locked && !self) { %>
 <dialog id="lock-dialog" class="flyte-dialog">

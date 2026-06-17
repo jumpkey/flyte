@@ -10,20 +10,28 @@
 import 'dotenv/config';
 import { testSql, assert, assertEqual } from '../../registration/testing/test-helpers.js';
 import { authService } from '../../services/auth-service.js';
+import { adminUsersService } from '../../services/admin-users-service.js';
 import { createSession } from '../middleware/session.js';
 
 const CSRF = 'a1b2c3d4e5f60718'.repeat(4);
 const EMAILS = ['admin-i8@example.com', 'target-i8@example.com', 'shadow-i8@example.com'];
 
+const TIMELINE_EVENT = 'Timeline Test Fest (D2)';
+
 async function cleanup() {
   const ids = (await testSql`SELECT id FROM users WHERE email = ANY(${EMAILS})`).map((r) => r.id as string);
   if (ids.length) {
+    // Children before users (FK-safe). refund_log → registrations → events.
+    const regIds = (await testSql`SELECT registration_id FROM registrations WHERE user_id = ANY(${ids})`).map((r) => r.registration_id as string);
+    if (regIds.length) await testSql`DELETE FROM refund_log WHERE registration_id = ANY(${regIds})`;
     await testSql`DELETE FROM user_action_events WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM login_events WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM sessions WHERE user_id = ANY(${ids})`;
+    await testSql`DELETE FROM waitlist_entries WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM registrations WHERE user_id = ANY(${ids})`;
     await testSql`DELETE FROM users WHERE id = ANY(${ids})`;
   }
+  await testSql`DELETE FROM events WHERE name = ${TIMELINE_EVENT}`;
 }
 async function makeUser(email: string, opts: { isAdmin?: boolean; status?: string } = {}): Promise<string> {
   const hash = await authService.hashPassword('pw');
@@ -155,6 +163,77 @@ async function runTests() {
   await test('existing user filters still work after pagination change', async () => {
     const list = await (await get('/admin/users?q=target-i8&status=active', adminCookie)).text();
     assert(list.includes('target-i8@example.com') && !list.includes('shadow-i8@example.com'), 'search + active filter still composes');
+  });
+
+  // ── Batch D2: unified activity timeline on the user-detail page ──
+  // Use a dedicated, uncluttered user so ordering across the union is deterministic
+  // (the earlier activity-feed tests bulk-seed events onto targetId).
+  const tlEmail = 'timeline-d2@example.com';
+  EMAILS.push(tlEmail);
+  const tlUserId = await makeUser(tlEmail);
+
+  await test('getTimeline unions all kinds newest-first and counts everything incl. account-created', async () => {
+    // A non-CONFIRMED event/registration so we never touch slot counters.
+    const eventId = (await testSql`
+      INSERT INTO events (name, event_date, total_capacity, confirmed_count, available_slots, registration_fee_cents, status)
+      VALUES (${TIMELINE_EVENT}, now() + interval '30 days', 50, 0, 50, 2500, 'OPEN')
+      RETURNING event_id`)[0].event_id as string;
+    const regId = (await testSql`
+      INSERT INTO registrations (event_id, user_id, email, first_name, last_name, gross_amount_cents, status, created_at)
+      VALUES (${eventId}, ${tlUserId}, ${tlEmail}, 'Tar', 'Get', 2500, 'PENDING_PAYMENT', now() - interval '5 hours')
+      RETURNING registration_id`)[0].registration_id as string;
+    await testSql`INSERT INTO refund_log (registration_id, event_id, stripe_refund_id, refund_type, amount_cents, reason, created_at)
+      VALUES (${regId}, ${eventId}, 're_d2', 'PARTIAL', 1000, 'test', now() - interval '4 hours')`;
+    await testSql`INSERT INTO login_events (user_id, email_attempted, success, ip_address, created_at)
+      VALUES (${tlUserId}, ${tlEmail}, TRUE, '1.2.3.4', now() - interval '3 hours')`;
+    await testSql`INSERT INTO waitlist_entries (event_id, user_id, email, first_name, last_name, created_at)
+      VALUES (${eventId}, ${tlUserId}, ${tlEmail}, 'Tar', 'Get', now() - interval '2 hours')`;
+    await testSql`INSERT INTO user_action_events (user_id, action, ip_address, created_at)
+      VALUES (${tlUserId}, 'profile_updated_d2', '1.2.3.4', now() - interval '1 hours')`;
+
+    const tl = await adminUsersService.getTimeline(tlUserId, 1, 20);
+    const kinds = tl.rows.map((r) => r.kind as string);
+    assert(kinds.includes('account'), 'account-created present');
+    assert(kinds.includes('registration'), 'registration present');
+    assert(kinds.includes('refund'), 'refund present');
+    assert(kinds.includes('login'), 'login present');
+    assert(kinds.includes('waitlist'), 'waitlist present');
+    assert(kinds.includes('action'), 'action present');
+    // 5 seeded rows + account-created = 6 total for this fresh user.
+    assertEqual(tl.total, 6, 'total counts all rows incl. account-created');
+    // Newest-first: the action (1h ago) precedes the login (3h ago), which
+    // precedes the registration (5h ago). (Account-created is "now" for this
+    // freshly-inserted user, so it sorts first — not asserted here.)
+    const iAction = kinds.indexOf('action');
+    const iLogin = kinds.indexOf('login');
+    const iReg = kinds.indexOf('registration');
+    assert(iAction < iLogin && iLogin < iReg, 'newest-first ordering across kinds');
+  });
+
+  await test('user-detail page renders an Activity timeline with the seeded entries', async () => {
+    const detail = await (await get(`/admin/users/${tlUserId}`, adminCookie)).text();
+    assert(detail.includes('Activity timeline'), 'timeline section heading');
+    assert(detail.includes('id="user-timeline"'), 'timeline container present');
+    assert(detail.includes(TIMELINE_EVENT), 'registration/event row shown');
+    assert(detail.includes('profile_updated_d2'), 'action row shown');
+    assert(detail.includes('Account created'), 'account-created row shown');
+    assert(!detail.includes('Login history') && !detail.includes('Action history'), 'old raw history sections removed');
+  });
+
+  await test('timeline paginates at 20/page and the page-2 endpoint returns a bare fragment', async () => {
+    for (let i = 0; i < 25; i++) {
+      await testSql`INSERT INTO user_action_events (user_id, action, ip_address, created_at)
+        VALUES (${tlUserId}, ${'tl_evt_' + i}, '9.9.9.9', now() - interval '10 hours' - (${i} || ' seconds')::interval)`;
+    }
+    const tl = await adminUsersService.getTimeline(tlUserId, 1, 20);
+    assert(tl.totalPages >= 2, `multiple pages (got ${tl.totalPages})`);
+
+    const page1 = await (await get(`/admin/users/${tlUserId}`, adminCookie)).text();
+    assert(/Page 1 of [2-9]/.test(page1), 'page indicator on detail');
+
+    const page2 = await (await get(`/admin/users/${tlUserId}/timeline?page=2`, adminCookie)).text();
+    assert(!page2.toLowerCase().includes('<html'), 'page 2 is a bare fragment (no layout)');
+    assert(page2.includes('Page 2 of'), 'page 2 indicator present');
   });
 
   await cleanup();
