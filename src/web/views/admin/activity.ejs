@@ -1,0 +1,59 @@
+<%
+  function pageUrl(p) {
+    var q = new URLSearchParams();
+    if (filters.type) q.set('type', filters.type);
+    if (filters.email) q.set('email', filters.email);
+    if (filters.from) q.set('from', filters.from);
+    if (filters.to) q.set('to', filters.to);
+    q.set('page', String(p));
+    return '/admin/activity?' + q.toString();
+  }
+%>
+<h1 class="h3 mb-4">Activity</h1>
+
+<form class="row g-2 align-items-end mb-4" method="get" action="/admin/activity">
+  <div class="col-6 col-md-2">
+    <label class="form-label" for="type">Type</label>
+    <select class="form-select" id="type" name="type">
+      <option value="">All</option>
+      <option value="login" <%= filters.type === 'login' ? 'selected' : '' %>>Sign-ins</option>
+      <option value="action" <%= filters.type === 'action' ? 'selected' : '' %>>Actions</option>
+    </select>
+  </div>
+  <div class="col-6 col-md-4">
+    <label class="form-label" for="email">User email</label>
+    <input class="form-control" type="search" id="email" name="email" value="<%= filters.email %>" placeholder="contains…">
+  </div>
+  <div class="col-6 col-md-2"><label class="form-label" for="from">From</label><input class="form-control" type="date" id="from" name="from" value="<%= filters.from %>"></div>
+  <div class="col-6 col-md-2"><label class="form-label" for="to">To</label><input class="form-control" type="date" id="to" name="to" value="<%= filters.to %>"></div>
+  <div class="col-12 col-md-2 d-flex gap-2"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-outline-secondary" href="/admin/activity">Reset</a></div>
+</form>
+
+<p class="text-secondary small mb-2"><%= total %> event<%= total === 1 ? '' : 's' %></p>
+<% if (!rows || rows.length === 0) { %>
+  <%- include('../partials/empty-state', { title: 'No activity', message: 'Nothing matches these filters.' }) %>
+<% } else { %>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead><tr><th>When</th><th>Type</th><th>Event</th><th>User</th><th>IP</th></tr></thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+      <tr>
+        <td><%= dateLong(r.at) %></td>
+        <td><span class="pill <%= r.kind === 'login' ? 'pill-info' : 'pill-neutral' %>"><%= r.kind %></span></td>
+        <td><%= r.summary %></td>
+        <td class="small"><%= r.email || '—' %></td>
+        <td class="small"><%= r.ip %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+<% if (totalPages > 1) { %>
+<nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Activity pages">
+  <% if (page > 1) { %><a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page - 1) %>">← Previous</a><% } else { %><span class="btn btn-outline-secondary btn-sm disabled">← Previous</span><% } %>
+  <span class="text-secondary small">Page <%= page %> of <%= totalPages %></span>
+  <% if (page < totalPages) { %><a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page + 1) %>">Next →</a><% } else { %><span class="btn btn-outline-secondary btn-sm disabled">Next →</span><% } %>
+</nav>
+<% } %>
+<% } %>

@@ -16,6 +16,8 @@ import { adminController } from './controllers/admin.js';
 import { adminEventsController } from './controllers/admin/events.js';
 import { adminRegistrationsController } from './controllers/admin/registrations.js';
 import { adminRefundsController } from './controllers/admin/refunds.js';
+import { adminUsersController } from './controllers/admin/users.js';
+import { adminActivityController } from './controllers/admin/activity.js';
 import { refundRequestController } from './controllers/refund-request.js';
 import { accountController } from './controllers/account.js';
 import { findRegistrationController } from './controllers/find-registration.js';
@@ -114,6 +116,13 @@ app.post('/admin/registrations/:id/refund', adminGuard, adminRegistrationsContro
 app.get('/admin/refund-requests', adminGuard, adminRefundsController.queue);
 app.post('/admin/refund-requests/:id/approve', adminGuard, adminRefundsController.approve);
 app.post('/admin/refund-requests/:id/deny', adminGuard, adminRefundsController.deny);
+
+// Admin users & activity (I8).
+app.get('/admin/users', adminGuard, adminUsersController.list);
+app.get('/admin/users/:id', adminGuard, adminUsersController.detail);
+app.post('/admin/users/:id/lock', adminGuard, adminUsersController.lock);
+app.post('/admin/users/:id/unlock', adminGuard, adminUsersController.unlock);
+app.get('/admin/activity', adminGuard, adminActivityController.list);
 
 app.get('/dashboard', authGuard, dashboardController.index);
 // My Registrations (I7) — ownership-checked account pages.

@@ -151,6 +151,10 @@ export const userService = {
     await sql`UPDATE users SET is_locked = TRUE WHERE id = ${id}`;
   },
 
+  async unlockAccount(id: string): Promise<void> {
+    await sql`UPDATE users SET is_locked = FALSE, failed_login_count = 0 WHERE id = ${id}`;
+  },
+
   async isEmailTaken(email: string): Promise<boolean> {
     const rows = await sql`SELECT 1 FROM users WHERE LOWER(email) = LOWER(${email})`;
     return rows.length > 0;

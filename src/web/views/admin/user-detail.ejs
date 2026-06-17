@@ -1,0 +1,87 @@
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <a class="text-decoration-none small" href="/admin/users">← All users</a>
+    <h1 class="h3 mb-1 mt-1"><%= profile.display_name %>
+      <%- include('../partials/status-pill', { status: profile.account_status }) %>
+      <% if (profile.is_locked) { %><%- include('../partials/status-pill', { status: 'LOCKED' }) %><% } %>
+    </h1>
+    <p class="text-secondary mb-0"><%= profile.email %></p>
+  </div>
+  <div>
+    <% if (profile.is_locked) { %>
+      <form method="post" action="/admin/users/<%= profile.id %>/unlock" class="m-0">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-outline-secondary" type="submit">Unlock</button>
+      </form>
+    <% } else if (self) { %>
+      <button class="btn btn-outline-danger" disabled title="You can't lock your own account">Lock</button>
+    <% } else { %>
+      <button class="btn btn-outline-danger" data-open-dialog="#lock-dialog">Lock</button>
+    <% } %>
+  </div>
+</div>
+
+<% if (profile.account_status === 'shadow') { %>
+<div class="alert alert-flyte mb-4" role="note">This is a <strong>shadow account</strong> — created at guest checkout. It can't sign in until the customer activates it via password reset.</div>
+<% } %>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Verified</div><div><%= profile.is_verified ? 'Yes' : 'No' %></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Admin</div><div><%= profile.is_admin ? 'Yes' : 'No' %></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Joined</div><div><%= dateLong(profile.created_at) %></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel py-2"><div class="caption-label">Last login</div><div><%= profile.last_login_at ? dateLong(profile.last_login_at) : '—' %></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <h2 class="h5 mb-2">Purchases</h2>
+    <% if (purchases.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Event</th><th>Status</th><th class="text-end">Amount</th></tr></thead>
+      <tbody><% purchases.forEach(function (p) { %>
+        <tr><td><a class="text-decoration-none" href="/admin/registrations/<%= p.registration_id %>"><%= p.event_name %></a></td>
+        <td><%- include('../partials/status-pill', { status: displayStatus({ status: p.status, refunded_amount_cents: p.refunded_amount_cents }) }) %></td>
+        <td class="text-end money"><%= money(p.gross_amount_cents) %></td></tr>
+      <% }); %></tbody>
+    </table></div>
+    <% } %>
+
+    <% if (waitlist.length > 0) { %>
+    <h2 class="h5 mb-2 mt-3">Waitlist</h2>
+    <ul class="list-unstyled"><% waitlist.forEach(function (w) { %><li><%= w.event_name %> <span class="text-secondary small">· <%= dateLong(w.created_at) %></span></li><% }); %></ul>
+    <% } %>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <h2 class="h5 mb-2">Login history</h2>
+    <% if (loginHistory.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>When</th><th>Result</th><th>IP</th></tr></thead>
+      <tbody><% loginHistory.forEach(function (l) { %>
+        <tr><td><%= dateLong(l.created_at) %></td>
+        <td><%- include('../partials/status-pill', { status: l.success ? 'CONFIRMED' : 'DENIED' }) %><% if (!l.success && l.failure_reason) { %> <span class="text-secondary small"><%= l.failure_reason %></span><% } %></td>
+        <td class="small"><%= l.ip_address %></td></tr>
+      <% }); %></tbody>
+    </table></div>
+    <% } %>
+
+    <h2 class="h5 mb-2 mt-3">Action history</h2>
+    <% if (actionHistory.length === 0) { %><p class="text-secondary">None.</p><% } else { %>
+    <ul class="list-unstyled"><% actionHistory.forEach(function (a) { %><li class="mb-1"><span class="fw-semibold"><%= a.action %></span> <span class="text-secondary small">· <%= dateLong(a.created_at) %></span></li><% }); %></ul>
+    <% } %>
+  </div>
+</div>
+
+<% if (!profile.is_locked && !self) { %>
+<dialog id="lock-dialog" class="flyte-dialog">
+  <form method="post" action="/admin/users/<%= profile.id %>/lock">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="h5">Lock <%= profile.email %>?</h2>
+    <p>They'll be signed out of all devices immediately and won't be able to sign in until unlocked.</p>
+    <div class="d-flex gap-2 justify-content-end">
+      <button type="button" class="btn btn-outline-secondary" data-close-dialog>Cancel</button>
+      <button type="submit" class="btn btn-danger">Lock &amp; sign out</button>
+    </div>
+  </form>
+</dialog>
+<% } %>
