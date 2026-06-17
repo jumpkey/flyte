@@ -3,6 +3,7 @@
     <a class="navbar-brand" href="/">Flyte<span class="brand-dot">.</span></a>
     <div class="navbar-nav ms-auto align-items-center gap-2">
       <% if (typeof user !== 'undefined' && user) { %>
+        <% if (user.isAdmin) { %><a class="nav-link fw-semibold" href="/admin">Admin</a><% } %>
         <a class="nav-link" href="/dashboard">Dashboard</a>
         <a class="nav-link" href="/account/registrations">My registrations</a>
         <a class="nav-link" href="/profile">Profile</a>

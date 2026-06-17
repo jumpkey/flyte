@@ -107,6 +107,15 @@ async function runTests() {
     }
   });
 
+  // W2: admins get an Admin nav link (and reach /admin); non-admins don't.
+  await test('nav shows an Admin link for admins only', async () => {
+    const { app } = await import('../app.js');
+    const adminBody = await (await app.request('http://localhost/', { headers: { Cookie: await sessionCookie(adminId) } })).text();
+    assert(adminBody.includes('href="/admin"'), 'admin sees an Admin link');
+    const userBody = await (await app.request('http://localhost/', { headers: { Cookie: await sessionCookie(userId) } })).text();
+    assert(!userBody.includes('href="/admin"'), 'non-admin does not see an Admin link');
+  });
+
   await cleanup();
 
   console.log(`\n=== adminGuard: ${passed} passed, ${failed} failed ===`);

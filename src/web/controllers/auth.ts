@@ -72,7 +72,8 @@ export const authController = {
     c.set('session', { userId: user.id, csrfToken: session?.csrfToken });
     c.set('sessionCookie', signedSid);
 
-    return c.redirect('/dashboard');
+    // Admins land on the admin console; everyone else on their dashboard (W2).
+    return c.redirect(user.isAdmin ? '/admin' : '/dashboard');
   },
 
   async registerForm(c: Context): Promise<Response> {
@@ -154,7 +155,8 @@ export const authController = {
     c.set('session', { userId: user.id, csrfToken: session?.csrfToken });
     c.set('sessionCookie', signedSid);
 
-    return c.redirect('/dashboard');
+    // Admins land on the admin console; everyone else on their dashboard (W2).
+    return c.redirect(user.isAdmin ? '/admin' : '/dashboard');
   },
 
   async checkEmail(c: Context): Promise<Response> {
