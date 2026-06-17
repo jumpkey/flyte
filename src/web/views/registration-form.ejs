@@ -17,6 +17,7 @@
     </div>
 
     <div id="registration-step-1">
+      <div id="form-error" class="alert alert-flyte alert-flyte-error" style="display:none;" role="alert"></div>
       <form id="participant-form">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="row g-3 mb-3">
@@ -31,15 +32,26 @@
         </div>
         <div class="mb-3">
           <label class="form-label" for="email">Email</label>
-          <input class="form-control" type="email" id="email" name="email" required>
+          <%# Logged-in: email prefilled + locked, no confirm field (session wins,
+              AC-I3 ③). Guest: confirm-email double-entry (D1). %>
+          <input class="form-control" type="email" id="email" name="email" required
+                 value="<%= user ? user.email : '' %>"<%= user ? ' readonly' : '' %>>
         </div>
+        <% if (!user) { %>
+        <div class="mb-3">
+          <label class="form-label" for="emailConfirm">Confirm email</label>
+          <input class="form-control" type="email" id="emailConfirm" name="emailConfirm" required autocomplete="off">
+          <div class="text-danger small mt-1" id="email-mismatch" style="display:none;">The email addresses do not match.</div>
+          <div class="form-text">We email your receipt and any refund here — no account needed.</div>
+        </div>
+        <% } %>
         <div class="mb-4">
           <label class="form-label" for="phone">Phone (optional)</label>
           <input class="form-control" type="tel" id="phone" name="phone">
         </div>
         <button type="submit" id="continue-btn" class="btn btn-cta w-100">Continue to payment</button>
       </form>
-      <p class="text-center text-muted mt-3 mb-0" style="font-size: .85rem;">🔒 Secure checkout · No account needed</p>
+      <p class="text-center text-muted mt-3 mb-0" style="font-size: .85rem;">🔒 Secure checkout<%= user ? '' : ' · No account needed' %></p>
     </div>
 
     <div id="registration-step-2" style="display:none;">

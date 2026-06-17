@@ -7,6 +7,9 @@ import { NotificationService } from '../../registration/services/NotificationSer
 import { getStripe } from '../../registration/stripe-factory.js';
 import { sql } from '../../services/db.js';
 import { config } from '../../config.js';
+import { userService } from '../../services/user-service.js';
+import type { SessionData } from '../middleware/session.js';
+import type { User } from '../../services/user-service.js';
 
 const eventAvailabilityService = new EventAvailabilityService();
 const waitlistService = new WaitlistService();
@@ -111,13 +114,33 @@ export const registrationController = {
 
     const grossAmountCents = eventRows[0].registration_fee_cents;
 
+    // Resolve the buyer (D1). Logged-in: the session email wins and no confirm
+    // field is required (AC-I3 ③). Guest: the two email fields must match, then
+    // we find-or-create a shadow user to bind the purchase to (AC-I3 ①).
+    const session = c.get('session') as SessionData | undefined;
+    const sessionUser = c.get('user') as User | undefined;
+    let email: string;
+    let userId: string;
+    if (session?.userId && sessionUser) {
+      email = sessionUser.email.toLowerCase();
+      userId = sessionUser.id;
+    } else {
+      const emailConfirm = String((body as Record<string, unknown>).emailConfirm ?? '').trim().toLowerCase();
+      if (cleaned.email.toLowerCase() !== emailConfirm) {
+        return c.json({ error: 'email_mismatch' }, 400);
+      }
+      email = cleaned.email;
+      const shadow = await userService.findOrCreateShadowUser(email, `${cleaned.firstName} ${cleaned.lastName}`);
+      userId = shadow.id;
+    }
+
     let svc: RegistrationService;
     try { svc = await getRegistrationService(); }
     catch (_) { return c.json({ error: 'payment_setup_failed' }, 500); }
 
     const result = await svc.initiateRegistration({
       eventId,
-      email: cleaned.email,
+      email,
       firstName: cleaned.firstName,
       lastName: cleaned.lastName,
       phone: cleaned.phone,
@@ -126,6 +149,9 @@ export const registrationController = {
     });
 
     if (result.outcome === 'SUCCESS') {
+      // Bind the purchase to the user (migration 007's user_id). The row is
+      // PENDING_PAYMENT and not yet meaningful, so a post-insert stamp is safe.
+      await sql`UPDATE registrations SET user_id = ${userId} WHERE registration_id = ${result.registrationId!}::UUID`;
       return c.json({ clientSecret: result.stripeClientSecret, paymentIntentId: result.paymentIntentId, registrationId: result.registrationId });
     }
     if (result.outcome === 'ALREADY_REGISTERED') return c.json({ error: 'already_registered' }, 400);
@@ -174,10 +200,22 @@ export const registrationController = {
       SELECT name, event_date, location FROM events WHERE event_id = ${reg.eventId}::UUID
     `;
 
+    // Activation callout (WF-05 / J3): show only when the bound account is still
+    // a shadow — i.e. the buyer can claim a full account via password reset.
+    const ownerRows = await sql<{account_status: string | null; email: string | null}[]>`
+      SELECT u.account_status, u.email
+      FROM registrations r LEFT JOIN users u ON u.id = r.user_id
+      WHERE r.registration_id = ${registrationId}::UUID
+    `;
+    const owner = ownerRows[0];
+    const isShadow = owner?.account_status === 'shadow';
+
     return renderView(c, 'registration-confirmed', {
       title: 'Registration Confirmed',
       registration: reg,
       event: eventRows.length > 0 ? eventRows[0] : null,
+      isShadow,
+      ownerEmail: owner?.email ?? reg.email,
     });
   },
 
@@ -186,8 +224,15 @@ export const registrationController = {
     if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const reason = c.req.query('reason');
 
-    const eventRows = await sql<{name: string}[]>`SELECT name FROM events WHERE event_id = ${eventId}::UUID`;
+    const eventRows = await sql<{name: string; waitlist_enabled: boolean}[]>`
+      SELECT name, waitlist_enabled FROM events WHERE event_id = ${eventId}::UUID
+    `;
     if (eventRows.length === 0) return c.text('Event not found', 404);
+    // D6: the waitlist is gated by the admin's per-event flag. When closed the
+    // form is unavailable (existing entries remain admin-visible).
+    if (!eventRows[0].waitlist_enabled) {
+      return renderView(c, 'waitlist-closed', { title: 'Waitlist closed', event: { eventId, name: eventRows[0].name } });
+    }
 
     return renderView(c, 'waitlist-form', {
       title: 'Join Waitlist',
@@ -201,6 +246,15 @@ export const registrationController = {
     if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? {};
 
+    const eventRows = await sql<{name: string; waitlist_enabled: boolean}[]>`
+      SELECT name, waitlist_enabled FROM events WHERE event_id = ${eventId}::UUID
+    `;
+    if (eventRows.length === 0) return c.text('Event not found', 404);
+    if (!eventRows[0].waitlist_enabled) {
+      return renderView(c, 'waitlist-closed', { title: 'Waitlist closed', event: { eventId, name: eventRows[0].name } });
+    }
+    const eventName = eventRows[0].name;
+
     const cleaned = validateRegistrationFields({
       email: body['email'],
       firstName: body['firstName'],
@@ -209,29 +263,57 @@ export const registrationController = {
     });
     if (!cleaned.ok) return c.text(`Invalid ${cleaned.field}: ${cleaned.reason}`, 400);
 
+    // Same buyer resolution as checkout (D1): session email wins for logged-in
+    // users, guests confirm their email and get a shadow binding.
+    const session = c.get('session') as SessionData | undefined;
+    const sessionUser = c.get('user') as User | undefined;
+    let email: string;
+    let userId: string;
+    if (session?.userId && sessionUser) {
+      email = sessionUser.email.toLowerCase();
+      userId = sessionUser.id;
+    } else {
+      const emailConfirm = String(body['emailConfirm'] ?? '').trim().toLowerCase();
+      if (cleaned.email.toLowerCase() !== emailConfirm) {
+        return renderView(c, 'waitlist-form', {
+          title: 'Join Waitlist',
+          event: { eventId, name: eventName },
+          error: 'The email addresses do not match.',
+          formData: { firstName: cleaned.firstName, lastName: cleaned.lastName, email: cleaned.email, phone: cleaned.phone ?? '' },
+        });
+      }
+      email = cleaned.email;
+      const shadow = await userService.findOrCreateShadowUser(email, `${cleaned.firstName} ${cleaned.lastName}`);
+      userId = shadow.id;
+    }
+
+    // Detect a duplicate join (friendly state, not an error — AC-I3 ⑥).
+    const before = await waitlistService.getWaitlistPosition(eventId, email);
+    const alreadyOnList = before !== null;
+
     const entry = await waitlistService.addToWaitlist({
-      eventId,
-      email: cleaned.email,
+      eventId, email,
       firstName: cleaned.firstName,
       lastName: cleaned.lastName,
       phone: cleaned.phone,
     });
+    await sql`UPDATE waitlist_entries SET user_id = ${userId} WHERE waitlist_entry_id = ${entry.waitlistEntryId}::UUID`;
 
-    const position = await waitlistService.getWaitlistPosition(eventId, entry.email);
+    const position = await waitlistService.getWaitlistPosition(eventId, email);
 
-    const eventRows = await sql<{name: string}[]>`SELECT name FROM events WHERE event_id = ${eventId}::UUID`;
-    const eventName = eventRows.length > 0 ? eventRows[0].name : 'Event';
-
-    const notif = getNotificationService();
-    try {
-      await notif.sendWaitlistAcknowledgement(entry, position ?? 1, eventName);
-    } catch (_) { /* best effort */ }
+    if (!alreadyOnList) {
+      const notif = getNotificationService();
+      try {
+        await notif.sendWaitlistAcknowledgement(entry, position ?? 1, eventName);
+      } catch (_) { /* best effort */ }
+    }
 
     return renderView(c, 'waitlist-confirmed', {
-      title: 'Added to Waitlist',
+      title: alreadyOnList ? 'Already on the waitlist' : 'Added to Waitlist',
       entry,
       position,
       eventName,
+      alreadyOnList,
     });
   },
 };

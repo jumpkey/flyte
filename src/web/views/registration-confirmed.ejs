@@ -13,12 +13,27 @@
       <% } %>
       <% } %>
       <div class="row-line"><span class="k">Name</span><span class="v"><%= registration.firstName %> <%= registration.lastName %></span></div>
-      <div class="row-line"><span class="k">Amount paid</span><span class="v money">$<%= (registration.grossAmountCents / 100).toFixed(2) %></span></div>
+      <div class="row-line"><span class="k">Amount paid</span><span class="v money"><%= money(registration.grossAmountCents) %></span></div>
       <div class="row-line"><span class="k">Registration ID</span><span class="v" style="font-size:.8rem;"><%= registration.registrationId %></span></div>
-      <div class="row-line"><span class="k">Status</span><span class="v"><span class="pill pill-success"><%= registration.status %></span></span></div>
+      <div class="row-line"><span class="k">Status</span><span class="v"><%- include('partials/status-pill', { status: registration.status }) %></span></div>
     </div>
 
-    <p class="text-muted" style="font-size:.9rem;">Need to cancel? Contact us with your Registration ID — full refunds are available subject to our cancellation policy.</p>
-    <a href="/" class="btn btn-outline-secondary mt-2">Browse more events</a>
+    <%# Activation callout (WF-05 / J3) — accent *tint*, an invitation not the page's
+        primary action. Shown only when the buyer's account is still a shadow. %>
+    <% if (typeof isShadow !== 'undefined' && isShadow) { %>
+    <div class="alert mb-3 text-start" style="background: var(--fl-flare-tint); border:0;">
+      <strong>Save your registration history.</strong>
+      Activate a free account to see this and future registrations in one place — just set a password.
+      <div class="mt-2">
+        <a class="btn btn-outline-secondary btn-sm" href="/forgot-password?email=<%= encodeURIComponent(ownerEmail) %>">Activate your account</a>
+      </div>
+    </div>
+    <% } %>
+
+    <p class="text-muted" style="font-size:.9rem;">Plans changed? You can request a refund any time before the event.</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="/registration/<%= registration.registrationId %>/refund-request" class="btn btn-outline-secondary">Request a refund</a>
+      <a href="/events" class="btn btn-outline-secondary">Browse more events</a>
+    </div>
   </div>
 </div>

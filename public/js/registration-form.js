@@ -16,9 +16,30 @@
   const participantForm = document.getElementById('participant-form');
   // Server-rendered "Pay $X.XX" label, captured so resets keep the amount.
   const payBtnLabel = payBtn.textContent;
+  const continueLabel = document.getElementById('continue-btn').textContent;
+
+  const formError = document.getElementById('form-error');
+  const emailConfirmEl = document.getElementById('emailConfirm');
+  const emailMismatchEl = document.getElementById('email-mismatch');
+  function showFormError(msg) { if (formError) { formError.textContent = msg; formError.style.display = 'block'; } }
+  function clearFormError() { if (formError) { formError.style.display = 'none'; } }
 
   participantForm.addEventListener('submit', async function(e) {
     e.preventDefault();
+    clearFormError();
+
+    // Guest double-entry: emails must match before we touch the network (D1).
+    if (emailConfirmEl) {
+      const a = document.getElementById('email').value.trim().toLowerCase();
+      const b = emailConfirmEl.value.trim().toLowerCase();
+      if (a !== b) {
+        if (emailMismatchEl) emailMismatchEl.style.display = 'block';
+        emailConfirmEl.focus();
+        return;
+      }
+      if (emailMismatchEl) emailMismatchEl.style.display = 'none';
+    }
+
     const continueBtn = document.getElementById('continue-btn');
     continueBtn.disabled = true;
     continueBtn.textContent = 'Loading...';
@@ -27,6 +48,7 @@
       firstName: document.getElementById('firstName').value,
       lastName: document.getElementById('lastName').value,
       email: document.getElementById('email').value,
+      emailConfirm: emailConfirmEl ? emailConfirmEl.value : undefined,
       phone: document.getElementById('phone').value || undefined,
     };
 
@@ -39,11 +61,17 @@
       const data = await resp.json();
 
       if (!resp.ok) {
-        showError(data.error || 'Failed to initiate registration');
+        var friendly = {
+          email_mismatch: 'The email addresses do not match.',
+          already_registered: "You're already registered for this event — check your email for the confirmation.",
+          payment_setup_failed: 'Payment is temporarily unavailable. Please try again in a moment.',
+        }[data.error] || 'We could not start your registration. Please try again.';
+        showFormError(friendly);
         continueBtn.disabled = false;
-        continueBtn.textContent = 'Continue to Payment';
+        continueBtn.textContent = continueLabel;
         return;
       }
+      clearFormError();
 
       clientSecret = data.clientSecret;
       paymentIntentId = data.paymentIntentId;
@@ -56,9 +84,9 @@
       step1.style.display = 'none';
       step2.style.display = 'block';
     } catch (err) {
-      showError('An error occurred. Please try again.');
+      showFormError('An error occurred. Please try again.');
       continueBtn.disabled = false;
-      continueBtn.textContent = 'Continue to Payment';
+      continueBtn.textContent = continueLabel;
     }
   });
 
@@ -66,7 +94,7 @@
     step2.style.display = 'none';
     step1.style.display = 'block';
     document.getElementById('continue-btn').disabled = false;
-    document.getElementById('continue-btn').textContent = 'Continue to Payment';
+    document.getElementById('continue-btn').textContent = continueLabel;
   });
 
   payBtn.addEventListener('click', async function() {

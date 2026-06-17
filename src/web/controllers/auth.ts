@@ -173,7 +173,11 @@ export const authController = {
   },
 
   async forgotPasswordForm(c: Context): Promise<Response> {
-    return renderView(c, 'forgot-password', { title: 'Forgot Password' });
+    // Prefill + activation framing when arriving from a shadow-account callout
+    // (/forgot-password?email=…). The email is only echoed back into the field,
+    // never confirmed to exist (anti-enumeration).
+    const email = c.req.query('email') ?? '';
+    return renderView(c, 'forgot-password', { title: 'Forgot Password', email, activate: email !== '' });
   },
 
   async forgotPassword(c: Context): Promise<Response> {
@@ -183,7 +187,10 @@ export const authController = {
     const start = Date.now();
     const ip = getClientIp(c);
     const user = await userService.findByEmail(email);
-    if (user && user.isVerified && !user.isLocked) {
+    // Issue a reset token to verified accounts AND to shadow accounts — for a
+    // shadow user this email IS the activation flow (J3). Never to locked ones.
+    // The min-time padding below keeps issuance enumeration-safe (S6).
+    if (user && (user.isVerified || user.accountStatus === 'shadow') && !user.isLocked) {
       const { raw, hashed } = authService.generateToken();
       const expiresAt = new Date(Date.now() + config.passwordResetTokenTtlHours * 60 * 60 * 1000);
       await userService.setPasswordResetToken(user.id, hashed, expiresAt);

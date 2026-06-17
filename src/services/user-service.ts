@@ -58,6 +58,28 @@ export const userService = {
     return mapUser(rows[0] as Record<string, unknown>);
   },
 
+  /**
+   * D1 invariant (site map §5.1): return the user for this email, creating a
+   * shadow row (NULL password, unverified, account_status='shadow') only when
+   * none exists. NEVER mutates an existing row — an active user keeps all their
+   * state, and a repeat guest reuses their shadow row even if they typed a
+   * different name this time. display_name is NOT NULL, so it is supplied, but
+   * only ever set at creation.
+   */
+  async findOrCreateShadowUser(email: string, displayName: string): Promise<User> {
+    const lower = email.trim().toLowerCase();
+    const name = (displayName ?? '').trim() || lower;
+    // The unique index users_email_lower_idx is an expression index on
+    // LOWER(email); a conflict target on an expression needs its own parens.
+    await sql`
+      INSERT INTO users (email, display_name, account_status, is_verified, password_hash)
+      VALUES (${lower}, ${name}, 'shadow', FALSE, NULL)
+      ON CONFLICT ((LOWER(email))) DO NOTHING
+    `;
+    const rows = await sql`SELECT * FROM users WHERE LOWER(email) = ${lower}`;
+    return mapUser(rows[0] as Record<string, unknown>);
+  },
+
   async findById(id: string): Promise<User | null> {
     const rows = await sql`SELECT * FROM users WHERE id = ${id}`;
     if (rows.length === 0) return null;
@@ -97,7 +119,20 @@ export const userService = {
   },
 
   async resetPassword(id: string, newPasswordHash: string): Promise<void> {
-    await sql`UPDATE users SET password_hash = ${newPasswordHash}, password_reset_token = NULL, password_reset_token_expires_at = NULL, is_locked = FALSE, failed_login_count = 0 WHERE id = ${id}`;
+    // Completing a reset doubles as shadow-account activation (J3): set the
+    // password and flip account_status→active + is_verified→true (the emailed
+    // link proves mailbox control). Harmless for an already-active user.
+    await sql`
+      UPDATE users
+      SET password_hash = ${newPasswordHash},
+          password_reset_token = NULL,
+          password_reset_token_expires_at = NULL,
+          is_locked = FALSE,
+          failed_login_count = 0,
+          account_status = 'active',
+          is_verified = TRUE
+      WHERE id = ${id}
+    `;
   },
 
   async updateLastLogin(id: string): Promise<void> {

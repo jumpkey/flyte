@@ -278,7 +278,9 @@ async function runTests() {
         'Cookie': `sid=${sidMatch[1]}`,
         'X-CSRF-Token': csrfMatch[1],
       },
-      body: JSON.stringify({ email: 'alice@example.com', firstName: 'Alice', lastName: 'Smith' }),
+      // emailConfirm matches email — I3 added guest double-entry (D1); a guest
+      // POST without a matching confirm now returns 400 email_mismatch.
+      body: JSON.stringify({ email: 'alice@example.com', emailConfirm: 'alice@example.com', firstName: 'Alice', lastName: 'Smith' }),
     });
     // 404 (event has available slots but stripe not configured) or 503 (stripe not configured)
     // — NOT 400 (validation error). This proves valid input passes the validation layer.

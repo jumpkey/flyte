@@ -1,7 +1,12 @@
+<% var fd = (typeof formData !== 'undefined' && formData) ? formData : {}; %>
 <div class="container py-4">
   <div class="panel checkout-panel">
     <h1 class="h3 mb-1">Join the waitlist</h1>
     <p class="text-muted mb-3"><%= event.name %></p>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-flyte alert-flyte-error" role="alert"><%= error %></div>
+    <% } %>
 
     <% if (typeof reason !== 'undefined' && reason === 'full') { %>
     <div class="alert alert-flyte alert-flyte-error" role="alert">
@@ -16,20 +21,29 @@
       <div class="row g-3 mb-3">
         <div class="col-12 col-sm-6">
           <label class="form-label" for="firstName">First name</label>
-          <input class="form-control" type="text" id="firstName" name="firstName" required>
+          <input class="form-control" type="text" id="firstName" name="firstName" value="<%= fd.firstName || '' %>" required>
         </div>
         <div class="col-12 col-sm-6">
           <label class="form-label" for="lastName">Last name</label>
-          <input class="form-control" type="text" id="lastName" name="lastName" required>
+          <input class="form-control" type="text" id="lastName" name="lastName" value="<%= fd.lastName || '' %>" required>
         </div>
       </div>
       <div class="mb-3">
         <label class="form-label" for="email">Email</label>
-        <input class="form-control" type="email" id="email" name="email" required>
+        <%# Logged-in: prefilled + locked, no confirm (session wins). Guest: double-entry. %>
+        <input class="form-control" type="email" id="email" name="email" required
+               value="<%= user ? user.email : (fd.email || '') %>"<%= user ? ' readonly' : '' %>>
       </div>
+      <% if (!user) { %>
+      <div class="mb-3">
+        <label class="form-label" for="emailConfirm">Confirm email</label>
+        <input class="form-control" type="email" id="emailConfirm" name="emailConfirm" autocomplete="off" required>
+        <div class="form-text">We'll email this address if a spot opens up — no account needed.</div>
+      </div>
+      <% } %>
       <div class="mb-4">
         <label class="form-label" for="phone">Phone (optional)</label>
-        <input class="form-control" type="tel" id="phone" name="phone">
+        <input class="form-control" type="tel" id="phone" name="phone" value="<%= fd.phone || '' %>">
       </div>
       <button type="submit" class="btn btn-primary w-100">Join waitlist</button>
     </form>
