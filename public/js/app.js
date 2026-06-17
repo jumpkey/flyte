@@ -80,6 +80,24 @@ document.addEventListener('change', function (e) {
   }
 });
 
+// Double-submit guard for one-shot POST forms (W13): once a form marked
+// [data-once] starts submitting, disable its submit button so a second click
+// can't fire a duplicate request. Belt-and-suspenders with the server-side
+// Stripe idempotency key. We don't preventDefault — the submission proceeds.
+document.addEventListener('submit', function (e) {
+  var form = e.target;
+  if (form && form.matches && form.matches('form[data-once]')) {
+    var btn = form.querySelector('button[type="submit"], button:not([type])');
+    if (btn) {
+      if (btn.dataset.submitting) { e.preventDefault(); return; }
+      btn.dataset.submitting = '1';
+      if (btn.dataset.busy) btn.textContent = btn.dataset.busy;
+      // Disable after the event loop so the button still posts with the form.
+      setTimeout(function () { btn.disabled = true; }, 0);
+    }
+  }
+});
+
 // Bootstrap/HTMX coexistence seam (WK §11.1 rule 5): re-init JS-driven
 // widgets inside swapped fragments here if we ever put any there.
 document.addEventListener('htmx:afterSwap', function () { /* no-op for now */ });

@@ -125,16 +125,24 @@ export class MockStripeClient {
   };
 
   refunds = {
-    create: async (params: Record<string, unknown>) => {
-      this.calls.push({ method: 'refunds.create', args: [params] });
+    create: async (params: Record<string, unknown>, reqOptions?: Record<string, unknown>) => {
+      this.calls.push({ method: 'refunds.create', args: [params, reqOptions] });
+      // Honour idempotency keys exactly as the real Stripe API does (W13): a
+      // repeated key returns the same refund object without issuing a second one.
+      const idempotencyKey = reqOptions?.['idempotencyKey'] as string | undefined;
+      if (idempotencyKey && this._idempotencyCache.has(idempotencyKey)) {
+        return this._idempotencyCache.get(idempotencyKey)!;
+      }
       if (this.options.refundShouldError) {
         throw Object.assign(new Error('Refund error (mock)'), { type: 'api_error' });
       }
-      return {
+      const refund = {
         id:     `re_mock_${Date.now()}`,
         amount: params['amount'] ?? params['payment_intent'],
         status: 'succeeded',
       };
+      if (idempotencyKey) this._idempotencyCache.set(idempotencyKey, refund);
+      return refund;
     },
   };
 

@@ -45,7 +45,7 @@
 
 <% if (refundable) { %>
 <dialog id="refund-dialog" class="flyte-dialog">
-  <form method="post" action="/admin/registrations/<%= reg.registration_id %>/refund">
+  <form method="post" action="/admin/registrations/<%= reg.registration_id %>/refund" data-once>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <h2 class="h5">Refund <%= reg.first_name %> <%= reg.last_name %></h2>
     <p class="text-secondary small">Up to <strong class="money"><%= money(remainingCents) %></strong> can be refunded to the original payment method.</p>
@@ -65,12 +65,12 @@
 
     <div class="mb-3">
       <label class="form-label" for="refund-reason">Reason <span class="text-secondary">(optional)</span></label>
-      <input class="form-control" name="reason" id="refund-reason" maxlength="200">
+      <input class="form-control" name="reason" id="refund-reason" maxlength="500">
     </div>
 
     <div class="d-flex gap-2 justify-content-end">
       <button type="button" class="btn btn-outline-secondary" data-close-dialog>Cancel</button>
-      <button type="submit" class="btn btn-danger">Issue refund</button>
+      <button type="submit" class="btn btn-danger" data-busy="Issuing refund…">Issue refund</button>
     </div>
   </form>
 </dialog>

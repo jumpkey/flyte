@@ -10,6 +10,9 @@ import type { SessionData } from '../../middleware/session.js';
 import type { User } from '../../../services/user-service.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Server-side cap on the admin deny note (W15) — the email and audit row that
+// quote it back are bounded, and a free-text field is otherwise unbounded input.
+const NOTE_MAX = 500;
 
 function flash(c: Context, message: string): void {
   const session = c.get('session') as SessionData | undefined;
@@ -106,7 +109,7 @@ export const adminRefundsController = {
     }
 
     const body = await getBody(c);
-    const note = String(body['note'] ?? '').trim();
+    const note = String(body['note'] ?? '').trim().slice(0, NOTE_MAX);
     if (!note) {
       flash(c, 'A note is required to deny a request.');
       return c.redirect(back);

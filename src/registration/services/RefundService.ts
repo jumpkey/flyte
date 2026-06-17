@@ -5,6 +5,18 @@ import type {
   RefundResult, BulkRefundResult, RegistrationRecord, RegistrationStatus
 } from '../types.js';
 
+/**
+ * Idempotency key for a Stripe refund (W13). Stripe dedups any retry that
+ * carries the same key, so a double-submitted modal or a network retry issues
+ * the refund at most once. We bind the key to the registration, the amount, and
+ * the balance already refunded BEFORE this refund — so a genuine second partial
+ * of the same size (a different logical refund) gets a distinct key and still
+ * goes through, while an accidental re-send of the same request collapses.
+ */
+function refundIdempotencyKey(registrationId: string, priorRefundedCents: number, amountCents: number): string {
+  return `refund-${registrationId}-${priorRefundedCents}-${amountCents}`;
+}
+
 function mapDbRow(row: Record<string, unknown>): RegistrationRecord {
   return {
     registrationId:          row['registration_id'] as string,
@@ -61,7 +73,10 @@ export class RefundService implements IRefundService {
 
       let refundId: string;
       try {
-        const refund = await this.stripe.refunds.create({ payment_intent: reg.paymentIntentId });
+        const refund = await this.stripe.refunds.create(
+          { payment_intent: reg.paymentIntentId },
+          { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, refundAmount) },
+        );
         refundId = refund.id;
       } catch (_) {
         return { outcome: 'STRIPE_ERROR', registrationId: reg.registrationId };
@@ -95,7 +110,10 @@ export class RefundService implements IRefundService {
 
       let refundId: string;
       try {
-        const refund = await this.stripe.refunds.create({ payment_intent: reg.paymentIntentId, amount: partialAmount });
+        const refund = await this.stripe.refunds.create(
+          { payment_intent: reg.paymentIntentId, amount: partialAmount },
+          { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, partialAmount) },
+        );
         refundId = refund.id;
       } catch (_) {
         return { outcome: 'STRIPE_ERROR', registrationId: reg.registrationId };
@@ -140,7 +158,10 @@ export class RefundService implements IRefundService {
 
       let refundId: string;
       try {
-        const refund = await this.stripe.refunds.create({ payment_intent: reg.paymentIntentId });
+        const refund = await this.stripe.refunds.create(
+          { payment_intent: reg.paymentIntentId },
+          { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, refundAmount) },
+        );
         refundId = refund.id;
       } catch (_) {
         results.push({ registrationId: reg.registrationId, result: { outcome: 'STRIPE_ERROR' } });

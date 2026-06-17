@@ -222,6 +222,81 @@ async function runTests() {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // W13 — Stripe refunds carry an idempotency key
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('--- W13: refund idempotency key ---');
+
+  await test('W13: refund passes an idempotency key bound to reg/prior-balance/amount', async () => {
+    await truncateTables();
+    await createTestEvent({ totalCapacity: 5, availableSlots: 4, confirmedCount: 1, registrationFeeCents: 5000 });
+    const regId = '00000000-0000-0000-0000-0000000000a1';
+    await testSql.unsafe(`
+      INSERT INTO registrations (registration_id, event_id, email, first_name, last_name,
+                                 gross_amount_cents, net_amount_cents, payment_intent_id, status, confirmed_at)
+      VALUES ('${regId}', '${TEST_EVENT_ID}', 'idem@example.com', 'Id', 'Em',
+              5000, 5000, 'pi_idem_01', 'CONFIRMED', now())
+    `);
+    const stripe = new MockStripeClient();
+    const svc = new RefundService(stripe as any, new NoopNotificationService() as any);
+    await svc.refundRegistration({ registrationId: regId, refundType: 'PARTIAL', partialAmountCents: 1000, reason: 'w13' });
+    const call = stripe.calls.find(c => c.method === 'refunds.create');
+    assert(call != null, 'refunds.create should be called');
+    const opts = call!.args[1] as Record<string, unknown> | undefined;
+    assert(!!opts, 'an options object (with the idempotency key) is passed as the 2nd arg');
+    assertEqual(opts!.idempotencyKey, `refund-${regId}-0-1000`, 'key = refund-<id>-<priorRefunded>-<amount>');
+  });
+
+  await test('W13: two equal sequential partials get distinct keys and both issue', async () => {
+    await truncateTables();
+    await createTestEvent({ totalCapacity: 5, availableSlots: 4, confirmedCount: 1, registrationFeeCents: 5000 });
+    const regId = '00000000-0000-0000-0000-0000000000a2';
+    await testSql.unsafe(`
+      INSERT INTO registrations (registration_id, event_id, email, first_name, last_name,
+                                 gross_amount_cents, net_amount_cents, payment_intent_id, status, confirmed_at)
+      VALUES ('${regId}', '${TEST_EVENT_ID}', 'idem2@example.com', 'Id', 'Em2',
+              5000, 5000, 'pi_idem_02', 'CONFIRMED', now())
+    `);
+    const stripe = new MockStripeClient();
+    const svc = new RefundService(stripe as any, new NoopNotificationService() as any);
+    const a = await svc.refundRegistration({ registrationId: regId, refundType: 'PARTIAL', partialAmountCents: 1000, reason: 'first' });
+    const b = await svc.refundRegistration({ registrationId: regId, refundType: 'PARTIAL', partialAmountCents: 1000, reason: 'second' });
+    assertEqual(a.outcome, 'PARTIAL_REFUND_ISSUED', 'first partial issued');
+    assertEqual(b.outcome, 'PARTIAL_REFUND_ISSUED', 'second equal partial also issued (not deduped)');
+    const keys = stripe.calls.filter(c => c.method === 'refunds.create').map(c => (c.args[1] as Record<string, unknown>).idempotencyKey);
+    assertEqual(keys[0], `refund-${regId}-0-1000`, 'first key uses prior balance 0');
+    assertEqual(keys[1], `refund-${regId}-1000-1000`, 'second key uses prior balance 1000');
+    const rows = await testSql`SELECT refunded_amount_cents FROM registrations WHERE registration_id = ${regId}::UUID`;
+    assertEqual(rows[0].refunded_amount_cents, 2000, 'both partials applied: refunded=2000');
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // W14 — sp_partial_refund_registration bounds the balance on captured net
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('--- W14: partial refund proc bounds on net ---');
+
+  await test('W14: proc rejects an amount above captured net even when ≤ gross', async () => {
+    await truncateTables();
+    await createTestEvent({ totalCapacity: 5, availableSlots: 4, confirmedCount: 1, registrationFeeCents: 5000 });
+    const regId = '00000000-0000-0000-0000-0000000000a3';
+    // net (4900) < gross (5000): a 5000 partial is ≤ gross but exceeds what was captured.
+    await testSql.unsafe(`
+      INSERT INTO registrations (registration_id, event_id, email, first_name, last_name,
+                                 gross_amount_cents, net_amount_cents, payment_intent_id, status, confirmed_at)
+      VALUES ('${regId}', '${TEST_EVENT_ID}', 'netbound@example.com', 'Net', 'Bound',
+              5000, 4900, 'pi_netbound_01', 'CONFIRMED', now())
+    `);
+    const rows = await testSql.unsafe<Array<{result_code: string}>>(
+      `SELECT * FROM sp_partial_refund_registration('${regId}', 're_x', 5000, 'w14')`
+    );
+    assertEqual(rows[0].result_code, 'AMOUNT_EXCEEDS_BALANCE', 'proc bounds on net, not gross');
+    // And a refund up to net is allowed by the proc.
+    const ok = await testSql.unsafe<Array<{result_code: string}>>(
+      `SELECT * FROM sp_partial_refund_registration('${regId}', 're_y', 4900, 'w14')`
+    );
+    assertEqual(ok[0].result_code, 'SUCCESS', 'a partial up to net succeeds');
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // Fix #11 — Anomalous 'succeeded' PI is logged, not expired
   // ─────────────────────────────────────────────────────────────────────────────
   console.log('--- Fix #11: Anomalous succeeded PI is logged, not expired ---');

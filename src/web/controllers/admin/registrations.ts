@@ -13,6 +13,9 @@ import type { SessionData } from '../../middleware/session.js';
 import type { User } from '../../../services/user-service.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Server-side cap on the admin refund reason (W15) — stored on refund_log and
+// surfaced in the timeline; bound the otherwise-unbounded free-text field.
+const REASON_MAX = 500;
 
 function flash(c: Context, message: string): void {
   const session = c.get('session') as SessionData | undefined;
@@ -122,7 +125,7 @@ export const adminRegistrationsController = {
 
     const body = await getBody(c);
     const refundType = String(body['refundType'] ?? 'full').toLowerCase() === 'partial' ? 'PARTIAL' : 'FULL';
-    const reason = String(body['reason'] ?? '').trim() || 'admin_initiated';
+    const reason = String(body['reason'] ?? '').trim().slice(0, REASON_MAX) || 'admin_initiated';
     const net = (reg.net_amount_cents as number | null) ?? (reg.gross_amount_cents as number);
     const remaining = net - (reg.refunded_amount_cents as number);
 

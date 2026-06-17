@@ -12,6 +12,7 @@ const TEST_FILES = [
   'shadow-login.test.ts',
   'admin-guard.test.ts',
   'load-user.test.ts',
+  'rate-limit.test.ts',
   'catalog.test.ts',
   'checkout-shadow.test.ts',
   'admin-events.test.ts',
