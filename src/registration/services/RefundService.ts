@@ -61,20 +61,33 @@ export class RefundService implements IRefundService {
     const eventName = eventRows.length > 0 ? eventRows[0].name : 'Event';
 
     if (request.refundType === 'FULL') {
-      // Stripe refunds the captured (net) amount when no `amount` is passed.
-      // Track the same value in our DB so refunded_amount_cents reflects the
-      // actual refund (avoids overstating the refund vs. the captured charge,
-      // which would corrupt subsequent partial-refund accounting).
-      const refundAmount = reg.netAmountCents ?? reg.grossAmountCents;
+      // A FULL refund cancels the registration and restores the slot. By default
+      // it returns the whole captured (net) amount — Stripe refunds the captured
+      // total when no `amount` is passed, and we track the same value so
+      // refunded_amount_cents never overstates the charge. An approver may also
+      // pass an explicit `partialAmountCents` to deduct a service fee (B5): the
+      // registration is still cancelled, but only that amount is returned. The
+      // amount is hard-capped at the captured balance, so a refund can never
+      // exceed what was charged.
+      const captured = reg.netAmountCents ?? reg.grossAmountCents;
+      const maxRefundable = captured - reg.refundedAmountCents;
+      const refundAmount = request.partialAmountCents ?? captured;
 
-      if (reg.refundedAmountCents >= refundAmount) {
+      if (request.partialAmountCents == null && reg.refundedAmountCents >= captured) {
         return { outcome: 'ALREADY_REFUNDED', registrationId: reg.registrationId };
       }
+      if (refundAmount <= 0) return { outcome: 'INVALID_STATE', registrationId: reg.registrationId };
+      if (refundAmount > maxRefundable) return { outcome: 'AMOUNT_EXCEEDS_BALANCE', registrationId: reg.registrationId };
 
       let refundId: string;
       try {
+        // Omit `amount` for a true full refund (returns the exact captured
+        // total); pass an explicit amount for a fee-deducted cancellation.
+        const params = request.partialAmountCents != null
+          ? { payment_intent: reg.paymentIntentId, amount: refundAmount }
+          : { payment_intent: reg.paymentIntentId };
         const refund = await this.stripe.refunds.create(
-          { payment_intent: reg.paymentIntentId },
+          params,
           { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, refundAmount) },
         );
         refundId = refund.id;

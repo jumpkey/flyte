@@ -61,6 +61,26 @@ export const adminRefundsController = {
       return c.redirect(back);
     }
 
+    // Optional approver inputs (B5): an editable refund amount (to deduct a
+    // service fee) and a note. The amount is validated for shape here and
+    // hard-capped against the real captured balance in RefundService — never
+    // more than what was charged. Blank amount → full refund.
+    const body = await getBody(c);
+    const rawAmount = String(body['amount'] ?? '').trim();
+    let partialAmountCents: number | undefined;
+    if (rawAmount) {
+      if (!/^\d+(\.\d{1,2})?$/.test(rawAmount)) {
+        flash(c, 'Enter a valid refund amount.');
+        return c.redirect(back);
+      }
+      partialAmountCents = Math.round(parseFloat(rawAmount) * 100);
+      if (partialAmountCents <= 0) {
+        flash(c, 'Refund amount must be greater than zero.');
+        return c.redirect(back);
+      }
+    }
+    const note = String(body['note'] ?? '').trim().slice(0, NOTE_MAX) || null;
+
     let svc: RefundService;
     try { svc = await getRefundService(); }
     catch (_) { flash(c, 'Payment service unavailable — request left open.'); return c.redirect(back); }
@@ -68,6 +88,7 @@ export const adminRefundsController = {
     const result = await svc.refundRegistration({
       registrationId: req.context.registration.registrationId,
       refundType: 'FULL',
+      partialAmountCents,
       reason: 'refund_request_approved',
     });
 
@@ -77,14 +98,17 @@ export const adminRefundsController = {
     switch (result.outcome) {
       case 'REFUND_ISSUED':
       case 'PARTIAL_REFUND_ISSUED':
-        if (resolver) await refundRequestsService.resolve(id, 'APPROVED', resolver, 'Approved — refund issued');
-        if (admin) { try { await eventService.logAction({ userId: admin.id, action: 'refund_request_approved', resource: back, metadata: { requestId: id }, ipAddress: getClientIp(c) }); } catch (_) { /* best effort */ } }
+        if (resolver) await refundRequestsService.resolve(id, 'APPROVED', resolver, note ?? 'Approved — refund issued');
+        if (admin) { try { await eventService.logAction({ userId: admin.id, action: 'refund_request_approved', resource: back, metadata: { requestId: id, amountCents: result.refundedAmountCents }, ipAddress: getClientIp(c) }); } catch (_) { /* best effort */ } }
         flash(c, `Approved — $${((result.refundedAmountCents ?? 0) / 100).toFixed(2)} refunded.`);
         break;
       case 'ALREADY_REFUNDED':
         // Idempotent (site map §4.3): resolve, no second refund.
         if (resolver) await refundRequestsService.resolve(id, 'APPROVED', resolver, 'Approved — registration was already refunded; no second refund');
         flash(c, 'Approved — this registration had already been refunded, so no further charge-back was made.');
+        break;
+      case 'AMOUNT_EXCEEDS_BALANCE':
+        flash(c, 'That amount is more than the refundable balance — the request is still open.');
         break;
       case 'STRIPE_ERROR':
         flash(c, 'Stripe declined the refund — the request is still open. Try again or refund from the payment detail.');

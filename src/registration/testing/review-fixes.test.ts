@@ -297,6 +297,55 @@ async function runTests() {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // B5 — approve a refund request with an editable amount (fee deduction)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log('--- B5: editable approve amount (fee deduction), hard-capped ---');
+
+  await test('B5: FULL refund with an explicit amount deducts a fee, cancels, caps at captured', async () => {
+    await truncateTables();
+    await createTestEvent({ totalCapacity: 5, availableSlots: 4, confirmedCount: 1, registrationFeeCents: 5000 });
+    const regId = '00000000-0000-0000-0000-0000000000b1';
+    // Charged $50, captured $48 (net). Approver refunds $40, keeps an $8 fee.
+    await testSql.unsafe(`
+      INSERT INTO registrations (registration_id, event_id, email, first_name, last_name,
+                                 gross_amount_cents, net_amount_cents, payment_intent_id, status, confirmed_at)
+      VALUES ('${regId}', '${TEST_EVENT_ID}', 'fee@example.com', 'Fee', 'Ded',
+              5000, 4800, 'pi_fee_01', 'CONFIRMED', now())
+    `);
+    const stripe = new MockStripeClient();
+    const svc = new RefundService(stripe as any, new NoopNotificationService() as any);
+
+    const r = await svc.refundRegistration({ registrationId: regId, refundType: 'FULL', partialAmountCents: 4000, reason: 'service_fee' });
+    assertEqual(r.outcome, 'REFUND_ISSUED', 'refund issued');
+    assertEqual(r.refundedAmountCents, 4000, 'refunds the entered amount, not the full capture');
+    const call = stripe.calls.find((c) => c.method === 'refunds.create');
+    assertEqual((call!.args[0] as Record<string, unknown>).amount, 4000, 'explicit amount sent to Stripe');
+    const reg = await testSql`SELECT status, refunded_amount_cents FROM registrations WHERE registration_id = ${regId}::UUID`;
+    assertEqual(reg[0].status, 'CANCELLED', 'registration is cancelled (customer is leaving)');
+    assertEqual(reg[0].refunded_amount_cents, 4000, 'db tracks the fee-deducted amount');
+  });
+
+  await test('B5: an approve amount above the captured balance is rejected (never more than charged)', async () => {
+    await truncateTables();
+    await createTestEvent({ totalCapacity: 5, availableSlots: 4, confirmedCount: 1, registrationFeeCents: 5000 });
+    const regId = '00000000-0000-0000-0000-0000000000b2';
+    await testSql.unsafe(`
+      INSERT INTO registrations (registration_id, event_id, email, first_name, last_name,
+                                 gross_amount_cents, net_amount_cents, payment_intent_id, status, confirmed_at)
+      VALUES ('${regId}', '${TEST_EVENT_ID}', 'overfee@example.com', 'Over', 'Fee',
+              5000, 4800, 'pi_fee_02', 'CONFIRMED', now())
+    `);
+    const stripe = new MockStripeClient();
+    const svc = new RefundService(stripe as any, new NoopNotificationService() as any);
+    // 5000 > captured 4800 → must be refused before any Stripe call.
+    const over = await svc.refundRegistration({ registrationId: regId, refundType: 'FULL', partialAmountCents: 5000, reason: 'too_much' });
+    assertEqual(over.outcome, 'AMOUNT_EXCEEDS_BALANCE', 'cannot refund more than was captured');
+    assertEqual(stripe.calls.filter((c) => c.method === 'refunds.create').length, 0, 'no Stripe refund attempted');
+    const reg = await testSql`SELECT status FROM registrations WHERE registration_id = ${regId}::UUID`;
+    assertEqual(reg[0].status, 'CONFIRMED', 'registration untouched');
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // Fix #11 — Anomalous 'succeeded' PI is logged, not expired
   // ─────────────────────────────────────────────────────────────────────────────
   console.log('--- Fix #11: Anomalous succeeded PI is logged, not expired ---');

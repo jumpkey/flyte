@@ -36,13 +36,23 @@
           </div>
 
           <dialog id="approve-<%= rq.request_id %>" class="flyte-dialog">
-            <form method="post" action="/admin/refund-requests/<%= rq.request_id %>/approve">
+            <form method="post" action="/admin/refund-requests/<%= rq.request_id %>/approve" data-once>
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <h2 class="h5">Approve refund?</h2>
-              <p>This refunds <strong class="money"><%= money(remaining) %></strong> to <%= rq.first_name %> <%= rq.last_name %> and marks the request approved.</p>
+              <h2 class="h5">Approve refund</h2>
+              <p class="text-secondary small mb-2">Refunds to <%= rq.first_name %> <%= rq.last_name %> and cancels the registration. Lower the amount to keep a service fee.</p>
+              <label class="form-label" for="amount-<%= rq.request_id %>">Refund amount</label>
+              <div class="input-group mb-1" style="max-width: 12rem;">
+                <span class="input-group-text">$</span>
+                <input class="form-control" id="amount-<%= rq.request_id %>" name="amount" inputmode="decimal" value="<%= (remaining / 100).toFixed(2) %>">
+              </div>
+              <div class="form-text mb-3">Up to <span class="money"><%= money(remaining) %></span> — never more than the amount charged.</div>
+              <div class="mb-3">
+                <label class="form-label" for="approve-note-<%= rq.request_id %>">Note <span class="text-secondary">(optional)</span></label>
+                <textarea class="form-control" id="approve-note-<%= rq.request_id %>" name="note" rows="2" maxlength="500"></textarea>
+              </div>
               <div class="d-flex gap-2 justify-content-end">
                 <button type="button" class="btn btn-outline-secondary" data-close-dialog>Cancel</button>
-                <button type="submit" class="btn btn-primary">Approve &amp; refund</button>
+                <button type="submit" class="btn btn-primary" data-busy="Refunding…">Approve &amp; refund</button>
               </div>
             </form>
           </dialog>
