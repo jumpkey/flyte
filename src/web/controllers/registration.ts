@@ -314,6 +314,37 @@ export const registrationController = {
       position,
       eventName,
       alreadyOnList,
+      waitlistEntryId: entry.waitlistEntryId,
+    });
+  },
+
+  /**
+   * GET /waitlist/:waitlistEntryId — live waitlist position (V7). A capability
+   * URL (bearer UUID, same pattern as the confirmation page) linked from the
+   * waitlist email; the join-time position in that email goes stale, this is
+   * current. One query.
+   */
+  async showWaitlistPosition(c: Context): Promise<Response> {
+    const waitlistEntryId = c.req.param('waitlistEntryId');
+    if (!waitlistEntryId || !UUID_RE.test(waitlistEntryId)) return c.text('Not found', 404);
+
+    const rows = await sql<{email: string; event_id: string; event_name: string; status: string; available_slots: number}[]>`
+      SELECT w.email, w.event_id, e.name AS event_name, e.status, e.available_slots
+      FROM waitlist_entries w JOIN events e ON e.event_id = w.event_id
+      WHERE w.waitlist_entry_id = ${waitlistEntryId}::UUID
+    `;
+    if (rows.length === 0) return c.text('Not found', 404);
+    const row = rows[0];
+
+    const position = await waitlistService.getWaitlistPosition(row.event_id, row.email);
+
+    return renderView(c, 'waitlist-position', {
+      title: 'Waitlist status',
+      eventName: row.event_name,
+      eventId: row.event_id,
+      position,
+      eventStatus: row.status,
+      spotsOpen: row.status !== 'FULL' && row.available_slots > 0,
     });
   },
 };

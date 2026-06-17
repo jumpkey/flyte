@@ -57,8 +57,9 @@ export class NotificationService implements INotificationService {
         <p>Dear ${escapeHtml(entry.firstName)} ${escapeHtml(entry.lastName)},</p>
         <p>You are #${position} on the waitlist for <strong>${escapeHtml(eventName)}</strong>.</p>
         <p>If a spot opens up, we will contact you at this email address. No payment is required at this time.</p>
+        <p><a href="${config.appDomain}/waitlist/${entry.waitlistEntryId}">Check your live waitlist position</a></p>
       `,
-      text: `You're on the Waitlist\n\nDear ${entry.firstName} ${entry.lastName},\n\nYou are #${position} on the waitlist for ${eventName}.\n\nIf a spot opens up, we will contact you. No payment is required at this time.`,
+      text: `You're on the Waitlist\n\nDear ${entry.firstName} ${entry.lastName},\n\nYou are #${position} on the waitlist for ${eventName}.\n\nIf a spot opens up, we will contact you. No payment is required at this time.\n\nCheck your live position: ${config.appDomain}/waitlist/${entry.waitlistEntryId}`,
     });
   }
 

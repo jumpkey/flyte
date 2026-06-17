@@ -225,6 +225,24 @@ async function runTests() {
     await testSql`DELETE FROM events WHERE event_id = ${eventId}`;
   });
 
+  // ── V7: live waitlist position (capability URL) ──
+  await test('V7: /waitlist/:id shows the live position; 404 for unknown', async () => {
+    await truncateTables();
+    const eventId = await createEvent('FULL', true);
+    const entry = await testSql`
+      INSERT INTO waitlist_entries (event_id, email, first_name, last_name)
+      VALUES (${eventId}, 'wl@example.com', 'Wait', 'List') RETURNING waitlist_entry_id`;
+    const id = entry[0].waitlist_entry_id as string;
+    const { app } = await import('../app.js');
+    const r = await app.request(`http://localhost/waitlist/${id}`);
+    assertEqual(r.status, 200, 'position page renders');
+    const body = await r.text();
+    assert(body.includes('Waitlist status') && body.includes('#1'), 'shows position #1');
+    const missing = await app.request('http://localhost/waitlist/00000000-0000-0000-0000-000000000000');
+    assertEqual(missing.status, 404, 'unknown entry 404s');
+    await truncateTables();
+  });
+
   await truncateTables();
   console.log(`\n=== Checkout-Shadow: ${passed} passed, ${failed} failed ===`);
   await testSql.end();

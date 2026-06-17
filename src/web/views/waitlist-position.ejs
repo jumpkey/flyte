@@ -1,0 +1,21 @@
+<div class="container py-4">
+  <div class="panel checkout-panel text-center">
+    <h1 class="h3 mb-1">Waitlist status</h1>
+    <p class="text-muted mb-4"><%= eventName %></p>
+
+    <% if (position !== null && typeof position !== 'undefined') { %>
+      <p class="mb-1">Your current position</p>
+      <p class="display-6 mb-3"><span class="pill pill-info">#<%= position %></span></p>
+    <% } else { %>
+      <p class="text-muted mb-3">You're no longer on this waitlist.</p>
+    <% } %>
+
+    <% if (spotsOpen) { %>
+      <div class="alert alert-flyte" role="status">A spot may have opened up.</div>
+      <a class="btn btn-cta" href="/events/<%= eventId %>/register">Register now</a>
+    <% } else { %>
+      <p class="text-muted">This event is still full. We'll email you if a spot opens up — no need to check back.</p>
+      <a class="btn btn-outline-secondary mt-2" href="/events/<%= eventId %>">Back to event</a>
+    <% } %>
+  </div>
+</div>

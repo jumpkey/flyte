@@ -99,5 +99,7 @@ app.post('/registration/confirm/:paymentIntentId', rateLimit(60, 60000), registr
 app.get('/registration/:registrationId/confirmed', registrationController.showConfirmed);
 app.get('/events/:eventId/waitlist', registrationController.showWaitlistForm);
 app.post('/events/:eventId/waitlist', rateLimit(60, 60000), registrationController.addToWaitlist);
+// Live waitlist position (V7) — capability URL from the waitlist email.
+app.get('/waitlist/:waitlistEntryId', registrationController.showWaitlistPosition);
 
 export { app };
