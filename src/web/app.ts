@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
 import { serveStatic } from '@hono/node-server/serve-static';
+import pino from 'pino';
+import { renderView } from './render.js';
 import { sessionMiddleware } from './middleware/session.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { requestLoggerMiddleware } from './middleware/request-logger.js';
@@ -35,6 +37,8 @@ type Variables = {
   user: User | undefined;
   parsedBody: Record<string, string | File> | undefined;
 };
+
+const logger = pino({ level: 'info' });
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -150,5 +154,21 @@ app.get('/events/:eventId/waitlist', registrationController.showWaitlistForm);
 app.post('/events/:eventId/waitlist', rateLimit(60, 60000), registrationController.addToWaitlist);
 // Live waitlist position (V7) — capability URL from the waitlist email.
 app.get('/waitlist/:waitlistEntryId', registrationController.showWaitlistPosition);
+
+// Styled 404 + 500 (I9). Admin/JSON callers still get plain text where it matters
+// (adminGuard answers c.notFound() which lands here as a styled page — acceptable,
+// the route simply doesn't exist for them).
+app.notFound((c) => renderView(c, 'error', {
+  title: 'Page not found', code: 404, heading: 'Page not found',
+  message: "We couldn't find that page. It may have moved, or the link may be incomplete.",
+}, { status: 404 }));
+
+app.onError((err, c) => {
+  logger.error({ err, path: c.req.path }, 'unhandled error');
+  return renderView(c, 'error', {
+    title: 'Something went wrong', code: 500, heading: 'Something went wrong',
+    message: 'An unexpected error occurred. Please try again — if it keeps happening, let us know.',
+  }, { status: 500 });
+});
 
 export { app };

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' ? title + ' · Flyte' : 'Flyte' %></title>
+  <link rel="icon" href="/public/favicon.svg" type="image/svg+xml">
   <%# Open Graph / Twitter cards (V3) — set by pages that pass `og`, so a pasted
       link unfurls as a poster. Discovery for a small events site is shared links. %>
   <% if (typeof og !== 'undefined' && og) { %>
@@ -21,6 +22,7 @@
   <script src="/public/js/app.js" defer></script>
 </head>
 <body class="d-flex flex-column min-vh-100">
+  <a href="#main" class="skip-link">Skip to content</a>
   <%- include('../partials/nav', { user: user, csrfToken: csrfToken }) %>
 
   <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>
@@ -29,7 +31,7 @@
   </div>
   <% } %>
 
-  <main class="flex-grow-1">
+  <main class="flex-grow-1" id="main">
     <%- body %>
   </main>
 

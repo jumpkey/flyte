@@ -65,3 +65,15 @@
     </div>
   </div>
 </section>
+
+<%# Mobile sticky purchase bar (WF-16) — mirrors the primary action at phone widths. %>
+<% if (!alreadyRegistered && event.status !== 'CLOSED' && !(card.soldOut && !card.waitlistOpen)) { %>
+<div class="sticky-cta">
+  <span class="event-price money fw-bold flex-grow-1"><%= money(event.registration_fee_cents) %></span>
+  <% if (card.soldOut && card.waitlistOpen) { %>
+    <a class="btn btn-primary" href="/events/<%= event.event_id %>/waitlist">Join waitlist</a>
+  <% } else { %>
+    <a class="btn btn-cta" href="/events/<%= event.event_id %>/register">Register</a>
+  <% } %>
+</div>
+<% } %>

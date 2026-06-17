@@ -398,6 +398,28 @@ $focus-ring-width: .15rem;
 .admin-row { cursor: pointer; }
 .admin-row:hover { background: $fl-surface; }
 
+// Skip-to-content link (WK §8) — off-screen until focused.
+.skip-link {
+  position: absolute; left: -999px; top: 0; z-index: 2000;
+  background: $fl-navy; color: #fff; padding: .5rem 1rem; border-radius: 0 0 8px 0;
+  &:focus { left: 0; }
+}
+
+// Mobile sticky purchase bar (WF-16) — a sticky CTA on the storefront/checkout
+// at phone widths so the primary action is always in reach. 44px touch targets.
+.sticky-cta {
+  position: sticky; bottom: 0; z-index: 100;
+  background: #fff; border-top: 1px solid $fl-border-l;
+  padding: .625rem .875rem; display: none;
+  .btn { min-height: 44px; }
+}
+@media (max-width: 575.98px) {
+  .sticky-cta { display: flex; align-items: center; gap: .75rem; }
+  // Comfortable touch targets on phones (WK §8 / WF-16).
+  .btn { min-height: 44px; }
+  .btn-cta, .btn-primary { min-height: 48px; }
+}
+
 // Focus visibility everywhere (WK-A11Y-1)
 :focus-visible { outline: 2px solid $fl-flare; outline-offset: 2px; }
 

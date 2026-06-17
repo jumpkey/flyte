@@ -19,6 +19,7 @@ const TEST_FILES = [
   'refund-requests.test.ts',
   'account.test.ts',
   'admin-users.test.ts',
+  'polish.test.ts',
 ];
 
 async function runFile(file: string): Promise<{ file: string; passed: boolean; output: string }> {

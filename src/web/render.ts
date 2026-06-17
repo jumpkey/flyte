@@ -2,6 +2,7 @@ import ejs from 'ejs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { SessionData } from './middleware/session.js';
 import type { User } from '../services/user-service.js';
 import { viewHelpers } from './view-helpers.js';
@@ -13,6 +14,8 @@ const VIEWS_DIR = path.resolve(__dirname, 'views');
 interface RenderOptions {
   /** Layout under views/layouts to wrap the view in. Defaults to 'main'. */
   layout?: 'main' | 'admin';
+  /** HTTP status for the response. Defaults to 200. */
+  status?: number;
 }
 
 export async function renderView(
@@ -46,7 +49,7 @@ export async function renderView(
     ...viewData,
     body: content,
   });
-  return c.html(html);
+  return c.html(html, (options.status ?? 200) as ContentfulStatusCode);
 }
 
 /**
