@@ -65,7 +65,13 @@ export class RegistrationService implements IRegistrationService {
           currency: 'usd',
           capture_method: 'manual',
           metadata: { eventId: formData.eventId, email: formData.email },
-          automatic_payment_methods: { enabled: true },
+          // Card-only: do NOT use automatic_payment_methods, which enables Stripe
+          // Link. Link remembers a card by email/browser and would resurface a
+          // previously-logged-in user's saved card inside a *guest* checkout
+          // (W1 / kickoff #26). Restricting to 'card' guarantees a pristine,
+          // stateless guest checkout. Revisit saved-cards as a deliberate
+          // logged-in feature (Stripe Customer + SetupIntent), separately.
+          payment_method_types: ['card'],
         },
         { idempotencyKey: `pi-create-${formData.eventId}-${crypto.createHash('sha256').update(formData.email.toLowerCase()).digest('hex').slice(0, 16)}` }
       );

@@ -77,7 +77,9 @@
       paymentIntentId = data.paymentIntentId;
 
       elements = stripe.elements({ clientSecret });
-      const paymentElement = elements.create('payment');
+      // Belt-and-suspenders with the card-only PaymentIntent: no wallets/Link UI,
+      // so a guest checkout never surfaces a prior session's saved payment method.
+      const paymentElement = elements.create('payment', { wallets: { applePay: 'never', googlePay: 'never' } });
       paymentElement.mount('#payment-element-container');
       paymentElement.on('ready', () => { payBtn.disabled = false; });
 

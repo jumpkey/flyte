@@ -33,6 +33,19 @@ async function runTests() {
   // ─────────────────────────────────────────────────────────────────────────────
   console.log('--- Fix #3: No zero-amount fallback ---');
 
+  await test('W1: guest-checkout PaymentIntent is card-only (Link disabled, no saved-card resurfacing)', async () => {
+    await truncateTables();
+    await createTestEvent();
+    const stripe = new MockStripeClient();
+    const svc = new RegistrationService(stripe as any, new NoopNotificationService() as any);
+    await svc.initiateRegistration({ eventId: TEST_EVENT_ID, email: 'guest@example.com', firstName: 'G', lastName: 'U', phone: undefined, attributes: {}, grossAmountCents: 10000 });
+    const create = (stripe.calls as Array<{ method: string; args: unknown[] }>).find((c) => c.method === 'paymentIntents.create');
+    assert(!!create, 'paymentIntents.create was called');
+    const params = create!.args[0] as Record<string, unknown>;
+    assertEqual(JSON.stringify(params.payment_method_types), JSON.stringify(['card']), 'PI restricted to card');
+    assertEqual(params.automatic_payment_methods, undefined, 'no automatic_payment_methods (Stripe Link disabled)');
+  });
+
   await test('3-1: handleAuthorizationWebhook returns NOT_FOUND for unknown PI', async () => {
     await truncateTables();
     await createTestEvent();
