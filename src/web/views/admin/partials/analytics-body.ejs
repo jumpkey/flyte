@@ -40,12 +40,27 @@
   <div class="col-12 col-lg-7">
     <h2 class="h5 mb-2">Events</h2>
     <% if (perEvent.length === 0) { %><p class="text-secondary">No events yet.</p><% } else { %>
-    <div class="table-responsive"><table class="table align-middle">
+    <%# CSP-safe client-side status filter (#16). Checkboxes for the statuses that
+        actually appear; all checked by default so with JS off every row shows.
+        app.js delegates on #event-status-filter / the events table after this
+        fragment re-renders on an HTMX range swap. %>
+    <% var _statuses = []; perEvent.forEach(function (e) { if (_statuses.indexOf(e.status) === -1) _statuses.push(e.status); });
+       _statuses = ['OPEN', 'CLOSED', 'FULL', 'CANCELLED'].filter(function (s) { return _statuses.indexOf(s) !== -1; }); %>
+    <% if (_statuses.length > 1) { %>
+    <div id="event-status-filter" class="d-flex flex-wrap gap-3 mb-2 small" data-events-table="events-table">
+      <% _statuses.forEach(function (s) { %>
+      <label class="d-inline-flex align-items-center gap-1 mb-0">
+        <input type="checkbox" class="form-check-input mt-0" data-status-filter value="<%= s %>" checked> <%= s %>
+      </label>
+      <% }); %>
+    </div>
+    <% } %>
+    <div class="table-responsive"><table class="table align-middle" id="events-table">
       <thead><tr><th>Event</th><th>Status</th><th class="text-end">Fill</th><th class="text-end">Gross</th><th class="text-end">Refund %</th></tr></thead>
       <tbody><% perEvent.forEach(function (e) {
         var fill = e.total_capacity > 0 ? Math.round((e.confirmed_count / e.total_capacity) * 100) : 0;
         var rr = e.gross > 0 ? Math.round((e.refunded / e.gross) * 1000) / 10 : 0; %>
-        <tr>
+        <tr data-status="<%= e.status %>">
           <td><a class="text-decoration-none" href="/admin/events/<%= e.event_id %>/performance"><%= e.name %></a></td>
           <td><%- include('../../partials/status-pill', { status: e.status }) %></td>
           <td class="text-end"><%= fill %>%</td>

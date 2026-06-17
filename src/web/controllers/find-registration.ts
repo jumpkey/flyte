@@ -17,6 +17,9 @@ async function getBody(c: Context): Promise<Record<string, string | File>> {
 export const findRegistrationController = {
   /** GET /find-registration — the guest recovery form (V1). */
   async form(c: Context): Promise<Response> {
+    // A logged-in user has no business looking up an arbitrary email here; their
+    // own registrations live on the dashboard. Bounce them to /account/registrations.
+    if (c.get('user')) return c.redirect('/account/registrations', 302);
     return renderView(c, 'find-registration', { title: 'Find my registration' });
   },
 
@@ -27,6 +30,9 @@ export const findRegistrationController = {
    * RL(5) is applied at the route.
    */
   async submit(c: Context): Promise<Response> {
+    // Same guard as form(): a logged-in user can't perform an arbitrary-email
+    // lookup; they're sent to their own registrations instead.
+    if (c.get('user')) return c.redirect('/account/registrations', 302);
     const start = Date.now();
     const body = await getBody(c);
     const email = String(body['email'] ?? '').trim().toLowerCase();

@@ -204,6 +204,33 @@ async function runTests() {
     assert((await resp.text()).includes('Check your email'), 'uniform ack');
   });
 
+  // ── B2: /find-registration is guest-only; logged-in users go to their dashboard ──
+  await test('B2: logged-in GET/POST /find-registration redirects to /account/registrations; guest GET renders form', async () => {
+    await truncateTables();
+    const { app } = await import('../app.js');
+
+    // Guest GET still renders the lookup form (200).
+    const guestGet = await app.request('http://localhost/find-registration');
+    assertEqual(guestGet.status, 200, 'guest GET renders the form');
+
+    // Logged-in GET redirects (302) to /account/registrations.
+    const liGet = await app.request('http://localhost/find-registration', { headers: { Cookie: a.cookie } });
+    assertEqual(liGet.status, 302, 'logged-in GET redirects');
+    assertEqual(liGet.headers.get('location'), '/account/registrations', 'GET redirect target');
+
+    // Logged-in POST also redirects. Seed the session with a known CSRF token so
+    // the request clears CSRF middleware and reaches the controller's guard.
+    const csrf = 'b2csrftoken'.repeat(4); // 44 chars, deterministic
+    const { signedSid } = await createSession({ userId: a.id, csrfToken: csrf }, a.id);
+    const liPost = await app.request('http://localhost/find-registration', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `sid=${signedSid}` },
+      body: new URLSearchParams({ email: 'whoever@example.com', _csrf: csrf }).toString(),
+    });
+    assertEqual(liPost.status, 302, 'logged-in POST redirects');
+    assertEqual(liPost.headers.get('location'), '/account/registrations', 'POST redirect target');
+  });
+
   await test('W11: My Registrations row links to refund-request when eligible, hides it otherwise', async () => {
     await truncateTables();
     const ev = await createEvent('Refund Link Fest');

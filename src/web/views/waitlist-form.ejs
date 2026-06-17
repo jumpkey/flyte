@@ -16,21 +16,28 @@
 
     <p class="text-muted">No spots are currently available. No payment is required to join the waitlist.</p>
 
+    <%# Logged-in: split the account display name into First/Last as editable
+        defaults (mirrors the prefilled email below, W7). Guest: empty. A submitted
+        form's own values (fd.*) win on re-render so validation errors don't reset. %>
+    <% var _nameParts = (user ? (user.displayName || '').trim() : '').split(/\s+/).filter(Boolean);
+       var _firstName = _nameParts.length ? _nameParts[0] : '';
+       var _lastName = _nameParts.length > 1 ? _nameParts.slice(1).join(' ') : ''; %>
     <form method="POST" action="/events/<%= event.eventId %>/waitlist">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="row g-3 mb-3">
         <div class="col-12 col-sm-6">
           <label class="form-label" for="firstName">First name</label>
-          <input class="form-control" type="text" id="firstName" name="firstName" value="<%= fd.firstName || '' %>" required>
+          <input class="form-control" type="text" id="firstName" name="firstName" value="<%= fd.firstName || _firstName %>" required>
         </div>
         <div class="col-12 col-sm-6">
           <label class="form-label" for="lastName">Last name</label>
-          <input class="form-control" type="text" id="lastName" name="lastName" value="<%= fd.lastName || '' %>" required>
+          <input class="form-control" type="text" id="lastName" name="lastName" value="<%= fd.lastName || _lastName %>" required>
         </div>
       </div>
       <div class="mb-3">
         <label class="form-label" for="email">Email</label>
-        <%# Logged-in: prefilled + locked, no confirm (session wins). Guest: double-entry. %>
+        <%# Logged-in: email is account-locked (prefilled + readonly, session wins) —
+            a test/other address can't be entered here by design. Guest: double-entry. %>
         <input class="form-control" type="email" id="email" name="email" required
                value="<%= user ? user.email : (fd.email || '') %>"<%= user ? ' readonly' : '' %>>
       </div>

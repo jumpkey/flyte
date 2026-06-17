@@ -355,6 +355,32 @@ async function runTests() {
     await testSql`DELETE FROM users WHERE id = ${userId}`;
   });
 
+  // ── B1: logged-in waitlist Join form prefills First/Last from display_name ──
+  await test('B1: waitlist form prefills First/Last for a logged-in user, empty for a guest', async () => {
+    await truncateTables();
+    const id = await createEvent({ status: 'FULL', availableSlots: 0, waitlistEnabled: true });
+    const email = 'catalog-b1@example.com';
+    await testSql`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email=${email})`;
+    await testSql`DELETE FROM users WHERE email=${email}`;
+    const hash = await authService.hashPassword('pw');
+    const u = await testSql`INSERT INTO users (email, password_hash, display_name, is_verified, account_status) VALUES (${email}, ${hash}, 'Ada Grace Lovelace', TRUE, 'active') RETURNING id`;
+    const userId = u[0].id as string;
+    const { signedSid } = await createSession({ userId }, userId);
+
+    const r = await get(`/events/${id}/waitlist`, `sid=${signedSid}`);
+    assertEqual(r.status, 200, 'waitlist form renders');
+    assert(r.body.includes('name="firstName" value="Ada"'), 'first name prefilled');
+    assert(r.body.includes('name="lastName" value="Grace Lovelace"'), 'last name = remainder');
+
+    // Guest sees empty name fields.
+    const guest = await get(`/events/${id}/waitlist`);
+    assert(guest.body.includes('name="firstName" value=""'), 'guest first name empty');
+    assert(guest.body.includes('name="lastName" value=""'), 'guest last name empty');
+
+    await testSql`DELETE FROM sessions WHERE user_id = ${userId}`;
+    await testSql`DELETE FROM users WHERE id = ${userId}`;
+  });
+
   // ── W9: month filter is a dropdown of YYYY-MM options ──
   await test('W9: /events month filter renders a select with YYYY-MM options', async () => {
     await truncateTables();

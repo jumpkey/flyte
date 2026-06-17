@@ -98,6 +98,24 @@ document.addEventListener('submit', function (e) {
   }
 });
 
+// Analytics Events table status filter (#16): CSP-safe, client-side. Delegated
+// on document so it survives the HTMX range-swap that re-renders the fragment.
+// With JS off, all rows show (checkboxes are checked by default, no JS hides).
+document.addEventListener('change', function (e) {
+  var box = e.target.closest && e.target.closest('#event-status-filter [data-status-filter]');
+  if (!box) return;
+  var filter = box.closest('#event-status-filter');
+  var table = document.getElementById(filter.getAttribute('data-events-table'));
+  if (!table) return;
+  var active = {};
+  filter.querySelectorAll('[data-status-filter]').forEach(function (cb) {
+    if (cb.checked) active[cb.value] = true;
+  });
+  table.querySelectorAll('tbody tr[data-status]').forEach(function (row) {
+    row.style.display = active[row.getAttribute('data-status')] ? '' : 'none';
+  });
+});
+
 // Bootstrap/HTMX coexistence seam (WK §11.1 rule 5): re-init JS-driven
 // widgets inside swapped fragments here if we ever put any there.
 document.addEventListener('htmx:afterSwap', function () { /* no-op for now */ });
