@@ -8,8 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // registration runner's spawn-per-file model so a hang or crash in one suite
 // can't take the others' reporting down with it.
 const TEST_FILES = [
+  'status-pill.test.ts',
   'shadow-login.test.ts',
   'admin-guard.test.ts',
+  'load-user.test.ts',
 ];
 
 async function runFile(file: string): Promise<{ file: string; passed: boolean; output: string }> {

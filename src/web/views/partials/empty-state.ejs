@@ -1,0 +1,11 @@
+<%# Empty-state block. Locals: title, message (optional), ctaHref (optional),
+    ctaLabel (optional). Used wherever a list/table can be legitimately empty. %>
+<div class="empty-state text-center py-5">
+  <h3 class="h5 mb-2"><%= title %></h3>
+  <% if (typeof message !== 'undefined' && message) { %>
+    <p class="text-secondary mb-3"><%= message %></p>
+  <% } %>
+  <% if (typeof ctaHref !== 'undefined' && ctaHref) { %>
+    <a class="btn btn-primary" href="<%= ctaHref %>"><%= typeof ctaLabel !== 'undefined' && ctaLabel ? ctaLabel : 'Continue' %></a>
+  <% } %>
+</div>

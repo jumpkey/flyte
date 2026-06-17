@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && tsc -p tsconfig.scripts.json && cp -r src/web/views dist/web/views",
+    "build": "npm run build:css && tsc && tsc -p tsconfig.scripts.json && cp -r src/web/views dist/web/views",
+    "build:css": "sass --no-source-map --quiet-deps --silence-deprecation=import --style=compressed src/styles/flyte.scss public/css/flyte.css",
+    "watch:css": "sass --watch --quiet-deps --silence-deprecation=import src/styles/flyte.scss public/css/flyte.css",
     "start": "node dist/index.js",
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed.ts",
@@ -12,11 +14,14 @@
     "test": "tsx src/registration/testing/run-all-tests.ts && tsx src/web/testing/run-web-tests.ts"
   },
   "dependencies": {
+    "@fontsource/inter": "5.2.8",
     "@hono/node-server": "^1.13.7",
     "bcryptjs": "^2.4.3",
+    "bootstrap": "5.3.3",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "hono": "^4.6.3",
+    "htmx.org": "2.0.3",
     "nodemailer": "^8.0.7",
     "pino": "^9.5.0",
     "postgres": "^3.4.4",
@@ -28,6 +33,7 @@
     "@types/node": "^22.9.0",
     "@types/nodemailer": "^6.4.16",
     "pino-pretty": "^11.3.0",
+    "sass": "^1.101.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

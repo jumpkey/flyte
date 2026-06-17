@@ -1,13 +1,12 @@
-<div>
-  <h1>You're on the Waitlist!</h1>
-
-  <p>You have been added to the waitlist for <strong><%= eventName %></strong>.</p>
-
-  <% if (typeof position !== 'undefined' && position !== null) { %>
-  <p>Your current position: <strong>#<%= position %></strong></p>
-  <% } %>
-
-  <p>We will contact you at <strong><%= entry.email %></strong> if a spot becomes available. No payment is required at this time.</p>
-
-  <a href="/" role="button" class="outline">Return Home</a>
+<div class="container py-4">
+  <div class="panel checkout-panel text-center">
+    <div class="success-mark mb-3">✓</div>
+    <h1 class="h3 mb-2">You're on the waitlist!</h1>
+    <p class="text-muted">We've added you to the waitlist for <strong><%= eventName %></strong>.</p>
+    <% if (typeof position !== 'undefined' && position !== null) { %>
+    <p>Your current position: <span class="pill pill-info">#<%= position %></span></p>
+    <% } %>
+    <p class="text-muted">We'll contact you at <strong><%= entry.email %></strong> if a spot becomes available. No payment is required at this time.</p>
+    <a href="/" class="btn btn-outline-secondary mt-2">Return home</a>
+  </div>
 </div>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' · Flyte Admin' : 'Flyte Admin' %></title>
+  <link rel="preload" href="/public/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/public/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/public/css/flyte.css">
+  <script src="/public/js/htmx.min.js" defer></script>
+  <script src="/public/js/app.js" defer></script>
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="admin-brand" href="/admin">Flyte<span class="brand-dot">.</span> Admin</a>
+      <%# Nav targets land as their increments ship (I4 events, I5 transactions,
+          I6 refunds, I8 users). activeNav highlights the current section. %>
+      <% const _active = typeof activeNav !== 'undefined' ? activeNav : ''; %>
+      <a class="admin-nav-link<%= _active === 'dashboard' ? ' active' : '' %>" href="/admin">Dashboard</a>
+      <a class="admin-nav-link<%= _active === 'events' ? ' active' : '' %>" href="/admin/events">Events</a>
+      <a class="admin-nav-link<%= _active === 'registrations' ? ' active' : '' %>" href="/admin/registrations">Transactions</a>
+      <a class="admin-nav-link<%= _active === 'refunds' ? ' active' : '' %>" href="/admin/refund-requests">Refund requests</a>
+      <a class="admin-nav-link<%= _active === 'users' ? ' active' : '' %>" href="/admin/users">Users</a>
+      <div class="admin-sidebar-foot">
+        <a class="admin-nav-link" href="/">← Storefront</a>
+        <form action="/logout" method="post" class="m-0">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="admin-nav-link btn btn-link text-start p-2 w-100" style="border:0;">Sign out</button>
+        </form>
+      </div>
+    </aside>
+    <main class="admin-content">
+      <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>
+        <div class="alert alert-flyte mb-3" role="alert"><%= flashMessage %></div>
+      <% } %>
+      <%- body %>
+    </main>
+  </div>
+</body>
+</html>

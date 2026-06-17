@@ -1,0 +1,393 @@
+// ============================================================================
+// Flyte theme — WK-compliant Bootstrap 5 build (WEBKIT-STANDARDS.md §11.1)
+// Layer 1: variable overrides · Layer 2: curated Bootstrap · Layer 3: Flyte kit
+// ============================================================================
+
+// ----- Self-hosted Inter (WK-TYP-1) -----------------------------------------
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/public/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/public/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/public/fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/public/fonts/inter-latin-800-normal.woff2') format('woff2');
+}
+
+// ----- Layer 1 · WK §2 token values as Bootstrap overrides -------------------
+@import "../../node_modules/bootstrap/scss/functions";
+
+// Palette (WK §2.1)
+$fl-navy:        #1F3A5F;
+$fl-navy-2:      #2C5282;
+$fl-ink:         #0F172A;
+$fl-text:        #334155;
+$fl-muted:       #64748B;
+$fl-line:        #94A3B8;
+$fl-border:      #CBD5E1;
+$fl-border-l:    #E2E8F0;
+$fl-surface:     #F1F5F9;
+$fl-canvas:      #F8FAFC;
+$fl-flare:       #E8590C;
+$fl-flare-deep:  #C2410C;
+$fl-flare-hover: #D9480F;
+$fl-flare-deep-hover: #9A3412;
+$fl-flare-tint:  #FFF4EC;
+$fl-success: #2F9E44; $fl-success-tint: #EBF7ED; $fl-success-text: #237032;
+$fl-warning: #F08C00; $fl-warning-tint: #FFF4E0; $fl-warning-text: #9C5A00;
+$fl-danger:  #E03131; $fl-danger-tint:  #FDECEC; $fl-danger-text:  #C92A2A;
+$fl-info:    #1971C2; $fl-info-tint:    #E7F1FA; $fl-info-text:    #1864AB;
+
+// Bootstrap theme mapping
+$primary:   $fl-flare-deep;      // WK-COL-7: standard buttons use flare-deep
+$secondary: $fl-navy;
+$success:   $fl-success;
+$warning:   $fl-warning;
+$danger:    $fl-danger;
+$info:      $fl-info;
+$light:     $fl-surface;
+$dark:      $fl-ink;
+
+$body-bg:           $fl-canvas;
+$body-color:        $fl-text;
+$body-secondary-color: $fl-muted;
+$headings-color:    $fl-ink;
+$headings-font-weight: 700;
+$font-family-sans-serif: 'Inter', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+$font-size-base:    1rem;
+$line-height-base:  1.6;
+
+$border-radius:     .5rem;       // 8px (WK-SPC: inputs/buttons)
+$border-radius-sm:  .375rem;
+$border-radius-lg:  .75rem;      // 12px (cards)
+$border-radius-pill: 999px;
+$border-color:      $fl-border-l;
+
+$input-border-color: $fl-border;
+$input-focus-border-color: $fl-flare;
+$input-focus-box-shadow: 0 0 0 .15rem rgba($fl-flare, .25);
+$form-label-font-weight: 600;
+$form-label-margin-bottom: .375rem;
+$input-padding-y: .5rem;
+$input-padding-x: .75rem;
+
+$btn-font-weight:   600;
+$btn-padding-y:     .5rem;
+$btn-padding-x:     1.25rem;
+$btn-focus-width:   .15rem;
+
+$link-color:        $fl-flare-deep;
+$link-hover-color:  $fl-flare-deep-hover;
+$link-decoration:   none;
+$link-hover-decoration: underline;
+
+$enable-shadows:    false;
+$enable-negative-margins: false;
+
+$alert-border-radius: .625rem;
+$badge-font-weight: 700;
+
+$focus-ring-color: rgba($fl-flare, .35);
+$focus-ring-width: .15rem;
+
+// ----- Layer 2 · curated Bootstrap (only what we use) ------------------------
+@import "../../node_modules/bootstrap/scss/variables";
+@import "../../node_modules/bootstrap/scss/variables-dark";
+@import "../../node_modules/bootstrap/scss/maps";
+@import "../../node_modules/bootstrap/scss/mixins";
+@import "../../node_modules/bootstrap/scss/utilities";
+
+@import "../../node_modules/bootstrap/scss/root";
+@import "../../node_modules/bootstrap/scss/reboot";
+@import "../../node_modules/bootstrap/scss/type";
+@import "../../node_modules/bootstrap/scss/containers";
+@import "../../node_modules/bootstrap/scss/grid";
+@import "../../node_modules/bootstrap/scss/forms";
+@import "../../node_modules/bootstrap/scss/buttons";
+@import "../../node_modules/bootstrap/scss/transitions";
+@import "../../node_modules/bootstrap/scss/nav";
+@import "../../node_modules/bootstrap/scss/navbar";
+@import "../../node_modules/bootstrap/scss/card";
+@import "../../node_modules/bootstrap/scss/badge";
+@import "../../node_modules/bootstrap/scss/alert";
+@import "../../node_modules/bootstrap/scss/progress";
+@import "../../node_modules/bootstrap/scss/close";
+@import "../../node_modules/bootstrap/scss/modal";
+@import "../../node_modules/bootstrap/scss/helpers";
+@import "../../node_modules/bootstrap/scss/utilities/api";
+
+// ----- Layer 3 · Flyte kit ----------------------------------------------------
+
+// Tokens as custom properties (WK-MAP-2 — components reference these)
+:root {
+  --fl-navy: #{$fl-navy};
+  --fl-navy-2: #{$fl-navy-2};
+  --fl-ink: #{$fl-ink};
+  --fl-text: #{$fl-text};
+  --fl-muted: #{$fl-muted};
+  --fl-line: #{$fl-line};
+  --fl-border: #{$fl-border};
+  --fl-border-l: #{$fl-border-l};
+  --fl-surface: #{$fl-surface};
+  --fl-canvas: #{$fl-canvas};
+  --fl-flare: #{$fl-flare};
+  --fl-flare-deep: #{$fl-flare-deep};
+  --fl-flare-hover: #{$fl-flare-hover};
+  --fl-flare-deep-hover: #{$fl-flare-deep-hover};
+  --fl-flare-tint: #{$fl-flare-tint};
+  --fl-success: #{$fl-success}; --fl-success-tint: #{$fl-success-tint}; --fl-success-text: #{$fl-success-text};
+  --fl-warning: #{$fl-warning}; --fl-warning-tint: #{$fl-warning-tint}; --fl-warning-text: #{$fl-warning-text};
+  --fl-danger: #{$fl-danger};  --fl-danger-tint: #{$fl-danger-tint};  --fl-danger-text: #{$fl-danger-text};
+  --fl-info: #{$fl-info};      --fl-info-tint: #{$fl-info-tint};      --fl-info-text: #{$fl-info-text};
+}
+
+// Money (WK-TYP-4)
+.money { font-variant-numeric: tabular-nums; }
+
+// Standard buttons: flare-deep with darker hover (WK-COL-7)
+.btn-primary {
+  --bs-btn-hover-bg: #{$fl-flare-deep-hover};
+  --bs-btn-hover-border-color: #{$fl-flare-deep-hover};
+  --bs-btn-active-bg: #{$fl-flare-deep-hover};
+  --bs-btn-active-border-color: #{$fl-flare-deep-hover};
+}
+// Secondary = outline navy (WK-CMP-1)
+.btn-outline-secondary {
+  --bs-btn-color: #{$fl-navy};
+  --bs-btn-border-color: #{$fl-navy};
+  --bs-btn-hover-bg: #{$fl-navy};
+  --bs-btn-hover-border-color: #{$fl-navy};
+  border-width: 1.5px;
+}
+// Large CTA: pure Flare, big bold label (≥18.66px bold ⇒ AA-large, WK-COL-7)
+.btn-cta {
+  background: $fl-flare;
+  border-color: $fl-flare;
+  color: #fff;
+  font-size: 1.1875rem;   // 19px
+  font-weight: 700;
+  padding: .75rem 1.75rem;
+  &:hover, &:focus { background: $fl-flare-hover; border-color: $fl-flare-hover; color: #fff; }
+}
+
+// Public top nav (WK-CMP-18, WF-01)
+.navbar-flyte {
+  background: $fl-navy;
+  .navbar-brand {
+    color: #fff; font-weight: 800; font-size: 1.25rem;
+    .brand-dot { color: $fl-flare; }
+  }
+  .nav-link { color: #C3D0E0; font-weight: 500; }
+  .nav-link:hover, .nav-link.active { color: #fff; }
+  .nav-link.active { box-shadow: inset 0 -3px 0 $fl-flare; }
+  .btn-outline-light { border-color: #5B7396; }
+}
+
+// Hero (WF-01)
+.hero {
+  background: linear-gradient(135deg, $fl-navy 0%, $fl-navy-2 100%);
+  color: #fff;
+  padding: 4rem 1rem;
+  text-align: center;
+  h1 { color: #fff; font-weight: 800; }
+  p { color: #C3D0E0; max-width: 60ch; margin-inline: auto; }
+}
+
+// Content panels
+.panel {
+  background: #fff;
+  border: 1px solid $fl-border-l;
+  border-radius: $border-radius-lg;
+  padding: 2rem;
+}
+.auth-panel { max-width: 26rem; margin: 3rem auto; }
+.checkout-panel { max-width: 45rem; margin: 2rem auto; }
+
+// Event card (WK-CMP-9)
+.event-card {
+  border: 1px solid $fl-border-l;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  background: #fff;
+  transition: box-shadow .15s ease-out, transform .15s ease-out;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  &:hover { box-shadow: 0 8px 24px rgba($fl-ink, .10); transform: translateY(-2px); color: inherit; }
+  .event-media {
+    aspect-ratio: 3 / 2;
+    position: relative;
+    background: linear-gradient(135deg, $fl-navy 0%, $fl-navy-2 100%);
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .event-fallback {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #fff;
+      .initials { font-size: 3rem; font-weight: 800; }
+      .when { color: #C3D0E0; font-weight: 600; font-size: .8rem; letter-spacing: .06em; }
+    }
+    .date-badge {
+      position: absolute; top: .75rem; left: .75rem;
+      background: #fff; color: $fl-navy;
+      font-size: .7rem; font-weight: 700; letter-spacing: .05em;
+      padding: .25rem .5rem; border-radius: .375rem;
+    }
+  }
+  .event-body { padding: 1rem 1rem 1.125rem; }
+  .event-title { font-size: 1.125rem; font-weight: 700; color: $fl-ink; margin: 0 0 .125rem; }
+  .event-meta { color: $fl-muted; font-size: .85rem; margin: 0 0 .75rem; }
+  .event-price { font-size: 1.125rem; font-weight: 800; color: $fl-ink; }
+}
+
+// Availability meter (WK-CMP-10)
+.meter {
+  height: 8px; border-radius: 4px; background: $fl-border-l; overflow: hidden;
+  .meter-fill { height: 100%; border-radius: 4px; background: $fl-success; }
+  &.meter-low .meter-fill { background: $fl-warning; }
+}
+.meter-label { font-size: .75rem; color: $fl-muted; margin-top: .375rem; }
+.meter-low + .meter-label, .meter-label.low { color: $fl-warning-text; font-weight: 600; }
+
+// Status pills (WK-CMP-15 / §2.3)
+.pill {
+  display: inline-block;
+  padding: .125rem .625rem;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.pill-success { background: $fl-success-tint; color: $fl-success-text; }
+.pill-warning { background: $fl-warning-tint; color: $fl-warning-text; }
+.pill-danger  { background: $fl-danger-tint;  color: $fl-danger-text; }
+.pill-info    { background: $fl-info-tint;    color: $fl-info-text; }
+.pill-neutral { background: $fl-surface;      color: $fl-muted; }
+
+// Flash messages → tinted alerts (WK-CMP-16)
+.alert-flyte {
+  background: $fl-success-tint;
+  border: 0; border-left: 4px solid $fl-success;
+  color: $fl-ink; border-radius: .625rem;
+  &.alert-flyte-error { background: $fl-danger-tint; border-left-color: $fl-danger; }
+}
+
+// Checkout stepper (WF-04)
+.stepper {
+  display: flex; align-items: center; gap: .75rem;
+  margin-bottom: 1.5rem;
+  .step { display: flex; align-items: center; gap: .5rem; color: $fl-muted; font-size: .9rem; }
+  .step .dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid $fl-border; font-size: .8rem; font-weight: 700;
+    background: #fff; color: $fl-muted;
+  }
+  .step.active { color: $fl-ink; font-weight: 700; }
+  .step.active .dot { background: $fl-flare; border-color: $fl-flare; color: #fff; }
+  .step.done .dot { background: $fl-success; border-color: $fl-success; color: #fff; }
+  .rail { flex: 0 0 3rem; height: 1.5px; background: $fl-border; }
+}
+
+// Order summary (WF-04)
+.order-summary {
+  background: $fl-surface; border-radius: .625rem; padding: 1rem 1.25rem;
+  .total { font-weight: 800; color: $fl-ink; }
+}
+
+// Receipt rows (WF-05)
+.receipt {
+  .row-line {
+    display: flex; justify-content: space-between; gap: 1rem;
+    padding: .625rem 0; border-top: 1px solid $fl-border-l;
+    .k { color: $fl-muted; font-size: .9rem; }
+    .v { color: $fl-ink; font-weight: 600; text-align: right; }
+  }
+}
+
+// Activation callout (WF-05, accent tint)
+.callout-flare {
+  background: $fl-flare-tint;
+  border: 1px solid #F3CDB3;
+  border-radius: $border-radius-lg;
+  padding: 1.25rem 1.5rem;
+}
+
+// Success mark (WF-05)
+.success-mark {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: $fl-success-tint; color: $fl-success;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: 800;
+}
+
+// Caption labels (WK-TYP-5)
+.caption-label {
+  font-size: .7rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: $fl-muted;
+}
+
+// Footer
+.site-footer {
+  border-top: 1px solid $fl-border-l;
+  color: $fl-muted; font-size: .85rem;
+  padding: 1.5rem 0; margin-top: 4rem;
+}
+
+// Admin shell (WF-07 left rail). Bootstrap has no sidebar — this is ours
+// (WK §11.1). The navy rail carries the admin nav; the content area is the
+// neutral canvas. Collapses to a top bar under 1024px (admin is desktop-first,
+// WK §4).
+.admin-shell { display: flex; min-height: 100vh; align-items: stretch; }
+.admin-sidebar {
+  flex: 0 0 240px; width: 240px;
+  background: $fl-navy; color: #fff;
+  padding: 1.25rem 1rem; display: flex; flex-direction: column; gap: .25rem;
+  .admin-brand {
+    font-weight: 800; font-size: 1.25rem; color: #fff;
+    text-decoration: none; padding: .25rem .5rem 1rem;
+    .brand-dot { color: $fl-flare; }
+  }
+  .admin-nav-link {
+    display: block; padding: .5rem .75rem; border-radius: 8px;
+    color: rgba(255,255,255,.78); text-decoration: none; font-weight: 600; font-size: .92rem;
+    &:hover { background: $fl-navy-2; color: #fff; }
+    &.active { background: $fl-navy-2; color: #fff; }
+  }
+  .admin-sidebar-foot { margin-top: auto; padding-top: 1rem; }
+}
+.admin-content { flex: 1 1 auto; min-width: 0; padding: 1.5rem 2rem; background: $fl-canvas; }
+@media (max-width: 1023.98px) {
+  .admin-shell { flex-direction: column; }
+  .admin-sidebar { flex-basis: auto; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  .admin-sidebar .admin-brand { padding: .25rem .5rem; }
+  .admin-sidebar .admin-sidebar-foot { margin-top: 0; padding-top: 0; }
+  .admin-content { padding: 1.25rem; }
+}
+
+// Focus visibility everywhere (WK-A11Y-1)
+:focus-visible { outline: 2px solid $fl-flare; outline-offset: 2px; }
+
+// Reduced motion (WK-MOT-2)
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+}

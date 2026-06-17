@@ -1,24 +1,33 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= typeof title !== 'undefined' ? title + ' - Flyte' : 'Flyte' %></title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <link rel="stylesheet" href="/public/css/app.css">
-  <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+  <title><%= typeof title !== 'undefined' ? title + ' · Flyte' : 'Flyte' %></title>
+  <link rel="preload" href="/public/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/public/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/public/css/flyte.css">
+  <script src="/public/js/htmx.min.js" defer></script>
+  <script src="/public/js/app.js" defer></script>
 </head>
-<body>
-  <main class="container">
-    <% if (typeof user !== 'undefined' && user) { %>
-    <%- include('../partials/nav', { user: user, csrfToken: csrfToken }) %>
-    <% } %>
+<body class="d-flex flex-column min-vh-100">
+  <%- include('../partials/nav', { user: user, csrfToken: csrfToken }) %>
 
-    <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>
-    <div class="flash-message"><%= flashMessage %></div>
-    <% } %>
+  <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>
+  <div class="container mt-3">
+    <div class="alert alert-flyte mb-0" role="alert"><%= flashMessage %></div>
+  </div>
+  <% } %>
 
+  <main class="flex-grow-1">
     <%- body %>
   </main>
+
+  <footer class="site-footer">
+    <div class="container d-flex justify-content-between flex-wrap gap-2">
+      <span class="fw-bold">Flyte</span>
+      <span>Secure checkout · Powered by Stripe</span>
+    </div>
+  </footer>
 </body>
 </html>

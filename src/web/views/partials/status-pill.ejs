@@ -1,0 +1,4 @@
+<%# Status pill (WK §5 / §2.3). Locals: status (string). The status→variant→label
+    mapping is statusPill() in view-helpers.ts — the single source of truth. The
+    label text is always present so color is never the sole carrier (WK-A11Y-3). %>
+<% const _pill = statusPill(status); %><span class="<%= _pill.cssClass %>"><%= _pill.label %></span>

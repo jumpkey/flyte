@@ -1,10 +1,18 @@
-<nav>
-  <a href="/dashboard" class="brand">Flyte</a>
-  <div class="nav-links">
-    <a href="/profile">Profile</a>
-    <form action="/logout" method="post" style="margin: 0;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button type="submit" class="outline contrast" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Sign Out</button>
-    </form>
+<nav class="navbar navbar-expand navbar-flyte">
+  <div class="container">
+    <a class="navbar-brand" href="/">Flyte<span class="brand-dot">.</span></a>
+    <div class="navbar-nav ms-auto align-items-center gap-2">
+      <% if (typeof user !== 'undefined' && user) { %>
+        <a class="nav-link" href="/dashboard">Dashboard</a>
+        <a class="nav-link" href="/profile">Profile</a>
+        <form action="/logout" method="post" class="m-0">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-outline-light btn-sm">Sign out</button>
+        </form>
+      <% } else { %>
+        <a class="nav-link" href="/login">Log in</a>
+        <a class="btn btn-outline-light btn-sm" href="/register">Sign up</a>
+      <% } %>
+    </div>
   </div>
 </nav>

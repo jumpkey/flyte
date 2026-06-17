@@ -1,8 +1,29 @@
-<div style="text-align: center; padding: 4rem 1rem;">
-  <h1>Welcome to Flyte</h1>
-  <p>A modern, secure web application template.</p>
-  <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-    <a href="/login" role="button">Sign In</a>
-    <a href="/register" role="button" class="outline">Create Account</a>
+<section class="hero">
+  <div class="container">
+    <h1 class="display-5">Find your next event</h1>
+    <p class="lead">Workshops, meetups and community events — secure checkout in under a minute. No account needed.</p>
+    <%# The storefront event grid (WF-01/WF-02) and the /events catalog arrive in
+        increment I2. For now the foundation ships a styled landing only. %>
+    <div class="d-flex gap-2 mt-3">
+      <a href="/register" class="btn btn-cta">Create an account</a>
+      <a href="/login" class="btn btn-outline-light">Sign in</a>
+    </div>
   </div>
-</div>
+</section>
+
+<section class="container py-5">
+  <div class="row g-4">
+    <div class="col-12 col-md-4">
+      <h2 class="h5">Browse &amp; book</h2>
+      <p class="text-secondary mb-0">A clean catalog of upcoming events with live availability — landing in the next release.</p>
+    </div>
+    <div class="col-12 col-md-4">
+      <h2 class="h5">Guest checkout</h2>
+      <p class="text-secondary mb-0">Buy in under a minute, no account required. Activate one later to see your history.</p>
+    </div>
+    <div class="col-12 col-md-4">
+      <h2 class="h5">Secure payments</h2>
+      <p class="text-secondary mb-0">Card processing and receipts handled by Stripe, with refunds built in.</p>
+    </div>
+  </div>
+</section>

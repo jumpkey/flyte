@@ -13,6 +13,7 @@ import { webhookController } from './controllers/webhook.js';
 import { adminController } from './controllers/admin.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { adminGuard } from './middleware/admin-guard.js';
+import { loadUser } from './middleware/load-user.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import type { SessionData } from './middleware/session.js';
 import type { User } from '../services/user-service.js';
@@ -36,11 +37,14 @@ app.post('/webhooks/stripe', webhookController.handleStripeWebhook);
 app.use('*', secureHeaders({
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", 'https://unpkg.com', 'https://js.stripe.com'],
-    styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+    // HTMX and the Bootstrap-derived CSS are self-hosted (public/js, public/css)
+    // and Inter is self-hosted (public/fonts), so unpkg.com and cdn.jsdelivr.net
+    // are off the allowlist entirely (WK-CODE-3). Only Stripe's domains remain.
+    scriptSrc: ["'self'", 'https://js.stripe.com'],
+    styleSrc: ["'self'", "'unsafe-inline'"],
     imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
     connectSrc: ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://hooks.stripe.com'],
-    fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+    fontSrc: ["'self'"],
     formAction: ["'self'"],
     frameAncestors: ["'none'"],
     frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
@@ -50,6 +54,7 @@ app.use('*', secureHeaders({
 }));
 app.use('*', requestLoggerMiddleware);
 app.use('*', sessionMiddleware);
+app.use('*', loadUser);
 app.use('*', csrfMiddleware);
 
 app.get('/', homeController.index);

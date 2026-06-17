@@ -1,0 +1,31 @@
+<%# Form-field partial (WK §5.2). Locals:
+      name (required), label (required),
+      type   — input type, default 'text'
+      value  — prefill, default ''
+      error  — per-field error message, optional
+      required, autocomplete, placeholder, help — all optional
+    Renders a labelled Bootstrap form control with inline validation styling.
+    Values are emitted with <%= %> (auto-escaped) — never raw (S4 / WK-CODE-5). %>
+<% const _type = typeof type !== 'undefined' ? type : 'text'; %>
+<% const _value = typeof value !== 'undefined' && value !== null ? value : ''; %>
+<% const _err = typeof error !== 'undefined' && error ? error : ''; %>
+<div class="mb-3">
+  <label for="field-<%= name %>" class="form-label"><%= label %><% if (typeof required !== 'undefined' && required) { %> <span class="text-danger" aria-hidden="true">*</span><% } %></label>
+  <input
+    type="<%= _type %>"
+    id="field-<%= name %>"
+    name="<%= name %>"
+    class="form-control<%= _err ? ' is-invalid' : '' %>"
+    value="<%= _value %>"
+    <% if (typeof placeholder !== 'undefined' && placeholder) { %>placeholder="<%= placeholder %>"<% } %>
+    <% if (typeof autocomplete !== 'undefined' && autocomplete) { %>autocomplete="<%= autocomplete %>"<% } %>
+    <% if (typeof required !== 'undefined' && required) { %>required aria-required="true"<% } %>
+    <% if (_err) { %>aria-invalid="true" aria-describedby="field-<%= name %>-error"<% } %>
+  >
+  <% if (typeof help !== 'undefined' && help) { %>
+    <div class="form-text"><%= help %></div>
+  <% } %>
+  <% if (_err) { %>
+    <div class="invalid-feedback" id="field-<%= name %>-error"><%= _err %></div>
+  <% } %>
+</div>
