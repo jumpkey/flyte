@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { sql } from '../../services/db.js';
+import { config } from '../../config.js';
 import type { StripeClient, IRegistrationService, INotificationService } from '../interfaces.js';
 import type {
   RegistrationFormData, RegistrationInitResult, AuthorizationProcessResult,
@@ -59,19 +60,26 @@ export class RegistrationService implements IRegistrationService {
 
     let pi: { id: string; client_secret: string };
     try {
+      // Keep Stripe Link out of checkout. IMPORTANT: `payment_method_types`
+      // does NOT exclude Link — Link is a wallet that, per Stripe's docs, can't
+      // be excluded per-transaction by method type, and its "returning user"
+      // recognition is keyed to a browser-level Stripe session (NOT our app
+      // login). That is why a prior user's Link card resurfaced for a different
+      // Flyte user on the same browser. The only reliable controls are the
+      // account's Link setting (Dashboard) and a Payment Method Configuration
+      // with Link disabled. When a Link-off PMC id is configured we pin it per
+      // PI (deterministic); otherwise we fall back to card-only types. See
+      // STRIPE-INTEGRATION.md → "Disabling Stripe Link".
+      const methodParams: Record<string, unknown> = config.stripe.paymentMethodConfiguration
+        ? { payment_method_configuration: config.stripe.paymentMethodConfiguration }
+        : { payment_method_types: ['card'] };
       pi = await this.stripe.paymentIntents.create(
         {
           amount: formData.grossAmountCents,
           currency: 'usd',
           capture_method: 'manual',
           metadata: { eventId: formData.eventId, email: formData.email },
-          // Card-only: do NOT use automatic_payment_methods, which enables Stripe
-          // Link. Link remembers a card by email/browser and would resurface a
-          // previously-logged-in user's saved card inside a *guest* checkout
-          // (W1 / kickoff #26). Restricting to 'card' guarantees a pristine,
-          // stateless guest checkout. Revisit saved-cards as a deliberate
-          // logged-in feature (Stripe Customer + SetupIntent), separately.
-          payment_method_types: ['card'],
+          ...methodParams,
         },
         { idempotencyKey: `pi-create-${formData.eventId}-${crypto.createHash('sha256').update(formData.email.toLowerCase()).digest('hex').slice(0, 16)}` }
       );

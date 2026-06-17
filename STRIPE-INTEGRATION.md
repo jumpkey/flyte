@@ -157,3 +157,56 @@ VALUES ('Test Event', now() + interval '30 days', 10, 0, 10, 5000);
 stripe listen --forward-to localhost:3000/webhooks/stripe
 stripe trigger payment_intent.amount_capturable_updated
 ```
+
+---
+
+## Disabling Stripe Link (CRITICAL — privacy)
+
+**Symptom.** On a browser where one user previously checked out, the Payment
+Element offers *that* user's saved card to a *different* logged-in Flyte user
+(or a guest). Reported in pilot round 2: logged in as Alice Adams, checkout
+surfaced leb@jumpkey's stored Visa.
+
+**Root cause.** Stripe **Link** is a wallet, and per Stripe's documentation you
+**cannot exclude Link per transaction** via `payment_method_types` /
+`excluded_payment_method_types`. Link's "returning user" recognition is keyed to
+a **browser-level session on Stripe's own domain (js.stripe.com)** — it has no
+relationship to Flyte's login. So `payment_method_types: ['card']` (our W1 fix)
+restricts payment-method *types* but does **not** remove Link, and the browser's
+remembered Link account leaks across Flyte users on the same machine. There is
+**no client-side Stripe.js option to disable Link in the Payment Element.**
+
+Refs: https://docs.stripe.com/payments/link/payment-element-link ·
+https://support.stripe.com/questions/how-do-i-turn-off-payment-methods
+
+**Fix — do BOTH:**
+
+1. **Account toggle (authoritative, required — do this now).**
+   Stripe Dashboard → **Settings → Payment methods → Link → turn Off**, for the
+   account whose keys are deployed (test *and* live). This is the only switch the
+   Payment Element fully honors; it immediately stops any saved Link card from
+   surfacing for anyone.
+
+2. **Code-enforced per-PaymentIntent (deterministic, survives account drift).**
+   Create a **Payment Method Configuration** with Link disabled and card on, then
+   set its id as an env var:
+   ```bash
+   # one-time: create a Link-off configuration
+   curl https://api.stripe.com/v1/payment_method_configurations \
+     -u "$STRIPE_SECRET_KEY:" \
+     -d name='Flyte (card only, no Link)' \
+     -d 'card[display_preference][preference]=on' \
+     -d 'link[display_preference][preference]=off'
+   # → returns pmc_xxx
+   fly secrets set STRIPE_PAYMENT_METHOD_CONFIGURATION=pmc_xxx
+   ```
+   When `STRIPE_PAYMENT_METHOD_CONFIGURATION` is set, `RegistrationService` pins
+   that PMC on every PaymentIntent (`payment_method_configuration`) instead of
+   `payment_method_types`, so Link is excluded at the configuration level
+   regardless of the account default. When unset, it falls back to card-only
+   `payment_method_types: ['card']` (unchanged behavior).
+
+**Alternative (pure client-side, no Dashboard dependency).** Switch the checkout
+from the Payment Element to the **Card Element**, which supports
+`disableLink: true`. That is a larger checkout refactor (different confirm flow)
+and is tracked as an option, not yet implemented.

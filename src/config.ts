@@ -31,6 +31,12 @@ export const config = {
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? '',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? '',
     apiTimeoutMs: parseInt(process.env.STRIPE_API_TIMEOUT_MS ?? '10000', 10),
+    // A Stripe Payment Method Configuration id (pmc_…) with Link DISABLED. Link
+    // is a wallet that `payment_method_types` cannot exclude (Stripe's own
+    // docs), so pinning a Link-off PMC per PaymentIntent is the deterministic,
+    // code-enforced way to keep Link out of checkout regardless of the account's
+    // default. Empty → fall back to card-only `payment_method_types`.
+    paymentMethodConfiguration: process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION ?? '',
   },
   registrationTtlMinutes: parseInt(process.env.REGISTRATION_TTL_MINUTES ?? '30', 10),
   captureMaxRetries: parseInt(process.env.CAPTURE_MAX_RETRIES ?? '5', 10),
