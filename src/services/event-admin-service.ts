@@ -46,6 +46,18 @@ export const eventAdminService = {
     return (rows[0] as unknown as AdminEventRow) ?? null;
   },
 
+  /** Count of CONFIRMED registrations — what a bulk refund would actually act on. */
+  async countConfirmedRegistrations(eventId: string): Promise<number> {
+    const rows = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM registrations WHERE event_id = ${eventId}::UUID AND status = 'CONFIRMED'`;
+    return rows[0]?.n ?? 0;
+  },
+
+  /** Direct status write (used by the zero-refund cancel short-circuit). */
+  async setStatus(eventId: string, status: string): Promise<void> {
+    await sql`UPDATE events SET status = ${status}, updated_at = now() WHERE event_id = ${eventId}::UUID`;
+  },
+
   /**
    * Create an event. New events default to DRAFT (publicly invisible) unless
    * opened immediately, in which case opened_at is stamped (Document 5 §5).

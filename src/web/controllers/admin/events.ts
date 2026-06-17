@@ -172,6 +172,16 @@ export const adminEventsController = {
       return c.redirect(`/admin/events/${eventId}`);
     }
 
+    // Nothing to refund → cancel directly without requiring Stripe. An empty or
+    // draft event can be cancelled even when payments aren't configured, and the
+    // bulk-refund path (which needs Stripe) only runs when money is actually owed.
+    const confirmed = await eventAdminService.countConfirmedRegistrations(eventId);
+    if (confirmed === 0) {
+      await eventAdminService.setStatus(eventId, 'CANCELLED');
+      flash(c, 'Event cancelled.');
+      return c.redirect(`/admin/events/${eventId}`);
+    }
+
     let svc: RefundService;
     try { svc = await getRefundService(); }
     catch (_) { flash(c, 'Payment service unavailable — event not cancelled.'); return c.redirect(`/admin/events/${eventId}`); }
