@@ -15,6 +15,8 @@ import { webhookController } from './controllers/webhook.js';
 import { adminController } from './controllers/admin.js';
 import { adminEventsController } from './controllers/admin/events.js';
 import { adminRegistrationsController } from './controllers/admin/registrations.js';
+import { adminRefundsController } from './controllers/admin/refunds.js';
+import { refundRequestController } from './controllers/refund-request.js';
 import { authGuard } from './middleware/auth-guard.js';
 import { adminGuard } from './middleware/admin-guard.js';
 import { loadUser } from './middleware/load-user.js';
@@ -106,6 +108,11 @@ app.get('/admin/registrations', adminGuard, adminRegistrationsController.list);
 app.get('/admin/registrations/:id', adminGuard, adminRegistrationsController.detail);
 app.post('/admin/registrations/:id/refund', adminGuard, adminRegistrationsController.refund);
 
+// Refund request queue (I6).
+app.get('/admin/refund-requests', adminGuard, adminRefundsController.queue);
+app.post('/admin/refund-requests/:id/approve', adminGuard, adminRefundsController.approve);
+app.post('/admin/refund-requests/:id/deny', adminGuard, adminRefundsController.deny);
+
 app.get('/dashboard', authGuard, dashboardController.index);
 app.get('/profile', authGuard, profileController.editForm);
 app.post('/profile', authGuard, profileController.update);
@@ -117,6 +124,9 @@ app.get('/events/:eventId/register', registrationController.showRegistrationForm
 app.post('/events/:eventId/register', rateLimit(60, 60000), registrationController.initiateRegistration);
 app.post('/registration/confirm/:paymentIntentId', rateLimit(60, 60000), registrationController.confirmRegistration);
 app.get('/registration/:registrationId/confirmed', registrationController.showConfirmed);
+// Refund request (J4 / I6) — capability URL from the confirmation page. RL(5) on file.
+app.get('/registration/:id/refund-request', refundRequestController.form);
+app.post('/registration/:id/refund-request', rateLimit(5, 60000), refundRequestController.create);
 app.get('/events/:eventId/waitlist', registrationController.showWaitlistForm);
 app.post('/events/:eventId/waitlist', rateLimit(60, 60000), registrationController.addToWaitlist);
 // Live waitlist position (V7) — capability URL from the waitlist email.

@@ -22,6 +22,8 @@ export const config = {
   verificationTokenTtlHours: parseInt(process.env.VERIFICATION_TOKEN_TTL_HOURS ?? '24', 10),
   passwordResetTokenTtlHours: parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_HOURS ?? '1', 10),
   seedAdminEmail: process.env.SEED_ADMIN_EMAIL ?? 'admin@flyte.local',
+  // Where operational notifications (e.g. new refund requests) are sent.
+  adminEmail: process.env.ADMIN_EMAIL ?? process.env.SMTP_FROM ?? 'admin@flyte.local',
   seedAdminPassword: process.env.SEED_ADMIN_PASSWORD ?? '',
   isProduction: process.env.NODE_ENV === 'production',
   stripe: {

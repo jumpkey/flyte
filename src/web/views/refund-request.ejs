@@ -1,0 +1,40 @@
+<div class="container py-4">
+  <div class="panel checkout-panel">
+    <% if (state === 'sent') { %>
+      <div class="success-mark mb-3">✓</div>
+      <h1 class="h3 mb-2">Refund request received</h1>
+      <p class="text-muted">We've received your request for <strong><%= eventName %></strong> and emailed a confirmation to <strong><%= email %></strong>. We'll be in touch once it's reviewed.</p>
+      <a href="/events" class="btn btn-outline-secondary mt-2">Browse events</a>
+
+    <% } else if (state === 'already') { %>
+      <h1 class="h3 mb-2">Request already submitted</h1>
+      <p class="text-muted">You've already requested a refund for <strong><%= eventName %></strong>. We're reviewing it and will email <strong><%= email %></strong> with the outcome — no need to submit again.</p>
+      <a href="/events" class="btn btn-outline-secondary mt-2">Browse events</a>
+
+    <% } else if (state === 'ineligible') { %>
+      <h1 class="h3 mb-2">Refund not available</h1>
+      <p class="text-muted">This registration isn't in a state where a refund can be requested. If you think this is a mistake, please contact us.</p>
+      <a href="/contact" class="btn btn-outline-secondary mt-2">Contact us</a>
+
+    <% } else { %>
+      <h1 class="h3 mb-1">Request a refund</h1>
+      <p class="text-muted mb-3">For your registration to <strong><%= eventName %></strong>.</p>
+
+      <div class="receipt text-start mb-4">
+        <div class="row-line d-flex justify-content-between"><span class="k text-muted">Name</span><span class="v"><%= name %></span></div>
+        <div class="row-line d-flex justify-content-between"><span class="k text-muted">Email</span><span class="v"><%= email %></span></div>
+        <div class="row-line d-flex justify-content-between"><span class="k text-muted">Amount paid</span><span class="v money"><%= money(amountCents) %></span></div>
+      </div>
+
+      <form method="post" action="/registration/<%= registrationId %>/refund-request">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-3">
+          <label class="form-label" for="reason">Reason <span class="text-secondary">(optional)</span></label>
+          <textarea class="form-control" id="reason" name="reason" rows="3" maxlength="500" placeholder="Let us know why you're requesting a refund."></textarea>
+        </div>
+        <button type="submit" class="btn btn-cta w-100">Submit refund request</button>
+        <p class="text-center text-muted mt-3 mb-0" style="font-size:.85rem;">Refunds are reviewed by our team and returned to your original payment method.</p>
+      </form>
+    <% } %>
+  </div>
+</div>
