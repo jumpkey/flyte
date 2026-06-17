@@ -388,6 +388,42 @@ async function runTests() {
     }
   });
 
+  // ── W22: og:type=event + static brand-card fallback for image-less events ──
+  await test('W22: image-less event falls back to the brand OG card; og:type is event', async () => {
+    await truncateTables();
+    const withImage = await createEvent({ name: 'Has Art', imageUrl: 'https://example.com/p.jpg' });
+    const rA = await get(`/events/${withImage}`);
+    assert(rA.body.includes('property="og:type" content="event"'), 'og:type=event');
+    assert(rA.body.includes('content="https://example.com/p.jpg"'), 'real image used when present');
+    assert(rA.body.includes('twitter:card" content="summary_large_image"'), 'large card for real art');
+
+    const noImage = await createEvent({ name: 'No Art', imageUrl: null });
+    const rB = await get(`/events/${noImage}`);
+    assert(rB.body.includes('/public/og-default.svg'), 'brand-card fallback image');
+    assert(rB.body.includes('twitter:card" content="summary"') && !rB.body.includes('summary_large_image'),
+      'fallback stays a summary card (SVG not rendered large by Twitter)');
+  });
+
+  // ── W18: storefront view counter (per-day upsert; ranged + per-event reads) ──
+  await test('W18: recordEventView increments a per-day counter that the reads sum', async () => {
+    await truncateTables();
+    const { analyticsService } = await import('../../services/analytics-service.js');
+    const id = await createEvent({ status: 'OPEN' });
+    const other = await createEvent({ status: 'OPEN' });
+    await analyticsService.recordEventView(id);
+    await analyticsService.recordEventView(id);
+    await analyticsService.recordEventView(other);
+
+    assertEqual(await analyticsService.viewsByEvent(id), 2, 'per-event total counts both views');
+    assertEqual(await analyticsService.viewsByEvent(other), 1, 'other event isolated');
+    assertEqual(await analyticsService.viewsInRange(7), 3, 'range sum spans all events');
+
+    // Upsert collapses same-day views into one row.
+    const rows = await testSql`SELECT views FROM page_views WHERE event_id = ${id}::UUID`;
+    assertEqual(rows.length, 1, 'one counter row per event per day');
+    assertEqual(rows[0].views, 2, 'row holds the running count');
+  });
+
   await truncateTables();
   console.log(`\n=== Catalog: ${passed} passed, ${failed} failed ===`);
   await testSql.end();

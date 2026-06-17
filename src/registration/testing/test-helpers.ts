@@ -8,8 +8,11 @@ export const testSql = postgres(TEST_DB_URL, { max: 5, idle_timeout: 10 });
 export const TEST_EVENT_ID = '00000000-0000-0000-0000-000000000001';
 
 export async function truncateTables(): Promise<void> {
+  // page_views has no FK to events (W18), so CASCADE won't reach it — list it
+  // explicitly. TRUNCATE is a no-op-safe on a table that may not exist yet only
+  // if it exists; it always exists once migration 009 has run (CI + local).
   await testSql.unsafe(`
-    TRUNCATE TABLE refund_log, waitlist_entries, registrations, events RESTART IDENTITY CASCADE
+    TRUNCATE TABLE refund_log, waitlist_entries, registrations, page_views, events RESTART IDENTITY CASCADE
   `);
 }
 

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Flyte — book your spot">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1F3A5F"/>
+      <stop offset="1" stop-color="#142844"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="64" y="64" width="92" height="92" rx="18" fill="#ffffff"/>
+  <text x="86" y="138" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" fill="#1F3A5F">F</text>
+  <circle cx="142" cy="132" r="9" fill="#C2410C"/>
+  <text x="176" y="138" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="800" fill="#ffffff">Flyte</text>
+  <text x="64" y="360" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="800" fill="#ffffff">Book your spot.</text>
+  <text x="64" y="452" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="500" fill="#C9D6E5">Events, classes &amp; experiences — checkout in seconds.</text>
+  <rect x="64" y="520" width="1072" height="6" rx="3" fill="#C2410C"/>
+</svg>

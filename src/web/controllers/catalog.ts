@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import { renderView, renderFragment } from '../render.js';
 import { catalogService } from '../../services/catalog-service.js';
+import { analyticsService } from '../../services/analytics-service.js';
 import { eventCardState } from '../view-helpers.js';
 import type { SessionData } from '../middleware/session.js';
 import type { User } from '../../services/user-service.js';
@@ -57,6 +58,10 @@ export const catalogController = {
       return c.notFound();
     }
 
+    // W18: count this storefront view (per-day counter). Fire-and-forget — the
+    // analytics counter must never delay or fail the page render.
+    void analyticsService.recordEventView(event.event_id).catch(() => { /* best effort */ });
+
     const card = eventCardState(event);
 
     let alreadyRegistered = false;
@@ -72,15 +77,21 @@ export const catalogController = {
       waitlist = await catalogService.getWaitlistMembership(eventId, session.userId);
     }
 
-    // Open Graph card (V3): turn a shared link into a poster.
+    // Open Graph card (V3 / W22): turn a shared link into a poster. Image-less
+    // events fall back to the static brand card so they still unfurl with art;
+    // og:type is `event` for richer unfurls on platforms that key off it.
     const origin = new URL(c.req.url).origin;
     const firstLine = (event.description ?? '').split('\n')[0].slice(0, 200);
+    const hasOwnImage = !!event.image_url;
     const og = {
       title: event.name,
       description: firstLine || `${new Date(event.event_date).toDateString()}${event.location ? ' · ' + event.location : ''}`,
-      type: 'website',
+      type: 'event',
       url: `${origin}/events/${event.event_id}`,
-      image: event.image_url ?? undefined,
+      image: event.image_url ?? `${origin}/public/og-default.svg`,
+      // Only the real raster art warrants a large Twitter card; the SVG brand
+      // fallback isn't rendered large by Twitter, so it stays a summary card.
+      largeImage: hasOwnImage,
     };
 
     return renderView(c, 'event-detail', {

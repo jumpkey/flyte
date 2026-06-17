@@ -38,6 +38,33 @@ async function periodTotals(fromDays: number, toDays: number): Promise<{ gross: 
 }
 
 export const analyticsService = {
+  /**
+   * W18 — record one storefront view of an event (per-day counter upsert). Called
+   * fire-and-forget from the detail route, so it must never throw into the
+   * request path; the caller swallows rejections.
+   */
+  async recordEventView(eventId: string): Promise<void> {
+    await sql`
+      INSERT INTO page_views (event_id, view_date, views)
+      VALUES (${eventId}::UUID, CURRENT_DATE, 1)
+      ON CONFLICT (event_id, view_date) DO UPDATE SET views = page_views.views + 1`;
+  },
+
+  /** Total storefront views across all events in the trailing window (A1 view stage). */
+  async viewsInRange(rangeDays: number): Promise<number> {
+    const rows = await sql<{ n: string | null }[]>`
+      SELECT COALESCE(SUM(views), 0)::text AS n FROM page_views
+      WHERE view_date >= (CURRENT_DATE - (${rangeDays - 1}||' days')::interval)`;
+    return +(rows[0]?.n ?? 0);
+  },
+
+  /** Lifetime storefront views for one event (A2). */
+  async viewsByEvent(eventId: string): Promise<number> {
+    const rows = await sql<{ n: string | null }[]>`
+      SELECT COALESCE(SUM(views), 0)::text AS n FROM page_views WHERE event_id = ${eventId}::UUID`;
+    return +(rows[0]?.n ?? 0);
+  },
+
   async getSalesDashboard(rangeDays: number): Promise<SalesDashboard> {
     const cur = await periodTotals(0, rangeDays);
     const prev = await periodTotals(rangeDays, rangeDays * 2);
