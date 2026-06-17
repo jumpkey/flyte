@@ -18,10 +18,12 @@
             <td><%- include('partials/status-pill', { status: displayStatus({ status: r.status, refunded_amount_cents: r.refunded_amount_cents }) }) %></td>
             <td class="text-end money"><%= money(r.gross_amount_cents) %></td>
             <td class="text-end">
-              <a class="text-decoration-none" href="/account/registrations/<%= r.registration_id %>">View →</a>
-              <% if (r.can_request_refund) { %>
-              <a class="text-decoration-none small d-block" href="/registration/<%= r.registration_id %>/refund-request">Request a refund</a>
-              <% } %>
+              <span class="d-inline-flex flex-wrap justify-content-end gap-3">
+                <a class="text-decoration-none" href="/account/registrations/<%= r.registration_id %>">View →</a>
+                <% if (r.can_request_refund) { %>
+                <a class="text-decoration-none" href="/registration/<%= r.registration_id %>/refund-request">Request a refund →</a>
+                <% } %>
+              </span>
             </td>
           </tr>
           <% }); %>

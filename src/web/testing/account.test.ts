@@ -210,6 +210,9 @@ async function runTests() {
     const confirmed = await createReg(ev, a.id, 'CONFIRMED');
     let body = await (await get('/account/registrations', a.cookie)).text();
     assert(body.includes(`/registration/${confirmed}/refund-request`), 'refund-request link present for eligible CONFIRMED row');
+    // A4: both row actions render as their own arrow-suffixed links.
+    assert(body.includes('View →'), 'View action renders with an arrow');
+    assert(body.includes('Request a refund →'), 'refund action renders with an arrow when eligible');
 
     // An open request makes the row ineligible → link disappears.
     await testSql`INSERT INTO refund_requests (registration_id, status, reason) VALUES (${confirmed}, 'REQUESTED', 'x')`;

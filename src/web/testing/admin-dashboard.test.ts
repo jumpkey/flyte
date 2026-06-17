@@ -83,6 +83,12 @@ async function runTests() {
     assert(!body.includes('Needs attention'), 'no alarm header when calm');
   });
 
+  await test('A2: Recent transactions panel links to the searchable transactions list', async () => {
+    await truncateTables();
+    const body = await (await get('/admin', adminCookie)).text();
+    assert(body.includes('href="/admin/registrations"'), 'view-all / search transactions link present');
+  });
+
   await test('triggers fire, deep-linked and prioritized (danger before warning before info)', async () => {
     await truncateTables();
     const ev = await createEvent({ status: 'OPEN', daysOut: 5 }); // also an event in next 7 days (info)

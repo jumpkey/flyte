@@ -318,7 +318,17 @@ $focus-ring-width: .15rem;
   .total { font-weight: 800; color: $fl-ink; }
 }
 
-// Roomier data tables (W8) — comfortable column spacing so cells don't crowd.
+// Base data tables (A1) — comfortable horizontal cell gutters on every table so
+// adjacent columns (e.g. dashboard "When"/"Email") never crowd. First/last cells
+// stay flush to the table edge so the grid lines up with surrounding content.
+.table {
+  th, td { padding-left: 1rem; padding-right: 1rem; }
+  th:first-child, td:first-child { padding-left: 0; }
+  th:last-child, td:last-child { padding-right: 0; }
+}
+
+// Roomier data tables (W8) — extra vertical breathing room on top of the base
+// horizontal gutters above.
 .table-roomy {
   th, td { padding: .75rem 1rem; }
   th:first-child, td:first-child { padding-left: 0; }

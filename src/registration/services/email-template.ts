@@ -26,7 +26,7 @@ export function wrapEmail(opts: {
 }): string {
   const ctaBlock = opts.cta
     ? `<tr><td style="padding:8px 32px 28px 32px;">
-         <a href="${opts.cta.url}" style="display:inline-block;background-color:${FLARE};color:#ffffff;text-decoration:none;font-family:${FONT};font-size:15px;font-weight:700;padding:12px 22px;border-radius:8px;">${opts.cta.label}</a>
+         <a href="${opts.cta.url}" style="display:inline-block;background-color:#ffffff;color:${FLARE};text-decoration:none;font-family:${FONT};font-size:15px;font-weight:700;padding:12px 22px;border-radius:8px;border:1px solid ${FLARE};">${opts.cta.label}</a>
        </td></tr>`
     : '';
   const preheader = opts.preheader
