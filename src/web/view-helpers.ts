@@ -74,5 +74,84 @@ export function money(cents: number | null | undefined): string {
   return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// ── Event card / storefront helpers (I2) ───────────────────────────────────
+
+export interface CardEvent {
+  status: string;
+  available_slots: number;
+  total_capacity: number;
+  waitlist_enabled?: boolean;
+}
+
+export type CardState = 'available' | 'low' | 'sold-out' | 'closed';
+
+export interface EventCardInfo {
+  state: CardState;
+  /** Fraction of capacity still available, 0..1. */
+  fraction: number;
+  /** Rounded percentage for the meter width (floored at 4 for visibility). */
+  meterPct: number;
+  soldOut: boolean;
+  /** Sold out AND the admin has the waitlist open (D6). */
+  waitlistOpen: boolean;
+  /** True for CLOSED/CANCELLED — no booking CTA. */
+  noCta: boolean;
+}
+
+/**
+ * Classify an event for card/detail rendering (AC-I2 ②). Single source of truth
+ * for the available / low (<25%) / sold-out / closed states and the availability
+ * meter, so the cards and the detail panel can't drift apart. FULL or zero slots
+ * is sold out; CLOSED/CANCELLED is closed; otherwise low when under a quarter of
+ * capacity remains, else available.
+ */
+export function eventCardState(ev: CardEvent): EventCardInfo {
+  const capacity = ev.total_capacity > 0 ? ev.total_capacity : 0;
+  const fraction = capacity > 0 ? Math.max(0, Math.min(1, ev.available_slots / capacity)) : 0;
+  const soldOut = ev.status === 'FULL' || ev.available_slots <= 0;
+  const closed = ev.status === 'CLOSED' || ev.status === 'CANCELLED';
+
+  let state: CardState;
+  if (closed) state = 'closed';
+  else if (soldOut) state = 'sold-out';
+  else if (fraction < 0.25) state = 'low';
+  else state = 'available';
+
+  return {
+    state,
+    fraction,
+    meterPct: Math.max(4, Math.round(fraction * 100)),
+    soldOut,
+    waitlistOpen: soldOut && !closed && ev.waitlist_enabled !== false,
+    noCta: closed,
+  };
+}
+
+/** Two-letter initials for the image fallback card (WK §6). */
+export function eventInitials(name: string): string {
+  return (name || '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase() || '?';
+}
+
+/** Short date badge, e.g. "JUN 17". */
+export function dateBadge(date: Date | string): string {
+  return new Date(date)
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    .toUpperCase();
+}
+
+/** Longer card meta date, e.g. "Tue, Jun 17". */
+export function dateLong(date: Date | string): string {
+  return new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
 /** The bundle injected into every template's locals. */
-export const viewHelpers = { statusPill, displayStatus, money };
+export const viewHelpers = {
+  statusPill, displayStatus, money,
+  eventCardState, eventInitials, dateBadge, dateLong,
+};

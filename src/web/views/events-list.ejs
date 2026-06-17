@@ -1,0 +1,27 @@
+<section class="container py-5">
+  <h1 class="h3 mb-4">Events</h1>
+
+  <%# Filter form. With JS it swaps just #events-grid (hx-get on the form);
+      without JS it is a normal GET to /events that reloads the page. %>
+  <form class="row g-2 align-items-end mb-4" method="get" action="/events"
+        hx-get="/events" hx-target="#events-grid" hx-swap="innerHTML" hx-push-url="true">
+    <div class="col-12 col-sm-6 col-md-5">
+      <label class="form-label" for="q">Search</label>
+      <input class="form-control" type="search" id="q" name="q" value="<%= q %>" placeholder="Name or location">
+    </div>
+    <div class="col-8 col-sm-4 col-md-3">
+      <label class="form-label" for="month">Month</label>
+      <input class="form-control" type="month" id="month" name="month" value="<%= month %>">
+    </div>
+    <div class="col-4 col-sm-2 col-md-2">
+      <button class="btn btn-primary w-100" type="submit">Filter</button>
+    </div>
+    <div class="col-12 col-md-2">
+      <a class="btn btn-outline-secondary w-100" href="/events">Reset</a>
+    </div>
+  </form>
+
+  <div id="events-grid">
+    <%- include('partials/events-grid', { events: events, page: page, totalPages: totalPages, total: total, q: q, month: month }) %>
+  </div>
+</section>

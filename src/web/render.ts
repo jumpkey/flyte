@@ -48,3 +48,20 @@ export async function renderView(
   });
   return c.html(html);
 }
+
+/**
+ * Render a single view (or partial) with no surrounding layout — for HTMX
+ * fragment swaps. The shared helpers and csrfToken are still injected so the
+ * fragment renders identically to its in-page counterpart.
+ */
+export async function renderFragment(c: Context, view: string, data: Record<string, unknown> = {}): Promise<Response> {
+  const session = (c.get('session') as SessionData | undefined) ?? {};
+  const viewData = {
+    ...viewHelpers,
+    ...data,
+    csrfToken: session.csrfToken ?? '',
+    user: (c.get('user') as User | undefined) ?? null,
+  };
+  const content = await ejs.renderFile(path.join(VIEWS_DIR, `${view}.ejs`), viewData);
+  return c.html(content);
+}

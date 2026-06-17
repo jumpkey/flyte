@@ -1,0 +1,45 @@
+<%# Event card (WK §5.3, the signature component). Locals: ev (a catalog event).
+    Used on the home grid, the /events catalog, and the I4 admin form preview.
+    The whole card links to the event detail page; the booking CTA lives there.
+    Image handling (D2/AC-I2 ③): the fallback (gradient + initials) is always
+    rendered underneath; a present image_url draws over it, and app.js removes a
+    broken <img> on error so the fallback shows through — never a broken icon. %>
+<% const _c = eventCardState(ev); %>
+<a class="event-card h-100 d-block text-decoration-none<%= _c.state === 'closed' ? ' event-card-closed' : '' %>" href="/events/<%= ev.event_id %>">
+  <div class="event-media">
+    <div class="event-fallback">
+      <span class="initials"><%= eventInitials(ev.name) %></span>
+      <span class="when"><%= dateBadge(ev.event_date) %></span>
+    </div>
+    <% if (ev.image_url) { %>
+      <img src="<%= ev.image_url %>" alt="" loading="lazy">
+    <% } %>
+    <span class="date-badge"><%= dateBadge(ev.event_date) %></span>
+  </div>
+  <div class="event-body">
+    <p class="event-title"><%= ev.name %></p>
+    <p class="event-meta">
+      <%= dateLong(ev.event_date) %><% if (ev.location) { %> · <%= ev.location %><% } %>
+    </p>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="event-price money"><%= money(ev.registration_fee_cents) %></span>
+      <% if (_c.state === 'closed') { %>
+        <%- include('status-pill', { status: ev.status }) %>
+      <% } else if (_c.soldOut) { %>
+        <% if (_c.waitlistOpen) { %>
+          <span class="fw-bold" style="color: var(--fl-info-text);">Sold out · waitlist →</span>
+        <% } else { %>
+          <%- include('status-pill', { status: 'FULL' }) %>
+        <% } %>
+      <% } else { %>
+        <span class="fw-bold" style="color: var(--fl-flare-deep);">View &amp; register →</span>
+      <% } %>
+    </div>
+    <% if (!_c.soldOut && _c.state !== 'closed') { %>
+      <div class="meter <%= _c.state === 'low' ? 'meter-low' : '' %>">
+        <div class="meter-fill" style="width: <%= _c.meterPct %>%"></div>
+      </div>
+      <div class="meter-label <%= _c.state === 'low' ? 'low' : '' %>"><%= ev.available_slots %> of <%= ev.total_capacity %> spots left</div>
+    <% } %>
+  </div>
+</a>

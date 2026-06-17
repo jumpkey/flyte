@@ -223,6 +223,10 @@ $focus-ring-width: .15rem;
 .checkout-panel { max-width: 45rem; margin: 2rem auto; }
 
 // Event card (WK-CMP-9)
+.event-card-closed { opacity: .62; filter: saturate(.6); }
+// Detail-page hero image reuses the card media (fallback + optional <img>),
+// but taller and with rounded corners.
+.event-media-detail { aspect-ratio: 16 / 9; overflow: hidden; }
 .event-card {
   border: 1px solid $fl-border-l;
   border-radius: $border-radius-lg;

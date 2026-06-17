@@ -1,0 +1,43 @@
+<%# Swappable catalog grid + pagination (HTMX target #events-grid). Rendered both
+    inside events-list.ejs and as a standalone fragment for HTMX swaps. Locals:
+    events, page, totalPages, total, q, month. Pagination links carry both a real
+    href (JS-off full GET) and hx-get (JS-on fragment swap) — AC-I2 ⑤. %>
+<%
+  function pageUrl(p) {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (month) params.set('month', month);
+    params.set('page', String(p));
+    return '/events?' + params.toString();
+  }
+%>
+<% if (!events || events.length === 0) { %>
+  <%- include('empty-state', { title: 'No events match', message: 'Try a different search or month.' }) %>
+<% } else { %>
+  <p class="text-secondary small mb-3"><%= total %> event<%= total === 1 ? '' : 's' %></p>
+  <div class="row g-4">
+    <% events.forEach(function (ev) { %>
+      <div class="col-12 col-md-6 col-lg-4">
+        <%- include('event-card', { ev: ev }) %>
+      </div>
+    <% }); %>
+  </div>
+
+  <% if (totalPages > 1) { %>
+    <nav class="d-flex justify-content-between align-items-center mt-4" aria-label="Catalog pages">
+      <% if (page > 1) { %>
+        <a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page - 1) %>"
+           hx-get="<%= pageUrl(page - 1) %>" hx-target="#events-grid" hx-swap="innerHTML" hx-push-url="true">← Previous</a>
+      <% } else { %>
+        <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">← Previous</span>
+      <% } %>
+      <span class="text-secondary small">Page <%= page %> of <%= totalPages %></span>
+      <% if (page < totalPages) { %>
+        <a class="btn btn-outline-secondary btn-sm" href="<%= pageUrl(page + 1) %>"
+           hx-get="<%= pageUrl(page + 1) %>" hx-target="#events-grid" hx-swap="innerHTML" hx-push-url="true">Next →</a>
+      <% } else { %>
+        <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">Next →</span>
+      <% } %>
+    </nav>
+  <% } %>
+<% } %>

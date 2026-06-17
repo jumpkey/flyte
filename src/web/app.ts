@@ -9,6 +9,7 @@ import { authController } from './controllers/auth.js';
 import { dashboardController } from './controllers/dashboard.js';
 import { profileController } from './controllers/profile.js';
 import { registrationController } from './controllers/registration.js';
+import { catalogController } from './controllers/catalog.js';
 import { webhookController } from './controllers/webhook.js';
 import { adminController } from './controllers/admin.js';
 import { authGuard } from './middleware/auth-guard.js';
@@ -42,7 +43,10 @@ app.use('*', secureHeaders({
     // are off the allowlist entirely (WK-CODE-3). Only Stripe's domains remain.
     scriptSrc: ["'self'", 'https://js.stripe.com'],
     styleSrc: ["'self'", "'unsafe-inline'"],
-    imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
+    // img-src widened to https: for admin-curated event images (D2/S5). Documented
+    // tradeoff: a remote image host can see the viewer's IP. Admin-only URLs, and
+    // the v2 option is an image proxy.
+    imgSrc: ["'self'", 'data:', 'https:'],
     connectSrc: ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://hooks.stripe.com'],
     fontSrc: ["'self'"],
     formAction: ["'self'"],
@@ -58,6 +62,9 @@ app.use('*', loadUser);
 app.use('*', csrfMiddleware);
 
 app.get('/', homeController.index);
+// Public storefront catalog + detail (I2). Detail 404s for DRAFT/CANCELLED.
+app.get('/events', catalogController.list);
+app.get('/events/:eventId', catalogController.detail);
 app.get('/login', authController.loginForm);
 app.post('/login', rateLimit(10, 60000), authController.login);
 app.get('/register', authController.registerForm);

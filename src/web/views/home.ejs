@@ -2,28 +2,24 @@
   <div class="container">
     <h1 class="display-5">Find your next event</h1>
     <p class="lead">Workshops, meetups and community events — secure checkout in under a minute. No account needed.</p>
-    <%# The storefront event grid (WF-01/WF-02) and the /events catalog arrive in
-        increment I2. For now the foundation ships a styled landing only. %>
-    <div class="d-flex gap-2 mt-3">
-      <a href="/register" class="btn btn-cta">Create an account</a>
-      <a href="/login" class="btn btn-outline-light">Sign in</a>
-    </div>
+    <a href="/events" class="btn btn-cta mt-3">Browse all events</a>
   </div>
 </section>
 
-<section class="container py-5">
-  <div class="row g-4">
-    <div class="col-12 col-md-4">
-      <h2 class="h5">Browse &amp; book</h2>
-      <p class="text-secondary mb-0">A clean catalog of upcoming events with live availability — landing in the next release.</p>
-    </div>
-    <div class="col-12 col-md-4">
-      <h2 class="h5">Guest checkout</h2>
-      <p class="text-secondary mb-0">Buy in under a minute, no account required. Activate one later to see your history.</p>
-    </div>
-    <div class="col-12 col-md-4">
-      <h2 class="h5">Secure payments</h2>
-      <p class="text-secondary mb-0">Card processing and receipts handled by Stripe, with refunds built in.</p>
-    </div>
+<section id="events" class="container py-5">
+  <div class="d-flex justify-content-between align-items-end mb-4">
+    <h2 class="h3 mb-0">Upcoming events</h2>
+    <a href="/events" class="text-decoration-none fw-semibold">See all →</a>
   </div>
+  <% if (!events || events.length === 0) { %>
+    <%- include('partials/empty-state', { title: 'No upcoming events yet', message: 'Check back soon — new events are added regularly.' }) %>
+  <% } else { %>
+    <div class="row g-4">
+      <% events.forEach(function (ev) { %>
+        <div class="col-12 col-md-6 col-lg-4">
+          <%- include('partials/event-card', { ev: ev }) %>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
 </section>
