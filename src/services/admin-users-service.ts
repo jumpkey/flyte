@@ -78,26 +78,21 @@ export const adminUsersService = {
   async getDetail(userId: string): Promise<{
     purchases: Array<Record<string, unknown>>;
     waitlist: Array<Record<string, unknown>>;
-    loginHistory: Array<Record<string, unknown>>;
-    actionHistory: Array<Record<string, unknown>>;
   }> {
-    const [purchases, waitlist, loginHistory, actionHistory] = await Promise.all([
+    // Login + action history used to live here; the user-detail page now shows a
+    // single paginated activity timeline (getTimeline, D2), so those two queries
+    // were dead weight and are gone. Only the at-a-glance summary panels remain.
+    const [purchases, waitlist] = await Promise.all([
       sql`SELECT r.registration_id, r.status, r.gross_amount_cents, r.refunded_amount_cents, r.created_at, e.name AS event_name
           FROM registrations r JOIN events e ON e.event_id = r.event_id
           WHERE r.user_id = ${userId}::UUID ORDER BY r.created_at DESC`,
       sql`SELECT w.waitlist_entry_id, e.name AS event_name, w.created_at
           FROM waitlist_entries w JOIN events e ON e.event_id = w.event_id
           WHERE w.user_id = ${userId}::UUID ORDER BY w.created_at DESC`,
-      sql`SELECT success, failure_reason, ip_address, created_at FROM login_events
-          WHERE user_id = ${userId}::UUID ORDER BY created_at DESC LIMIT 25`,
-      sql`SELECT action, resource, ip_address, created_at FROM user_action_events
-          WHERE user_id = ${userId}::UUID ORDER BY created_at DESC LIMIT 25`,
     ]);
     return {
       purchases: purchases as unknown as Array<Record<string, unknown>>,
       waitlist: waitlist as unknown as Array<Record<string, unknown>>,
-      loginHistory: loginHistory as unknown as Array<Record<string, unknown>>,
-      actionHistory: actionHistory as unknown as Array<Record<string, unknown>>,
     };
   },
 
