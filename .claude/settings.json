@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flyctl status *)",
+      "Bash(flyctl machine *)",
+      "Bash(flyctl releases *)",
+      "Bash(flyctl secrets *)"
+    ]
+  }
+}

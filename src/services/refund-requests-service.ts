@@ -109,6 +109,53 @@ export const refundRequestsService = {
     };
   },
 
+  /**
+   * The refund ledger (resolved tab) — every executed refund from refund_log,
+   * not just resolved requests. A refund reaches this table whether it came from
+   * an approved customer request or a direct admin refund off the payment detail,
+   * so this is the one place that shows all of them. Origin is derived from the
+   * reason the approve flow stamps ('refund_request_approved'). Paginated.
+   */
+  async listRefundLedger(page = 1, perPage = 25): Promise<{
+    rows: Array<Record<string, unknown>>;
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+  }> {
+    const pp = Math.min(Math.max(perPage, 1), 100);
+    const pg = Math.max(page, 1);
+    const offset = (pg - 1) * pp;
+
+    const countRows = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM refund_log`;
+    const total = countRows[0]?.n ?? 0;
+
+    const rows = await sql`
+      SELECT fl.refund_log_id, fl.amount_cents, fl.refund_type, fl.reason,
+             fl.stripe_refund_id, fl.created_at,
+             r.registration_id, r.first_name, r.last_name, r.email,
+             e.name AS event_name,
+             -- Customer-originated if the registration carries an approved
+             -- request. The approve flow always resolves the request to
+             -- APPROVED, so this catches real refunds; direct refunds (no
+             -- request) fall through to 'Direct'.
+             EXISTS (
+               SELECT 1 FROM refund_requests rr
+               WHERE rr.registration_id = fl.registration_id AND rr.status = 'APPROVED'
+             ) AS from_request
+      FROM refund_log fl
+      JOIN registrations r ON r.registration_id = fl.registration_id
+      JOIN events e ON e.event_id = r.event_id
+      ORDER BY fl.created_at DESC
+      LIMIT ${pp} OFFSET ${offset}
+    `;
+    return {
+      rows: rows as unknown as Array<Record<string, unknown>>,
+      total, page: pg, perPage: pp,
+      totalPages: Math.max(Math.ceil(total / pp), 1),
+    };
+  },
+
   async countOpen(): Promise<number> {
     const rows = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM refund_requests WHERE status = 'REQUESTED'`;
     return rows[0]?.n ?? 0;

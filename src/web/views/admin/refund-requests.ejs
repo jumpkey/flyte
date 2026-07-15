@@ -2,9 +2,9 @@
 
 <ul class="nav nav-pills mb-4">
   <li class="nav-item"><a class="nav-link <%= tab === 'open' ? 'active' : '' %>" href="/admin/refund-requests">Requested</a></li>
-  <li class="nav-item"><a class="nav-link <%= tab === 'resolved' ? 'active' : '' %>" href="/admin/refund-requests?tab=resolved">Resolved</a></li>
+  <li class="nav-item"><a class="nav-link <%= tab === 'resolved' ? 'active' : '' %>" href="/admin/refund-requests?tab=resolved">Refunds</a></li>
 </ul>
 
 <div id="refund-queue">
-  <%- include('partials/refund-queue', { requests: requests, tab: tab, page: page, totalPages: totalPages, total: total }) %>
+  <%- include('partials/refund-queue', { rows: rows, tab: tab, page: page, totalPages: totalPages, total: total }) %>
 </div>

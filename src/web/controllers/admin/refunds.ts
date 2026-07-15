@@ -39,10 +39,14 @@ export const adminRefundsController = {
   async queue(c: Context): Promise<Response> {
     const tab = c.req.query('tab') === 'resolved' ? 'resolved' : 'open';
     const page = parseInt(c.req.query('page') ?? '1', 10) || 1;
-    const result = await refundRequestsService.listQueue(tab, page, 25);
+    // Open tab = the customer-request queue; resolved tab = the full refund
+    // ledger (every executed refund, including direct admin refunds).
+    const result = tab === 'resolved'
+      ? await refundRequestsService.listRefundLedger(page, 25)
+      : await refundRequestsService.listQueue('open', page, 25);
     const data = {
       title: 'Refund requests', activeNav: 'refunds', tab,
-      requests: result.rows, ...result,
+      ...result,
     };
     if (c.req.header('HX-Request') === 'true') {
       return renderFragment(c, 'admin/partials/refund-queue', data);
