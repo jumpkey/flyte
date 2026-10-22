@@ -1,0 +1,15 @@
+# Private-only, single-process simulator. Deploy from load_testing/ with -c this file.
+app = 'flyte-stripe-sim-20261022'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile.simulator'
+
+[env]
+  STRIPE_SIM_SMTP_ENABLED = '1'
+  STRIPE_SIM_SEED = '20261022'
+
+[[vm]]
+  memory = '2048mb'
+  cpu_kind = 'performance'
+  cpus = 1

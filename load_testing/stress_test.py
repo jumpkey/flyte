@@ -108,6 +108,72 @@ class RequestResult:
 
 
 @dataclass
+class SimulatorConfirmRetry:
+    status_code: int
+    latency_ms: float
+    error: str
+
+
+SIMULATOR_CONFIRM_MAX_RETRIES = 3
+SIMULATOR_CONFIRM_BACKOFF_SECONDS = (0.1, 0.2, 0.3)
+
+
+async def confirm_simulator_payment_intent(
+    session: aiohttp.ClientSession,
+    simulator_url: str,
+    pi_id: str,
+    timeout: aiohttp.ClientTimeout,
+    api_key: str | None,
+    *,
+    max_retries: int = SIMULATOR_CONFIRM_MAX_RETRIES,
+) -> tuple[int, str | None, list[SimulatorConfirmRetry], float]:
+    """Confirm a simulated PI, retrying only safe, idempotent transport failures.
+
+    The result status/error describes the final attempt. ``retries`` contains
+    every failed attempt that was followed by another attempt; callers can
+    report each one without obscuring an exhausted final failure.
+    """
+    url = f"{simulator_url.rstrip('/')}/v1/payment_intents/{pi_id}/confirm"
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    retry_rows: list[SimulatorConfirmRetry] = []
+    total_started = time.monotonic()
+    status_code = 0
+    final_error: str | None = None
+
+    for attempt_index in range(max_retries + 1):
+        attempt_started = time.monotonic()
+        retryable = False
+        try:
+            async with session.post(url, headers=headers, timeout=timeout) as response:
+                status_code = response.status
+                if status_code in (200, 201):
+                    await response.read()
+                    return status_code, None, retry_rows, (time.monotonic() - total_started) * 1000
+                body = await response.text()
+                final_error = f"simulator confirm failed: {body[:200]}"
+                retryable = status_code == 429 or 500 <= status_code <= 599
+        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+            status_code = 0
+            final_error = f"simulator confirm transport error: {type(exc).__name__}: {exc}"
+            retryable = True
+        except Exception as exc:
+            status_code = 0
+            final_error = f"simulator confirm error: {type(exc).__name__}: {exc}"
+            retryable = False
+
+        latency_ms = (time.monotonic() - attempt_started) * 1000
+        if retryable and attempt_index < max_retries:
+            retry_rows.append(SimulatorConfirmRetry(status_code, latency_ms, final_error or "retryable failure"))
+            delay_index = min(attempt_index, len(SIMULATOR_CONFIRM_BACKOFF_SECONDS) - 1)
+            await asyncio.sleep(SIMULATOR_CONFIRM_BACKOFF_SECONDS[delay_index])
+            continue
+        return status_code, final_error, retry_rows, (time.monotonic() - total_started) * 1000
+
+    # The range always returns, but retain a defensive return for type checkers.
+    return status_code, final_error or "simulator confirm failed", retry_rows, (time.monotonic() - total_started) * 1000
+
+
+@dataclass
 class RunStats:
     results: list[RequestResult] = field(default_factory=list)
     start_time: float = field(default_factory=time.monotonic)
@@ -312,32 +378,33 @@ class RegistrationWorker:
             # endpoint. This transitions the PI from requires_payment_method →
             # requires_capture so that the Flyte confirm endpoint can proceed.
             if self.simulator_url:
-                try:
-                    async with self.session.post(
-                        f"{self.simulator_url}/v1/payment_intents/{pi_id}/confirm",
-                        timeout=self.timeout,
-                    ) as sim_resp:
-                        if sim_resp.status not in (200, 201):
-                            sim_body = await sim_resp.text()
-                            results.append(RequestResult(
-                                worker_id=self.worker_id,
-                                attempt=attempt,
-                                phase="sim_confirm",
-                                status_code=sim_resp.status,
-                                latency_ms=0,
-                                outcome="ERROR",
-                                error=f"simulator confirm failed: {sim_body[:200]}",
-                            ))
-                            return results
-                except Exception as e:
+                sim_status, sim_error, retries, sim_latency = await confirm_simulator_payment_intent(
+                    self.session, self.simulator_url, pi_id, self.timeout,
+                    os.environ.get("STRIPE_SIM_API_KEY"),
+                )
+                for retry in retries:
+                    results.append(RequestResult(
+                        worker_id=self.worker_id,
+                        attempt=attempt,
+                        phase="sim_retry",
+                        status_code=retry.status_code,
+                        latency_ms=retry.latency_ms,
+                        outcome="SIMULATOR_TRANSPORT_RETRY",
+                        error=retry.error,
+                        registration_id=registration_id,
+                        pi_id=pi_id,
+                    ))
+                if sim_status not in (200, 201):
                     results.append(RequestResult(
                         worker_id=self.worker_id,
                         attempt=attempt,
                         phase="sim_confirm",
-                        status_code=0,
-                        latency_ms=0,
-                        outcome="NETWORK_ERROR",
-                        error=f"simulator confirm error: {e}",
+                        status_code=sim_status,
+                        latency_ms=sim_latency,
+                        outcome="NETWORK_ERROR" if sim_status == 0 else "ERROR",
+                        error=sim_error,
+                        registration_id=registration_id,
+                        pi_id=pi_id,
                     ))
                     return results
             confirm_url = f"{self.base_url}/registration/confirm/{pi_id}"

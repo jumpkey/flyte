@@ -163,7 +163,7 @@ fly deploy --dockerfile Dockerfile.simulator
 fly secrets set STRIPE_SIMULATOR_HOST=flyte-stripe-sim.internal \
                 STRIPE_SIMULATOR_PORT=12111 \
                 STRIPE_SIMULATOR_PROTOCOL=http \
-                STRIPE_SECRET_KEY=sk_test_sim_only \
+                STRIPE_SECRET_KEY=sk_test_simulator_only \
                 -a <your-main-app>
 ```
 
