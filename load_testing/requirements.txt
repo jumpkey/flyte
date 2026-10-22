@@ -7,3 +7,7 @@ python-dotenv==1.0.1
 rich==13.8.1
 click==8.1.7
 python-multipart==0.0.9
+
+# Instrumented stress runner and independent database/resource checks
+psycopg2-binary==2.9.13
+psutil==7.2.2

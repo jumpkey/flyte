@@ -79,7 +79,7 @@ LAST_NAMES = [
 
 def _random_email(idx: int) -> str:
     random_suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
-    return f"loadtest_{idx}_{random_suffix}@example.com"
+    return f"loadtest_{idx}_{random_suffix}@example.invalid"
 
 
 def _random_name() -> tuple[str, str]:
@@ -241,6 +241,7 @@ class RegistrationWorker:
 
         payload: dict[str, Any] = {
             "email": email,
+            "emailConfirm": email,
             "firstName": first,
             "lastName": last,
         }
@@ -279,6 +280,7 @@ class RegistrationWorker:
                     outcome=outcome,
                     pi_id=pi_id,
                     registration_id=registration_id,
+                    error=str(body.get("error")) if body.get("error") else None,
                 ))
         except asyncio.TimeoutError:
             results.append(RequestResult(
@@ -396,6 +398,8 @@ def _classify_phase1(status: int, body: dict[str, Any]) -> str:
         if err == "already_registered":
             return "ALREADY_REGISTERED"
         return "VALIDATION_ERROR"
+    if status == 409:
+        return "FULL" if body.get("error") == "event_full" else "EVENT_CLOSED"
     if status == 429:
         return "RATE_LIMITED"
     if status == 503:
@@ -410,18 +414,20 @@ def _classify_phase1(status: int, body: dict[str, Any]) -> str:
 
 
 def _classify_phase3(status: int, location: str, body: dict[str, Any]) -> str:
-    if status in (301, 302, 303, 307, 308):
-        if "/confirmed" in location:
-            return "SUCCESS"
-        if "waitlist" in location:
-            return "FULL"
-        return "REDIRECT"
+    # Current API returns HTTP 200 for several business states. A transport
+    # success alone does not prove that a seat/payment was confirmed.
     if status == 429:
         return "RATE_LIMITED"
     if status == 403:
         return "CSRF_REJECTED"
     if 200 <= status < 300:
-        return "SUCCESS"
+        state = body.get("status")
+        if state == "CONFIRMED": return "SUCCESS"
+        if state in ("PENDING_CAPTURE", "PENDING_PAYMENT"): return "PENDING"
+        if state in ("PAYMENT_FAILED", "EXPIRED", "CANCELLED"): return state
+        return "UNVERIFIED"
+    if status in (301, 302, 303, 307, 308):
+        return "FULL" if "waitlist" in location else "UNVERIFIED_REDIRECT"
     return "ERROR"
 
 
@@ -440,12 +446,6 @@ async def run_load_test(
     simulator_url: str | None = None,
 ) -> RunStats:
     stats = RunStats()
-
-    # Semaphore to cap concurrency
-    sem = asyncio.Semaphore(concurrency)
-    # Counter for atomic attempt numbering
-    attempt_counter = 0
-    lock = asyncio.Lock()
 
     connector = aiohttp.TCPConnector(limit=concurrency + 10, limit_per_host=concurrency + 10)
 
@@ -471,42 +471,28 @@ async def run_load_test(
         )
 
     try:
-        async def do_attempt(worker: RegistrationWorker, attempt_num: int) -> None:
-            async with sem:
-                results = await worker.run_one(attempt_num)
-                for r in results:
-                    stats.add(r)
-
-        # Build the task list — distribute attempts round-robin across workers
-        tasks: list[asyncio.Task[None]] = []
-        for i in range(total):
-            worker = workers[i % concurrency]
-            task = asyncio.create_task(do_attempt(worker, i))
-            tasks.append(task)
-            if ramp_up > 0 and i < concurrency:
-                await asyncio.sleep(ramp_up / concurrency)
-
+        # Bootstrap every worker before selling any seats. Otherwise a worker
+        # starting after sell-out cannot obtain the registration-page CSRF token.
+        await asyncio.gather(*(worker._acquire_session() for worker in workers))
+        stats.start_time = time.monotonic()
+        attempts = iter(range(total))
         with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeElapsedColumn(),
-            console=console,
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+            BarColumn(), TaskProgressColumn(), TimeElapsedColumn(), console=console,
         ) as progress:
-            prog_task = progress.add_task(
-                f"Running {total} requests × {concurrency} workers …", total=total
-            )
-
-            done_count = 0
-            for coro in asyncio.as_completed(tasks):
-                await coro
-                done_count += 1
-                progress.update(prog_task, completed=done_count)
+            prog_task = progress.add_task(f"Running {total} attempts × {concurrency} workers …", total=total)
+            async def run_worker(worker: RegistrationWorker) -> None:
+                # Exactly one in-flight attempt per worker/cookie jar. A global
+                # semaphore with round-robin tasks can overlap the same worker.
+                for attempt in attempts:
+                    for result in await worker.run_one(attempt):
+                        stats.add(result)
+                    progress.advance(prog_task)
+            await asyncio.gather(*(run_worker(worker) for worker in workers))
     finally:
         for sess in sessions:
             await sess.close()
-        connector.close()
+        await connector.close()
 
     stats.end_time = time.monotonic()
 
@@ -701,8 +687,8 @@ def main(
     console.print(f"\n[dim]Full results written to [bold]{output}[/bold][/dim]")
 
     # Exit with non-zero if any requests failed unexpectedly
-    p1_outcomes = stats.outcome_distribution("phase1")
-    error_count = p1_outcomes.get("ERROR", 0) + p1_outcomes.get("NETWORK_ERROR", 0)
+    unexpected = {"ERROR", "NETWORK_ERROR", "CSRF_REJECTED", "VALIDATION_ERROR", "UNVERIFIED", "UNVERIFIED_REDIRECT"}
+    error_count = sum(r.outcome in unexpected for r in stats.results)
     if error_count > 0:
         console.print(f"[red]{error_count} unexpected errors — check results.json[/red]")
         sys.exit(2)
