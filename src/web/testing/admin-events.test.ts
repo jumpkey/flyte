@@ -121,6 +121,10 @@ async function runTests() {
     assert(!http.ok && !!http.errors.imageUrl, 'http rejected');
     const fee = validateEventForm({ name: 'X', eventDate: '2030-01-01T10:00', capacity: '5', feeDollars: '10.999' });
     assert(!fee.ok && !!fee.errors.feeDollars, 'bad fee rejected');
+    const priceBase = { name: 'X', eventDate: '2030-01-01T10:00', capacity: '5' };
+    assert(!validateEventForm({ ...priceBase, feeDollars: '0.49' }).ok, 'below processor minimum rejected');
+    assert(validateEventForm({ ...priceBase, feeDollars: '0.50' }).ok, 'processor minimum accepted');
+    assert(validateEventForm({ ...priceBase, feeDollars: '0' }).ok, 'free accepted');
     const floor = validateEventForm({ name: 'X', eventDate: '2030-01-01T10:00', capacity: '3', feeDollars: '10' }, { minCapacity: 5 });
     assert(!floor.ok && !!floor.errors.capacity, 'capacity floor enforced');
   });

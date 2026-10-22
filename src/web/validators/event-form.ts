@@ -89,6 +89,9 @@ export function validateEventForm(
     errors.feeDollars = 'Enter a dollar amount like 25 or 25.00.';
   } else {
     registrationFeeCents = Math.round(parseFloat(feeDollars) * 100);
+    if (registrationFeeCents > 0 && registrationFeeCents < 50) {
+      errors.feeDollars = 'Enter 0 for a free event, or at least $0.50 for a paid event.';
+    }
   }
 
   // Image URL: optional, https only, length-bounded (S5).

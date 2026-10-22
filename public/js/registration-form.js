@@ -1,8 +1,9 @@
 (function() {
   const stripeKey = document.querySelector('[data-stripe-key]')?.getAttribute('data-stripe-key');
-  if (!stripeKey) { console.warn('No Stripe publishable key found'); return; }
+  const isFree = document.querySelector('[data-free-registration]')?.getAttribute('data-free-registration') === 'true';
+  if (!isFree && !stripeKey) { console.warn('No Stripe publishable key found'); return; }
 
-  const stripe = Stripe(stripeKey);
+  const stripe = isFree ? null : Stripe(stripeKey);
   let elements;
   let clientSecret;
   let paymentIntentId;
