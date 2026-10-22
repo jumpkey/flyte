@@ -55,7 +55,7 @@ export const authController = {
         await userService.incrementFailedLogins(user.id);
         const updated = await userService.findById(user.id);
         if (updated && updated.failedLoginCount >= config.accountLockThreshold) {
-          await userService.lockAccount(user.id);
+          await userService.lockForFailedLogins(user.id);
         }
       }
 
@@ -160,18 +160,9 @@ export const authController = {
   },
 
   async checkEmail(c: Context): Promise<Response> {
-    const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? await c.req.parseBody();
-    const email = ((body['email'] as string) ?? '').trim().toLowerCase();
-
-    if (!email) {
-      return c.html('<span></span>');
-    }
-
-    const taken = await userService.isEmailTaken(email);
-    if (taken) {
-      return c.html('<span style="color: red;">&#x2717; Email already registered</span>');
-    }
-    return c.html('<span style="color: green;">&#x2713; Email available</span>');
+    // Keep the public field hint independent of account membership. The final
+    // registration POST still reports duplicate addresses for compatibility.
+    return c.html('<span class="text-secondary">You can continue; we will check this address when you submit.</span>');
   },
 
   async forgotPasswordForm(c: Context): Promise<Response> {
@@ -190,9 +181,10 @@ export const authController = {
     const ip = getClientIp(c);
     const user = await userService.findByEmail(email);
     // Issue a reset token to verified accounts AND to shadow accounts — for a
-    // shadow user this email IS the activation flow (J3). Never to locked ones.
+    // shadow user this email IS the activation flow (J3). A failed-login lock
+    // is recoverable by email; an administrative suspension is not.
     // The min-time padding below keeps issuance enumeration-safe (S6).
-    if (user && (user.isVerified || user.accountStatus === 'shadow') && !user.isLocked) {
+    if (user && (user.isVerified || user.accountStatus === 'shadow') && !user.isAdminSuspended) {
       const { raw, hashed } = authService.generateToken();
       const expiresAt = new Date(Date.now() + config.passwordResetTokenTtlHours * 60 * 60 * 1000);
       await userService.setPasswordResetToken(user.id, hashed, expiresAt);
@@ -259,11 +251,14 @@ export const authController = {
     }
 
     const newPasswordHash = await authService.hashPassword(password);
-    await userService.resetPassword(user.id, newPasswordHash);
-    await destroyUserSessions(user.id);
+    const resetUser = await userService.resetPassword(hashed, newPasswordHash);
+    if (!resetUser) {
+      return renderView(c, 'reset-password-error', { title: 'Reset Failed', error: 'Invalid or expired reset link' });
+    }
+    await destroyUserSessions(resetUser.id);
 
     await eventService.logAction({
-      userId: user.id,
+      userId: resetUser.id,
       sessionId: null,
       action: 'password_reset_completed',
       resource: '/reset-password',

@@ -6,7 +6,7 @@
 <%
   function pageUrl(p) {
     var q = new URLSearchParams();
-    if (tab === 'resolved') q.set('tab', 'resolved');
+    if (tab !== 'open') q.set('tab', tab);
     q.set('page', String(p));
     return '/admin/refund-requests?' + q.toString();
   }
@@ -19,6 +19,13 @@
         message: tab === 'open'
           ? 'When a customer files a refund request it appears here.'
           : 'Every refund — whether from an approved request or a direct admin refund — appears here.' }) %>
+<% } else if (tab === 'history') { %>
+<div class="table-responsive"><table class="table align-middle">
+<thead><tr><th>Customer / event</th><th>Decision</th><th>Resolution note</th><th>Resolved</th></tr></thead>
+<tbody><% rows.forEach(function(rq) { %><tr>
+<td><a href="/admin/registrations/<%= rq.registration_id %>"><%= rq.first_name %> <%= rq.last_name %></a><div class="small text-secondary"><%= rq.event_name %></div></td>
+<td><%= rq.status %></td><td><%= rq.resolution_note || '—' %></td><td><%= dateLong(rq.resolved_at) %></td>
+</tr><% }); %></tbody></table></div>
 <% } else if (tab === 'resolved') { %>
 <div class="table-responsive">
   <table class="table align-middle">
@@ -84,7 +91,7 @@
             <button class="btn btn-outline-danger btn-sm" data-open-dialog="#deny-<%= rq.request_id %>">Deny</button>
           </div>
 
-          <dialog id="approve-<%= rq.request_id %>" class="flyte-dialog">
+          <dialog id="approve-<%= rq.request_id %>" class="flyte-dialog" aria-label="Approve refund request">
             <form method="post" action="/admin/refund-requests/<%= rq.request_id %>/approve" data-once>
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <h2 class="h5">Approve refund</h2>
@@ -106,7 +113,7 @@
             </form>
           </dialog>
 
-          <dialog id="deny-<%= rq.request_id %>" class="flyte-dialog">
+          <dialog id="deny-<%= rq.request_id %>" class="flyte-dialog" aria-label="Deny refund request">
             <form method="post" action="/admin/refund-requests/<%= rq.request_id %>/deny">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <h2 class="h5">Deny refund request</h2>

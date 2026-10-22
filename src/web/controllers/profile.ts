@@ -5,6 +5,11 @@ import { authService } from '../../services/auth-service.js';
 import { eventService } from '../../services/event-service.js';
 import type { User } from '../../services/user-service.js';
 import { getClientIp } from '../utils/get-client-ip.js';
+import { changePasswordAndRotateUserSession } from '../middleware/session.js';
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!);
+}
 
 export const profileController = {
   async editForm(c: Context): Promise<Response> {
@@ -52,11 +57,30 @@ export const profileController = {
     }
 
     if (errors.length > 0) {
-      return c.html(`<div style="color: red;">${errors.map(e => `<p>${e}</p>`).join('')}</div>`);
+      const message = errors.join('. ');
+      if (c.req.header('HX-Request') === 'true') return c.html(`<div class="text-danger">${escapeHtml(message)}</div>`);
+      return renderView(c, 'profile', { title: 'Edit Profile', profileFeedback: message, profileError: true }, { status: 400 });
     }
 
     if (Object.keys(updates).length > 0) {
-      await userService.updateProfile(user.id, updates);
+      if (updates.passwordHash) {
+        const sid = c.get('sessionId') as string | null;
+        if (sid) {
+          const session = c.get('session') as { csrfToken?: string; flashMessage?: string } | undefined;
+          const nextSession = { userId: user.id, csrfToken: session?.csrfToken };
+          const rotated = await changePasswordAndRotateUserSession(
+            user.id,
+            updates.passwordHash,
+            nextSession,
+            updates.displayName,
+          );
+          c.set('sessionId', rotated.sid);
+          c.set('session', nextSession);
+          c.set('sessionCookie', rotated.signedSid);
+        }
+      } else {
+        await userService.updateProfile(user.id, updates);
+      }
       const updatedUser = await userService.findById(user.id);
       if (updatedUser) c.set('user', updatedUser);
 
@@ -70,6 +94,7 @@ export const profileController = {
       });
     }
 
-    return c.html('<div style="color: green;">Profile updated successfully</div>');
+    if (c.req.header('HX-Request') === 'true') return c.html('<div class="text-success">Profile updated successfully</div>');
+    return renderView(c, 'profile', { title: 'Edit Profile', profileFeedback: 'Profile updated successfully', profileError: false });
   },
 };

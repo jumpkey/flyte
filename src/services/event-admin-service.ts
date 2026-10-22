@@ -95,6 +95,11 @@ export const eventAdminService = {
     return rows[0]?.n ?? 0;
   },
 
+  async countUnsettledRegistrations(eventId: string): Promise<number> {
+    const rows = await sql`SELECT count(*)::int AS n FROM registrations WHERE event_id = ${eventId}::uuid AND status IN ('CONFIRMED','PENDING_CAPTURE','PENDING_PAYMENT')`;
+    return rows[0]?.n ?? 0;
+  },
+
   /** Direct status write (used by the zero-refund cancel short-circuit). */
   async setStatus(eventId: string, status: string): Promise<void> {
     await sql`UPDATE events SET status = ${status}, updated_at = now() WHERE event_id = ${eventId}::UUID`;
@@ -143,7 +148,7 @@ export const eventAdminService = {
         status = ${newStatus},
         opened_at = ${stampOpened ? sql`now()` : sql`opened_at`},
         updated_at = now()
-      WHERE event_id = ${eventId}::UUID
+      WHERE event_id = ${eventId}::UUID AND status NOT IN ('CANCELLING','CANCELLED')
     `;
   },
 

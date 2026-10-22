@@ -24,12 +24,12 @@ All state-changing actions are protected by CSRF tokens. Login attempts, registr
 
 | Concern | Choice |
 |---|---|
-| Runtime | Node.js 20 LTS |
+| Runtime | Node.js 24 LTS |
 | Language | TypeScript 5 (strict mode) |
 | Web framework | [Hono](https://hono.dev/) |
 | Templating | EJS (server-rendered HTML) |
 | UI interactivity | [HTMX](https://htmx.org/) — no client-side framework |
-| CSS | [Pico CSS](https://picocss.com/) (classless) |
+| CSS | [Bootstrap 5](https://getbootstrap.com/) with project SCSS |
 | Database | PostgreSQL |
 | Database driver | [postgres.js](https://github.com/porsager/postgres) |
 | Password hashing | bcrypt (cost >= 12) |
@@ -71,7 +71,7 @@ flyte/
 
 ## Quick start (local development)
 
-**Prerequisites:** Node.js 20, PostgreSQL running on `localhost:5432`.
+**Prerequisites:** Node.js 24, PostgreSQL running on `localhost:5432`.
 
 ```bash
 # 1. Install dependencies
@@ -115,3 +115,13 @@ npm run dev         # listens on http://localhost:3000
 | `npm start` | Run the compiled production build |
 | `npm run migrate` | Apply pending SQL migrations |
 | `npm run seed` | Seed the default admin user |
+| `npm run smoke:stabilization` | Run the guarded, test-mode payment lifecycle smoke against a disposable/testbed database (see [STABILIZATION.md](STABILIZATION.md)) |
+
+Migrations are applied by the PostgreSQL advisory-lock runner in `scripts/migrate.ts`.
+Each migration and its schema-version marker commit together in one transaction;
+failed migrations stop the release rather than being skipped.
+
+The stabilization testbed is deployed manually from GitHub Actions using **Fly
+Deploy** and the selected branch. The automatic `main` push deployment is
+disabled. See [STABILIZATION.md](STABILIZATION.md) for the guarded smoke test and
+testbed readiness checks.

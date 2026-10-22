@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import Stripe from 'stripe';
 import { sql } from '../../services/db.js';
 import { config } from '../../config.js';
 import type { StripeClient, IRegistrationService, INotificationService } from '../interfaces.js';
@@ -8,12 +9,9 @@ import type {
 } from '../types.js';
 
 function isTransientStripeError(err: unknown): boolean {
-  const e = err as Record<string, unknown>;
-  return (
-    e['type'] === 'api_error' ||
-    e['code'] === 'rate_limit' ||
-    e['code'] === 'api_connection_error'
-  );
+  return err instanceof Stripe.errors.StripeConnectionError ||
+    err instanceof Stripe.errors.StripeAPIError ||
+    err instanceof Stripe.errors.StripeRateLimitError;
 }
 
 function mapDbRow(row: Record<string, unknown>): RegistrationRecord {
@@ -48,14 +46,62 @@ export class RegistrationService implements IRegistrationService {
   ) {}
 
   async initiateRegistration(formData: RegistrationFormData): Promise<RegistrationInitResult> {
-    const eventRows = await sql<Array<{registration_fee_cents: number}>>`
-      SELECT registration_fee_cents FROM events WHERE event_id = ${formData.eventId}
+    const eventRows = await sql<Array<{registration_fee_cents: number; status: string; event_date: Date; name: string; available_slots: number}>>`
+      SELECT registration_fee_cents, status, event_date, name, available_slots FROM events WHERE event_id = ${formData.eventId}
     `;
     if (eventRows.length === 0) {
       return { outcome: 'NOT_FOUND', message: 'Event not found' };
     }
     if (eventRows[0].registration_fee_cents !== formData.grossAmountCents) {
       return { outcome: 'INTERNAL_ERROR', message: 'Amount mismatch' };
+    }
+    if (formData.grossAmountCents === 0) {
+      if (eventRows[0].status === 'FULL' || eventRows[0].available_slots <= 0) return { outcome: 'AVAILABILITY_EXHAUSTED' };
+      if (eventRows[0].status !== 'OPEN' || new Date(eventRows[0].event_date).getTime() <= Date.now()) {
+        return { outcome: 'INVALID_STATE', message: 'Event is not accepting registrations' };
+      }
+      const rows = await sql<Array<{result_code: string; registration_id: string | null}>>`
+        SELECT * FROM sp_register_free(${formData.eventId}::UUID, ${formData.email},
+          ${formData.firstName}, ${formData.lastName}, ${formData.phone ?? null},
+          ${JSON.stringify(formData.attributes ?? {})}::JSONB)
+      `;
+      const row = rows[0];
+      if (row.result_code === 'SUCCESS' && row.registration_id) {
+        const reg = await this.getRegistration(row.registration_id);
+        if (reg) {
+          try {
+            await this.notificationService.sendRegistrationConfirmation(reg, eventRows[0].name);
+            await sql`SELECT sp_mark_confirmation_email_sent(${row.registration_id}::UUID)`;
+          } catch (_) { /* reconciler can retry */ }
+        }
+        return { outcome: 'SUCCESS', registrationId: row.registration_id };
+      }
+      if (row.result_code === 'ALREADY_REGISTERED') return { outcome: 'ALREADY_REGISTERED' };
+      if (row.result_code === 'EVENT_NOT_FOUND') return { outcome: 'NOT_FOUND' };
+      if (row.result_code === 'EVENT_CLOSED') return { outcome: 'INVALID_STATE' };
+      if (row.result_code === 'AVAILABILITY_EXHAUSTED') return { outcome: 'AVAILABILITY_EXHAUSTED' };
+      return { outcome: 'INTERNAL_ERROR', message: 'Could not reserve free registration' };
+    }
+
+    // Detect a live checkout without disclosing its client secret based on an
+    // unverified email address. The browser can resume its own in-memory
+    // checkout capability after Back; a lost browser session must not be
+    // silently rebound to another guest.
+    const existing = await sql<Array<{registration_id: string}>>`
+      SELECT registration_id FROM registrations
+      WHERE event_id = ${formData.eventId}::UUID AND lower(email) = lower(${formData.email})
+        AND status NOT IN ('PAYMENT_FAILED', 'EXPIRED', 'CANCELLED')
+      ORDER BY created_at DESC LIMIT 1
+    `;
+    if (existing.length) {
+      // Email is not proof of mailbox ownership. Never return a pending PI's
+      // client secret based on a guest-supplied email address.
+      return { outcome: 'ALREADY_REGISTERED', registrationId: existing[0].registration_id };
+    }
+
+    if (eventRows[0].status === 'FULL' || eventRows[0].available_slots <= 0) return { outcome: 'AVAILABILITY_EXHAUSTED' };
+    if (eventRows[0].status !== 'OPEN' || new Date(eventRows[0].event_date).getTime() <= Date.now()) {
+      return { outcome: 'INVALID_STATE', message: 'Event is not accepting registrations' };
     }
 
     let pi: { id: string; client_secret: string };
@@ -73,26 +119,29 @@ export class RegistrationService implements IRegistrationService {
       const methodParams: Record<string, unknown> = config.stripe.paymentMethodConfiguration
         ? { payment_method_configuration: config.stripe.paymentMethodConfiguration }
         : { payment_method_types: ['card'] };
+      const attemptId = crypto.randomUUID();
       pi = await this.stripe.paymentIntents.create(
         {
           amount: formData.grossAmountCents,
           currency: 'usd',
           capture_method: 'manual',
-          metadata: { eventId: formData.eventId, email: formData.email },
+          metadata: { eventId: formData.eventId, email: formData.email, checkoutAttemptId: attemptId },
           ...methodParams,
         },
-        { idempotencyKey: `pi-create-${formData.eventId}-${crypto.createHash('sha256').update(formData.email.toLowerCase()).digest('hex').slice(0, 16)}` }
+        { idempotencyKey: `pi-create-${attemptId}` }
       );
     } catch (err: unknown) {
       const e = err as Record<string, unknown>;
       const msg = (e['message'] as string | undefined) ?? '';
-      if (msg.includes('timeout') || e['code'] === 'api_connection_error') {
+      if (err instanceof Stripe.errors.StripeConnectionError || err instanceof Stripe.errors.StripeRateLimitError || msg.toLowerCase().includes('timeout')) {
         return { outcome: 'STRIPE_TIMEOUT', message: 'Stripe API timed out' };
       }
       return { outcome: 'STRIPE_ERROR', message: 'Stripe API error' };
     }
 
-    const spRows = await sql<Array<{result_code: string; registration_id: string | null}>>`
+    let spRows: Array<{result_code: string; registration_id: string | null}>;
+    try {
+      spRows = await sql<Array<{result_code: string; registration_id: string | null}>>`
       SELECT * FROM sp_initiate_registration(
         ${formData.eventId}::UUID,
         ${formData.email},
@@ -104,12 +153,34 @@ export class RegistrationService implements IRegistrationService {
         ${pi.id}
       )
     `;
+    } catch (dbError) {
+      // A DB error may have happened after commit. Only cancel if we can prove
+      // the intent has no durable registration reference.
+      try {
+        const refs = await sql`SELECT 1 FROM registrations WHERE payment_intent_id = ${pi.id}`;
+        if (refs.length === 0) await this.stripe.paymentIntents.cancel(pi.id);
+      } catch (_) { /* unknown state: retain PI for safe reconciliation */ }
+      throw dbError;
+    }
 
     const spResult = spRows[0];
 
     if (spResult.result_code === 'ALREADY_REGISTERED') {
-      try { await this.stripe.paymentIntents.cancel(pi.id); } catch (_) { /* best effort */ }
+      const refs = await sql`SELECT 1 FROM registrations WHERE payment_intent_id = ${pi.id}`;
+      if (refs.length === 0) try { await this.stripe.paymentIntents.cancel(pi.id); } catch (_) { /* best effort */ }
       return { outcome: 'ALREADY_REGISTERED' };
+    }
+    if (spResult.result_code === 'EVENT_CLOSED') {
+      try { await this.stripe.paymentIntents.cancel(pi.id); } catch (_) { /* best effort */ }
+      return { outcome: 'INVALID_STATE' };
+    }
+    if (spResult.result_code === 'AVAILABILITY_EXHAUSTED') {
+      try { await this.stripe.paymentIntents.cancel(pi.id); } catch (_) { /* best effort */ }
+      return { outcome: 'AVAILABILITY_EXHAUSTED' };
+    }
+    if (spResult.result_code === 'INVALID_AMOUNT') {
+      try { await this.stripe.paymentIntents.cancel(pi.id); } catch (_) { /* best effort */ }
+      return { outcome: 'INTERNAL_ERROR', message: 'Amount mismatch' };
     }
     if (spResult.result_code === 'EVENT_NOT_FOUND') {
       try { await this.stripe.paymentIntents.cancel(pi.id); } catch (_) { /* best effort */ }
@@ -149,10 +220,6 @@ export class RegistrationService implements IRegistrationService {
       return { outcome: 'INTERNAL_ERROR', message: 'Failed to retrieve payment intent' };
     }
 
-    if (pi.status !== 'requires_capture') {
-      return { outcome: 'PAYMENT_FAILED', message: 'Payment not authorized' };
-    }
-
     const rows = await sql<Array<{gross_amount_cents: number}>>`
       SELECT gross_amount_cents FROM registrations WHERE payment_intent_id = ${paymentIntentId}
     `;
@@ -162,12 +229,17 @@ export class RegistrationService implements IRegistrationService {
       return { outcome: 'NOT_FOUND' };
     }
 
-    return this.handlePaymentAuthorized(paymentIntentId, rows[0].gross_amount_cents);
+    if (pi.status === 'requires_capture') return this.handlePaymentAuthorized(paymentIntentId, rows[0].gross_amount_cents);
+    if (pi.status === 'succeeded') return this.handlePaymentAuthorized(paymentIntentId, rows[0].gross_amount_cents, true);
+    if (pi.status === 'processing') return { outcome: 'CAPTURE_FAILED', message: 'Payment is still processing' };
+    if (pi.status === 'canceled') return this.handlePaymentFailed(paymentIntentId, {});
+    return { outcome: 'PAYMENT_FAILED', message: 'Payment was not authorized' };
   }
 
   async handlePaymentAuthorized(
     paymentIntentId: PaymentIntentId,
-    grossAmountCents: number
+    grossAmountCents: number,
+    alreadyCaptured = false
   ): Promise<AuthorizationProcessResult> {
     const slotRows = await sql<Array<{
       result_code: string;
@@ -184,6 +256,10 @@ export class RegistrationService implements IRegistrationService {
     const slotResult = slotRows[0];
 
     if (slotResult.result_code === 'IDEMPOTENT_REPLAY') {
+      if (alreadyCaptured && slotResult.registration_id) {
+        const reg = await this.getRegistration(slotResult.registration_id);
+        if (reg?.status === 'PENDING_CAPTURE') return this.finalizeCaptured(paymentIntentId, grossAmountCents, grossAmountCents);
+      }
       return { outcome: 'IDEMPOTENT_REPLAY', registrationId: slotResult.registration_id ?? undefined };
     }
 
@@ -202,51 +278,62 @@ export class RegistrationService implements IRegistrationService {
     }
 
     const registrationId = slotResult.registration_id!;
-    try {
-      const captured = await this.stripe.paymentIntents.capture(paymentIntentId);
-      const netAmountCents = captured.latest_charge?.amount_captured ?? captured.amount_received ?? grossAmountCents;
+    if (alreadyCaptured) return this.finalizeCaptured(paymentIntentId, grossAmountCents, grossAmountCents, registrationId);
 
-      const finalRows = await sql<Array<{
-        result_code: string;
-        registration_id: string | null;
-        event_id: string | null;
-        email: string | null;
-        first_name: string | null;
-        last_name: string | null;
-      }>>`
+    let captured: { latest_charge?: { amount_captured: number }; amount_received?: number };
+    try {
+      captured = await this.stripe.paymentIntents.capture(paymentIntentId);
+    } catch (captureErr: unknown) {
+      let recovered: Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>> | null = null;
+      try { recovered = await this.stripe.paymentIntents.retrieve(paymentIntentId); } catch (_) { /* uncertain: retain slot */ }
+      if (recovered?.status === 'succeeded') {
+        return this.finalizeCaptured(paymentIntentId, grossAmountCents,
+          recovered.latest_charge?.amount_captured ?? recovered.amount_received ?? grossAmountCents, registrationId);
+      }
+      if (!recovered || recovered.status !== 'requires_capture' || isTransientStripeError(captureErr) || !(captureErr instanceof Stripe.errors.StripeCardError)) {
+        await sql`SELECT sp_increment_capture_attempt(${registrationId}::UUID)`;
+        return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Capture outcome is uncertain; the reservation is being reconciled' };
+      }
+      try {
+        const canceled = await this.stripe.paymentIntents.cancel(paymentIntentId);
+        if (canceled.status !== 'canceled') return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Payment authorization could not be released yet' };
+      } catch (_) {
+        return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Payment authorization could not be released yet' };
+      }
+      await sql`SELECT * FROM sp_restore_slot_on_capture_failure(${paymentIntentId})`;
+      return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Capture permanently failed' };
+    }
+    const netAmountCents = captured.latest_charge?.amount_captured ?? captured.amount_received ?? grossAmountCents;
+    return this.finalizeCaptured(paymentIntentId, grossAmountCents, netAmountCents, registrationId);
+  }
+
+  private async finalizeCaptured(paymentIntentId: PaymentIntentId, _grossAmountCents: number,
+    netAmountCents: number, knownRegistrationId?: RegistrationId): Promise<AuthorizationProcessResult> {
+    let finalRows: Array<{result_code: string; registration_id: string | null}>;
+    try {
+      finalRows = await sql<Array<{result_code: string; registration_id: string | null}>>`
         SELECT * FROM sp_finalize_registration(${paymentIntentId}, ${netAmountCents})
       `;
-
-      const finalResult = finalRows[0];
-      if (finalResult.result_code === 'SUCCESS') {
+    } catch (_) {
+      return { outcome: 'CAPTURE_FAILED', registrationId: knownRegistrationId, message: 'Capture succeeded; registration finalization will be retried' };
+    }
+    const finalResult = finalRows[0];
+    const registrationId = (finalResult.registration_id ?? knownRegistrationId) as RegistrationId | undefined;
+    if (finalResult.result_code === 'SUCCESS') {
+      if (registrationId) {
         try {
           const reg = await this.getRegistration(registrationId);
           if (reg) {
-            const eventRows = await sql<Array<{name: string}>>`
-              SELECT name FROM events WHERE event_id = ${reg.eventId}
-            `;
-            const eventName = eventRows.length > 0 ? eventRows[0].name : 'Event';
-            await this.notificationService.sendRegistrationConfirmation(reg, eventName);
+            const eventRows = await sql<Array<{name: string}>>`SELECT name FROM events WHERE event_id = ${reg.eventId}`;
+            await this.notificationService.sendRegistrationConfirmation(reg, eventRows[0]?.name ?? 'Event');
             await sql`SELECT sp_mark_confirmation_email_sent(${registrationId}::UUID)`;
           }
-        } catch (emailErr) {
-          console.error('[RegistrationService] Email notification failed:', emailErr);
-        }
-        return { outcome: 'SUCCESS', registrationId };
+        } catch (emailErr) { console.error('[RegistrationService] Email notification failed:', emailErr); }
       }
-      return { outcome: 'IDEMPOTENT_REPLAY', registrationId };
-    } catch (captureErr: unknown) {
-      if (isTransientStripeError(captureErr)) {
-        await sql`SELECT sp_increment_capture_attempt(${registrationId}::UUID)`;
-        return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Capture failed transiently; will retry' };
-      } else {
-        await sql`SELECT * FROM sp_restore_slot_on_capture_failure(${paymentIntentId})`;
-        // Release the customer's card authorization. Without this the PI
-        // remains in requires_capture and Stripe holds funds for ~7 days.
-        try { await this.stripe.paymentIntents.cancel(paymentIntentId); } catch (_) { /* best effort */ }
-        return { outcome: 'CAPTURE_FAILED', registrationId, message: 'Capture permanently failed' };
-      }
+      return { outcome: 'SUCCESS', registrationId };
     }
+    if (finalResult.result_code === 'IDEMPOTENT_REPLAY') return { outcome: 'IDEMPOTENT_REPLAY', registrationId };
+    return { outcome: 'CAPTURE_FAILED', registrationId, message: `Capture recorded; finalization pending (${finalResult.result_code})` };
   }
 
   async handlePaymentFailed(

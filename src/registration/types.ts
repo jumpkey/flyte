@@ -112,6 +112,7 @@ export interface IndividualRefundRequest {
   refundType:          RefundType;
   partialAmountCents?: number;
   reason:              string;
+  operationId?:        string;
 }
 
 export interface BulkRefundRequest {

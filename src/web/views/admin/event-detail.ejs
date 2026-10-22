@@ -1,8 +1,4 @@
 <%
-  function toLocalInput(d) {
-    var dt = new Date(d); var p = function (n) { return String(n).padStart(2, '0'); };
-    return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()) + 'T' + p(dt.getHours()) + ':' + p(dt.getMinutes());
-  }
   var feeDollars = (event.registration_fee_cents / 100).toFixed(2);
   var cancellable = event.status !== 'CANCELLED' && event.status !== 'CLOSED';
 %>
@@ -81,6 +77,7 @@
 <% } %>
 
 <%# Waitlist %>
+<p class="text-secondary small">Waitlist openings are handled manually. Review this list and contact attendees directly; the system does not promote people or send availability alerts.</p>
 <div class="d-flex justify-content-between align-items-center mb-2">
   <h2 class="h5 mb-0">Waitlist <span class="text-secondary">(<%= waitlist.length %>)</span></h2>
   <% if (waitlist && waitlist.length > 0) { %><a class="btn btn-outline-secondary btn-sm" href="/admin/events/<%= event.event_id %>/waitlist.csv">Waitlist CSV</a><% } %>
@@ -101,7 +98,7 @@
 <% } %>
 
 <%# Cancel modal — states the blast radius (WF-10). %>
-<dialog id="cancel-dialog" class="flyte-dialog">
+<dialog id="cancel-dialog" class="flyte-dialog" aria-label="Cancel event">
   <form method="post" action="/admin/events/<%= event.event_id %>/cancel">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <h2 class="h5">Cancel “<%= event.name %>”?</h2>

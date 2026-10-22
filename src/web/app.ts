@@ -1,4 +1,7 @@
+import { sql } from '../services/db.js';
 import { Hono } from 'hono';
+import type { Context } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import { serveStatic } from '@hono/node-server/serve-static';
 import pino from 'pino';
@@ -43,7 +46,30 @@ const logger = pino({ level: 'info' });
 
 const app = new Hono<{ Variables: Variables }>();
 
+app.get('/health', async (c) => {
+  try {
+    await sql`SELECT 1`;
+    return c.json({ ok: true, revision: process.env.APP_REVISION ?? 'development' });
+  } catch (_) {
+    return c.json({ ok: false }, 503);
+  }
+});
+
 app.use('/public/*', serveStatic({ root: './' }));
+
+// Bound every request before any route parser runs. The webhook has a tighter
+// route-specific cap below and keeps its raw bytes for signature verification.
+const rejectOversizedBody = (c: Context) => c.text('Payload Too Large', 413);
+app.use('*', bodyLimit({ maxSize: 3 * 1024 * 1024, onError: rejectOversizedBody }));
+const smallFormBody = bodyLimit({ maxSize: 64 * 1024, onError: rejectOversizedBody });
+const smallJsonBody = bodyLimit({ maxSize: 128 * 1024, onError: rejectOversizedBody });
+for (const path of ['/login', '/register', '/api/check-email', '/forgot-password', '/reset-password', '/profile']) {
+  app.use(path, smallFormBody);
+}
+for (const path of ['/events/:eventId/register', '/registration/confirm/:paymentIntentId', '/events/:eventId/waitlist']) {
+  app.use(path, smallJsonBody);
+}
+app.use('/webhooks/stripe', bodyLimit({ maxSize: 1024 * 1024, onError: rejectOversizedBody }));
 
 // Webhook route MUST be registered before session/csrf middleware
 // so it receives the raw unparsed body
@@ -60,7 +86,7 @@ app.use('*', secureHeaders({
     // img-src widened to https: for admin-curated event images (D2/S5). Documented
     // tradeoff: a remote image host can see the viewer's IP. Admin-only URLs, and
     // the v2 option is an image proxy.
-    imgSrc: ["'self'", 'data:', 'https:'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
     connectSrc: ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://hooks.stripe.com'],
     fontSrc: ["'self'"],
     formAction: ["'self'"],

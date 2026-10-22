@@ -1,21 +1,6 @@
 import { sql } from '../../services/db.js';
 import type { StripeClient, IRefundService, INotificationService } from '../interfaces.js';
-import type {
-  IndividualRefundRequest, BulkRefundRequest,
-  RefundResult, BulkRefundResult, RegistrationRecord, RegistrationStatus
-} from '../types.js';
-
-/**
- * Idempotency key for a Stripe refund (W13). Stripe dedups any retry that
- * carries the same key, so a double-submitted modal or a network retry issues
- * the refund at most once. We bind the key to the registration, the amount, and
- * the balance already refunded BEFORE this refund — so a genuine second partial
- * of the same size (a different logical refund) gets a distinct key and still
- * goes through, while an accidental re-send of the same request collapses.
- */
-function refundIdempotencyKey(registrationId: string, priorRefundedCents: number, amountCents: number): string {
-  return `refund-${registrationId}-${priorRefundedCents}-${amountCents}`;
-}
+import type { IndividualRefundRequest, BulkRefundRequest, RefundResult, BulkRefundResult, RegistrationRecord, RegistrationStatus } from '../types.js';
 
 function mapDbRow(row: Record<string, unknown>): RegistrationRecord {
   return {
@@ -42,183 +27,120 @@ function mapDbRow(row: Record<string, unknown>): RegistrationRecord {
   };
 }
 
+/** Refund operations persist before contacting Stripe, so retries span both systems. */
 export class RefundService implements IRefundService {
-  constructor(
-    private stripe: StripeClient,
-    private notificationService: INotificationService
-  ) {}
+  constructor(private stripe: StripeClient, private notificationService: INotificationService) {}
 
   async refundRegistration(request: IndividualRefundRequest): Promise<RefundResult> {
-    const rows = await sql`SELECT * FROM registrations WHERE registration_id = ${request.registrationId}::UUID`;
-    if (rows.length === 0) return { outcome: 'NOT_FOUND' };
-    const reg = mapDbRow(rows[0] as Record<string, unknown>);
-
-    if (reg.status === 'CANCELLED') return { outcome: 'ALREADY_REFUNDED', registrationId: reg.registrationId };
-    if (reg.status !== 'CONFIRMED') return { outcome: 'INVALID_STATE', registrationId: reg.registrationId };
-    if (!reg.paymentIntentId) return { outcome: 'INVALID_STATE' };
-
-    const eventRows = await sql<Array<{name: string}>>`SELECT name FROM events WHERE event_id = ${reg.eventId}::UUID`;
-    const eventName = eventRows.length > 0 ? eventRows[0].name : 'Event';
-
-    if (request.refundType === 'FULL') {
-      // A FULL refund cancels the registration and restores the slot. By default
-      // it returns the whole captured (net) amount — Stripe refunds the captured
-      // total when no `amount` is passed, and we track the same value so
-      // refunded_amount_cents never overstates the charge. An approver may also
-      // pass an explicit `partialAmountCents` to deduct a service fee (B5): the
-      // registration is still cancelled, but only that amount is returned. The
-      // amount is hard-capped at the captured balance, so a refund can never
-      // exceed what was charged.
-      const captured = reg.netAmountCents ?? reg.grossAmountCents;
-      const maxRefundable = captured - reg.refundedAmountCents;
-      const refundAmount = request.partialAmountCents ?? captured;
-
-      if (request.partialAmountCents == null && reg.refundedAmountCents >= captured) {
-        return { outcome: 'ALREADY_REFUNDED', registrationId: reg.registrationId };
+    const operation = await sql.begin(async tx => {
+      const rows = await tx`SELECT * FROM registrations WHERE registration_id = ${request.registrationId}::uuid FOR UPDATE`;
+      if (!rows[0]) return { error: 'NOT_FOUND' as const };
+      const reg = mapDbRow(rows[0]);
+      const key = request.operationId ?? `refund-${reg.registrationId}-${reg.refundedAmountCents}-${request.refundType}-${request.partialAmountCents ?? 'remaining'}`;
+      const existing = await tx`SELECT * FROM refund_operations WHERE operation_id = ${key}`;
+      if (existing[0]) {
+        const op = existing[0];
+        if (op.registration_id !== reg.registrationId || op.refund_type !== request.refundType ||
+            (request.partialAmountCents != null && op.amount_cents !== request.partialAmountCents)) return { error: 'INVALID_STATE' as const };
+        return { op, reg };
       }
-      if (refundAmount <= 0) return { outcome: 'INVALID_STATE', registrationId: reg.registrationId };
-      if (refundAmount > maxRefundable) return { outcome: 'AMOUNT_EXCEEDS_BALANCE', registrationId: reg.registrationId };
-
-      let refundId: string;
+      if (reg.status === 'CANCELLED') return { error: 'ALREADY_REFUNDED' as const };
+      if (reg.status !== 'CONFIRMED') return { error: 'INVALID_STATE' as const };
+      // Resume an uncertain operation instead of permitting a second refund.
+      const pending = await tx`SELECT * FROM refund_operations WHERE registration_id = ${reg.registrationId}::uuid AND status = 'PENDING'`;
+      if (pending[0]) return { error: 'INTERNAL_ERROR' as const };
+      const remaining = (reg.netAmountCents ?? reg.grossAmountCents) - reg.refundedAmountCents;
+      const amount = request.partialAmountCents ?? (request.refundType === 'FULL' ? remaining : -1);
+      if (!Number.isSafeInteger(amount) || amount < 0 || (request.refundType === 'PARTIAL' && amount === 0)) return { error: 'INVALID_STATE' as const };
+      if (amount > remaining) return { error: 'AMOUNT_EXCEEDS_BALANCE' as const };
+      if (amount > 0 && !reg.paymentIntentId) return { error: 'INVALID_STATE' as const };
+      const inserted = await tx`INSERT INTO refund_operations (operation_id, registration_id, refund_type, amount_cents, reason)
+        VALUES (${key}, ${reg.registrationId}::uuid, ${request.refundType}, ${amount}, ${request.reason}) RETURNING *`;
+      return { op: inserted[0], reg };
+    });
+    if ('error' in operation) return { outcome: operation.error!, registrationId: request.registrationId };
+    const { op, reg } = operation;
+    const success = (): RefundResult => ({ outcome: op.refund_type === 'FULL' ? 'REFUND_ISSUED' : 'PARTIAL_REFUND_ISSUED',
+      registrationId: reg.registrationId, stripeRefundId: op.stripe_refund_id ?? undefined, refundedAmountCents: op.amount_cents });
+    if (op.status === 'COMPLETED') return success();
+    let refundId: string | null = op.stripe_refund_id ?? null;
+    let amount = op.amount_cents as number;
+    if (amount > 0) {
+      // Stripe may prune idempotency keys after 24 hours. Never create a new
+      // refund blindly once an unresolved request crosses that boundary.
+      if (!refundId && Date.now() - new Date(op.created_at).getTime() > 23 * 60 * 60 * 1000) return { outcome: 'INTERNAL_ERROR', registrationId: reg.registrationId };
       try {
-        // Omit `amount` for a true full refund (returns the exact captured
-        // total); pass an explicit amount for a fee-deducted cancellation.
-        const params = request.partialAmountCents != null
-          ? { payment_intent: reg.paymentIntentId, amount: refundAmount }
-          : { payment_intent: reg.paymentIntentId };
-        const refund = await this.stripe.refunds.create(
-          params,
-          { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, refundAmount) },
-        );
+        const refund = refundId && this.stripe.refunds.retrieve
+          ? await this.stripe.refunds.retrieve(refundId)
+          : await this.stripe.refunds.create({ payment_intent: reg.paymentIntentId, amount }, { idempotencyKey: op.operation_id });
         refundId = refund.id;
+        if (typeof refund.amount !== 'number' || refund.amount !== amount) return { outcome: 'INTERNAL_ERROR', registrationId: reg.registrationId };
+        await sql`UPDATE refund_operations SET stripe_refund_id = ${refundId}, updated_at = now() WHERE operation_id = ${op.operation_id}`;
+        if (refund.status !== 'succeeded') return { outcome: 'STRIPE_ERROR', registrationId: reg.registrationId };
       } catch (_) {
+        // Preserve the operation: the processor may have accepted the refund.
         return { outcome: 'STRIPE_ERROR', registrationId: reg.registrationId };
       }
-
-      const spRows = await sql<Array<{result_code: string}>>`
-        SELECT * FROM sp_cancel_registration(
-          ${reg.registrationId}::UUID,
-          ${refundId},
-          ${refundAmount},
-          ${request.reason},
-          TRUE
-        )
-      `;
-      if (spRows[0].result_code !== 'SUCCESS') {
-        return { outcome: 'INTERNAL_ERROR' };
-      }
-
-      try {
-        await this.notificationService.sendRefundConfirmation(reg, refundAmount, eventName);
-      } catch (_) { /* best effort */ }
-
-      return { outcome: 'REFUND_ISSUED', registrationId: reg.registrationId, stripeRefundId: refundId, refundedAmountCents: refundAmount };
-    } else {
-      const partialAmount = request.partialAmountCents;
-      if (!partialAmount || partialAmount <= 0) return { outcome: 'INVALID_STATE' };
-      // Refundable balance is bounded by what was actually captured.
-      const captured = reg.netAmountCents ?? reg.grossAmountCents;
-      const remaining = captured - reg.refundedAmountCents;
-      if (partialAmount > remaining) return { outcome: 'AMOUNT_EXCEEDS_BALANCE' };
-
-      let refundId: string;
-      try {
-        const refund = await this.stripe.refunds.create(
-          { payment_intent: reg.paymentIntentId, amount: partialAmount },
-          { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, partialAmount) },
-        );
-        refundId = refund.id;
-      } catch (_) {
-        return { outcome: 'STRIPE_ERROR', registrationId: reg.registrationId };
-      }
-
-      const spRows = await sql<Array<{result_code: string}>>`
-        SELECT * FROM sp_partial_refund_registration(
-          ${reg.registrationId}::UUID,
-          ${refundId},
-          ${partialAmount},
-          ${request.reason}
-        )
-      `;
-      if (spRows[0].result_code === 'AMOUNT_EXCEEDS_BALANCE') return { outcome: 'AMOUNT_EXCEEDS_BALANCE' };
-      if (spRows[0].result_code !== 'SUCCESS') return { outcome: 'INTERNAL_ERROR' };
-
-      return { outcome: 'PARTIAL_REFUND_ISSUED', registrationId: reg.registrationId, stripeRefundId: refundId, refundedAmountCents: partialAmount };
     }
+    const applied = await sql.begin(async tx => {
+      const code = op.refund_type === 'FULL'
+        ? await tx`SELECT * FROM sp_cancel_registration(${reg.registrationId}::uuid, ${refundId ?? op.operation_id}, ${amount}, ${op.reason}, TRUE)`
+        : await tx`SELECT * FROM sp_partial_refund_registration(${reg.registrationId}::uuid, ${refundId}, ${amount}, ${op.reason})`;
+      if (!['SUCCESS', 'IDEMPOTENT_REPLAY', 'ALREADY_CANCELLED'].includes(code[0].result_code)) return false;
+      await tx`UPDATE refund_operations SET status = 'COMPLETED', stripe_refund_id = ${refundId}, updated_at = now() WHERE operation_id = ${op.operation_id}`;
+      return true;
+    });
+    if (!applied) return { outcome: 'INTERNAL_ERROR', registrationId: reg.registrationId };
+    op.stripe_refund_id = refundId;
+    // A single claim avoids duplicate emails on concurrent delivery. Mail is
+    // advisory; financial completion does not depend on delivery.
+    const claimed = await sql`UPDATE refund_operations SET notification_claimed = TRUE WHERE operation_id = ${op.operation_id} AND NOT notification_claimed RETURNING operation_id`;
+    if (claimed.length) {
+      const events = await sql`SELECT name FROM events WHERE event_id = ${reg.eventId}::uuid`;
+      try { await this.notificationService.sendRefundConfirmation(reg, amount, events[0]?.name ?? 'Event'); } catch (_) { /* operator can resend */ }
+    }
+    return success();
+  }
+
+  async reconcilePendingRefunds(): Promise<number> {
+    const pending = await sql`SELECT * FROM refund_operations WHERE status = 'PENDING' ORDER BY created_at LIMIT 100`;
+    let completed = 0;
+    for (const op of pending) {
+      try {
+        const result = await this.refundRegistration({ registrationId: op.registration_id, refundType: op.refund_type,
+          partialAmountCents: op.amount_cents, reason: op.reason, operationId: op.operation_id });
+        if (['REFUND_ISSUED', 'PARTIAL_REFUND_ISSUED'].includes(result.outcome)) completed++;
+        else console.warn('[refund-recovery] unresolved operation', op.operation_id, result.outcome);
+      } catch (error) {
+        console.error('[refund-recovery] operation failed', op.operation_id, error);
+      }
+    }
+    return completed;
   }
 
   async refundEvent(request: BulkRefundRequest): Promise<BulkRefundResult> {
-    const eventRows = await sql<Array<{name: string}>>`SELECT name FROM events WHERE event_id = ${request.eventId}::UUID`;
-    const eventName = eventRows.length > 0 ? eventRows[0].name : 'Event';
-
-    const confirmedRows = await sql`
-      SELECT * FROM registrations WHERE event_id = ${request.eventId}::UUID AND status = 'CONFIRMED'
-    `;
-    const registrations = (confirmedRows as Record<string, unknown>[]).map(mapDbRow);
-
+    // Commit the admission freeze before inspecting payment state. Captures
+    // already in flight may finish, and are refunded on this or the next pass.
+    await sql`UPDATE events SET status = 'CANCELLING', updated_at = now() WHERE event_id = ${request.eventId}::uuid AND status <> 'CANCELLED'`;
+    const pending = await sql`SELECT registration_id, payment_intent_id FROM registrations WHERE event_id = ${request.eventId}::uuid AND status = 'PENDING_PAYMENT'`;
+    for (const row of pending) {
+      try {
+        if (row.payment_intent_id) await this.stripe.paymentIntents.cancel(row.payment_intent_id);
+        await sql`SELECT * FROM sp_fail_registration(${row.payment_intent_id})`;
+      } catch (_) { /* reconciliation must resolve the uncertain capture */ }
+    }
+    const confirmed = await sql`SELECT registration_id FROM registrations WHERE event_id = ${request.eventId}::uuid AND status = 'CONFIRMED'`;
     const results: BulkRefundResult['results'] = [];
     let totalSucceeded = 0;
-    let totalFailed = 0;
-
-    for (const reg of registrations) {
-      if (!reg.paymentIntentId) {
-        results.push({ registrationId: reg.registrationId, result: { outcome: 'INVALID_STATE' } });
-        totalFailed++;
-        continue;
-      }
-
-      const refundAmount = reg.netAmountCents ?? reg.grossAmountCents;
-
-      let refundId: string;
-      try {
-        const refund = await this.stripe.refunds.create(
-          { payment_intent: reg.paymentIntentId },
-          { idempotencyKey: refundIdempotencyKey(reg.registrationId, reg.refundedAmountCents, refundAmount) },
-        );
-        refundId = refund.id;
-      } catch (_) {
-        results.push({ registrationId: reg.registrationId, result: { outcome: 'STRIPE_ERROR' } });
-        totalFailed++;
-        continue;
-      }
-
-      const spRows = await sql<Array<{result_code: string}>>`
-        SELECT * FROM sp_cancel_registration(
-          ${reg.registrationId}::UUID,
-          ${refundId},
-          ${refundAmount},
-          ${request.reason},
-          FALSE
-        )
-      `;
-      const code = spRows[0].result_code;
-      if (code === 'SUCCESS' || code === 'ALREADY_CANCELLED') {
-        results.push({ registrationId: reg.registrationId, result: { outcome: 'REFUND_ISSUED', stripeRefundId: refundId } });
-        totalSucceeded++;
-        try {
-          await this.notificationService.sendRefundConfirmation(reg, refundAmount, eventName);
-        } catch (_) { /* best effort */ }
-      } else {
-        results.push({ registrationId: reg.registrationId, result: { outcome: 'INTERNAL_ERROR' } });
-        totalFailed++;
-      }
+    for (const reg of confirmed) {
+      const result = await this.refundRegistration({ registrationId: reg.registration_id, refundType: 'FULL', reason: request.reason,
+        operationId: `event-cancel-${request.eventId}-${reg.registration_id}` });
+      results.push({ registrationId: reg.registration_id, result });
+      if (['REFUND_ISSUED', 'ALREADY_REFUNDED'].includes(result.outcome)) totalSucceeded++;
     }
-
-    if (totalFailed === 0) {
-      await sql`UPDATE events SET status = 'CANCELLED', updated_at = now() WHERE event_id = ${request.eventId}::UUID`;
-    } else {
-      console.warn(
-        `[RefundService] ${totalFailed}/${registrations.length} refunds failed for event ${request.eventId}; ` +
-        `event status NOT changed to CANCELLED`
-      );
-    }
-
-    return {
-      eventId: request.eventId,
-      totalProcessed: registrations.length,
-      totalSucceeded,
-      totalFailed,
-      results,
-    };
+    const unresolved = await sql`SELECT count(*)::int AS n FROM registrations WHERE event_id = ${request.eventId}::uuid AND status IN ('PENDING_PAYMENT','PENDING_CAPTURE','CONFIRMED')`;
+    const totalFailed = unresolved[0].n as number;
+    if (totalFailed === 0) await sql`UPDATE events SET status = 'CANCELLED', updated_at = now() WHERE event_id = ${request.eventId}::uuid AND status = 'CANCELLING'`;
+    return { eventId: request.eventId, totalProcessed: totalSucceeded + totalFailed, totalSucceeded, totalFailed, results };
   }
 }

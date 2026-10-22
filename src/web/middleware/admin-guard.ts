@@ -18,7 +18,7 @@ export const adminGuard = createMiddleware(async (c, next) => {
     return c.notFound();
   }
   const user = await userService.findById(session.userId);
-  if (!user || user.isLocked || !user.isAdmin) {
+  if (!user || user.isLocked || user.isAdminSuspended || !user.isAdmin) {
     return c.notFound();
   }
   c.set('user', user);

@@ -10,12 +10,13 @@ import type {
 export interface StripeClient {
   paymentIntents: {
     create(params: Record<string, unknown>, options?: unknown): Promise<{id: string; client_secret: string; status: string; amount: unknown; currency: unknown; capture_method: string}>;
-    retrieve(id: string): Promise<{id: string; status: string; amount_received?: number; latest_charge?: {amount_captured: number}; metadata?: Record<string, string>}>;
+    retrieve(id: string): Promise<{id: string; status: string; client_secret?: string; amount_received?: number; latest_charge?: {amount_captured: number}; metadata?: Record<string, string>}>;
     capture(id: string, params?: Record<string, unknown>, options?: unknown): Promise<{id: string; status: string; amount_received?: number; latest_charge?: {amount_captured: number}}>;
     cancel(id: string, params?: Record<string, unknown>, options?: unknown): Promise<{id: string; status: string}>;
   };
   refunds: {
     create(params: Record<string, unknown>, options?: unknown): Promise<{id: string; amount: unknown; status: string}>;
+    retrieve?(id: string): Promise<{id: string; amount: unknown; status: string}>;
   };
   webhooks: {
     constructEvent(payload: string | Buffer, sig: string, secret: string): Record<string, unknown>;
@@ -30,7 +31,7 @@ export interface IRegistrationService {
   initiateRegistration(formData: RegistrationFormData): Promise<RegistrationInitResult>;
   handleAuthorizationWebhook(paymentIntentId: PaymentIntentId, stripeEventPayload: Record<string, unknown>): Promise<AuthorizationProcessResult>;
   confirmRegistrationFromClient(paymentIntentId: PaymentIntentId): Promise<AuthorizationProcessResult>;
-  handlePaymentAuthorized(paymentIntentId: PaymentIntentId, grossAmountCents: number): Promise<AuthorizationProcessResult>;
+  handlePaymentAuthorized(paymentIntentId: PaymentIntentId, grossAmountCents: number, alreadyCaptured?: boolean): Promise<AuthorizationProcessResult>;
   handlePaymentFailed(paymentIntentId: PaymentIntentId, stripeEventPayload: Record<string, unknown>): Promise<AuthorizationProcessResult>;
   getRegistration(registrationId: RegistrationId): Promise<RegistrationRecord | null>;
   getRegistrationByPaymentIntent(paymentIntentId: PaymentIntentId): Promise<RegistrationRecord | null>;

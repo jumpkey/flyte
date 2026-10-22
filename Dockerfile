@@ -1,13 +1,18 @@
-FROM node:20-alpine AS builder
+ARG APP_REVISION=unknown
+
+FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
+ARG APP_REVISION
 WORKDIR /app
 ENV NODE_ENV=production
+ENV APP_REVISION=${APP_REVISION}
+LABEL org.opencontainers.image.revision=${APP_REVISION}
 
 # Install supercronic for cron job scheduling.
 # Verify the download against the SHA1 checksum published by the upstream
@@ -27,7 +32,7 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/web/views ./dist/web/views
 COPY --from=builder /app/db ./db
-COPY public ./public
+COPY --from=builder /app/public ./public
 COPY crontab ./crontab
 EXPOSE 3000
 

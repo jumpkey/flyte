@@ -23,6 +23,7 @@ const TEST_FILES = [
   'admin-users.test.ts',
   'polish.test.ts',
   'analytics.test.ts',
+  'security-stabilization.test.ts',
 ];
 
 async function runFile(file: string): Promise<{ file: string; passed: boolean; output: string }> {

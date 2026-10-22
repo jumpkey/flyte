@@ -12,7 +12,7 @@ export async function truncateTables(): Promise<void> {
   // explicitly. TRUNCATE is a no-op-safe on a table that may not exist yet only
   // if it exists; it always exists once migration 009 has run (CI + local).
   await testSql.unsafe(`
-    TRUNCATE TABLE refund_log, waitlist_entries, registrations, page_views, events RESTART IDENTITY CASCADE
+    TRUNCATE TABLE refund_operations, refund_log, waitlist_entries, registrations, page_views, events RESTART IDENTITY CASCADE
   `);
 }
 

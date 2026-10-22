@@ -14,6 +14,8 @@ import { testSql, truncateTables, assert, assertEqual } from '../../registration
 import { authService } from '../../services/auth-service.js';
 import { createSession } from '../middleware/session.js';
 import { validateEventForm, isAllowedTransition } from '../validators/event-form.js';
+import { instantToWallTime, wallTimeToInstant } from '../../services/event-time.js';
+import { dateBadge, dateLong } from '../view-helpers.js';
 import { RefundService } from '../../registration/services/RefundService.js';
 import { MockStripeClient } from '../../registration/testing/MockStripeClient.js';
 
@@ -123,6 +125,37 @@ async function runTests() {
     assert(!floor.ok && !!floor.errors.capacity, 'capacity floor enforced');
   });
 
+  await test('event wall times reject Chicago DST gaps and overlaps with actionable errors', () => {
+    const base = { name: 'X', capacity: '5', feeDollars: '10' };
+    const gap = validateEventForm({ ...base, eventDate: '2026-03-08T02:30' }, { timeZone: 'America/Chicago' });
+    assert(!gap.ok && /clocks move forward/i.test(gap.errors.eventDate), 'spring-forward gap rejected');
+    const overlap = validateEventForm({ ...base, eventDate: '2026-11-01T01:30' }, { timeZone: 'America/Chicago' });
+    assert(!overlap.ok && /clocks move back/i.test(overlap.errors.eventDate), 'fall-back overlap rejected');
+  });
+
+  await test('event times round-trip in UTC and convert on either side of Chicago DST', () => {
+    const utc = wallTimeToInstant('2030-01-01T10:00', 'UTC');
+    assert(utc.ok, 'UTC wall time accepted');
+    if (utc.ok) {
+      assertEqual(utc.date.toISOString(), '2030-01-01T10:00:00.000Z', 'UTC instant');
+      assertEqual(instantToWallTime(utc.date, 'UTC'), '2030-01-01T10:00', 'UTC editor value');
+    }
+    const before = wallTimeToInstant('2026-03-08T01:30', 'America/Chicago');
+    const after = wallTimeToInstant('2026-03-08T03:30', 'America/Chicago');
+    assert(before.ok && after.ok, 'valid times around spring transition accepted');
+    if (before.ok && after.ok) {
+      assertEqual(before.date.toISOString(), '2026-03-08T07:30:00.000Z', 'CST instant');
+      assertEqual(after.date.toISOString(), '2026-03-08T08:30:00.000Z', 'CDT instant');
+      assertEqual(instantToWallTime(after.date, 'America/Chicago'), '2026-03-08T03:30', 'Chicago editor value');
+    }
+  });
+
+  await test('event display helpers use the explicit configured zone', () => {
+    const instant = new Date('2030-01-01T16:00:00.000Z');
+    assert(dateLong(instant).includes('4:00 PM (UTC)'), 'long date carries time and IANA zone');
+    assertEqual(dateBadge(instant), 'JAN 1', 'short badge uses the configured zone');
+  });
+
   await test('transition rules: DRAFT→OPEN ok, OPEN→DRAFT no, OPEN↔CLOSED ok', () => {
     assert(isAllowedTransition('DRAFT', 'OPEN'), 'draft→open');
     assert(!isAllowedTransition('OPEN', 'DRAFT'), 'open→draft forbidden');
@@ -140,7 +173,9 @@ async function runTests() {
     assertEqual((await get('/admin/events')).status, 404, 'anon list 404');
     assertEqual((await get('/admin/events', nonAdmin.cookie)).status, 404, 'non-admin list 404');
     assertEqual((await get('/admin/events', admin.cookie)).status, 200, 'admin list 200');
-    assertEqual((await get('/admin/events/new', admin.cookie)).status, 200, 'admin new 200');
+    const newForm = await get('/admin/events/new', admin.cookie);
+    assertEqual(newForm.status, 200, 'admin new 200');
+    assert((await newForm.text()).includes('Date &amp; time (UTC)'), 'new event form names its event time zone');
   });
 
   await test('POST without CSRF token is 403; with token proceeds', async () => {
@@ -218,7 +253,7 @@ async function runTests() {
     const svc = new RefundService(new MockStripeClient({ refundShouldError: true }) as never, new NoopNotif() as never);
     const result = await svc.refundEvent({ eventId: id, refundType: 'FULL', reason: 'event_cancelled' });
     assert(result.totalFailed >= 1, 'a refund failed');
-    assertEqual((await testSql`SELECT status FROM events WHERE event_id = ${id}::UUID`)[0].status, 'OPEN', 'event NOT cancelled on failure');
+    assertEqual((await testSql`SELECT status FROM events WHERE event_id = ${id}::UUID`)[0].status, 'CANCELLING', 'event remains in the resumable cancellation state on failure');
   });
 
   // ── D1: uploaded event graphic (blob) ──
@@ -237,7 +272,7 @@ async function runTests() {
     assertEqual(img.status, 200, 'image served 200');
     assertEqual(img.headers.get('content-type'), 'image/png', 'server-derived content type');
     assertEqual(img.headers.get('x-content-type-options'), 'nosniff', 'nosniff header');
-    assert((img.headers.get('cache-control') || '').includes('max-age'), 'cache-control set');
+    assertEqual(img.headers.get('cache-control'), 'no-cache', 'image replacement is not hidden by a stale cache');
   });
 
   await test('D1: a non-image buffer is rejected — no blob stored, validation error shown', async () => {

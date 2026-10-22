@@ -77,14 +77,14 @@ async function runTests() {
       (r) => r.authOutcome === 'SUCCESS' || r.authOutcome === 'IDEMPOTENT_REPLAY'
     );
     const exhausted = results.filter(
-      (r) => r.authOutcome === 'AVAILABILITY_EXHAUSTED'
+      (r) => r.initOutcome === 'AVAILABILITY_EXHAUSTED' || r.authOutcome === 'AVAILABILITY_EXHAUSTED'
     );
 
     assertEqual(successfulAuths.length, capacity, `exactly ${capacity} should succeed`);
     assertEqual(
       exhausted.length,
       attempts - capacity,
-      `${attempts - capacity} should be AVAILABILITY_EXHAUSTED`
+      `${attempts - capacity} should be AVAILABILITY_EXHAUSTED; outcomes: ${JSON.stringify(results)}`
     );
 
     // Verify DB state

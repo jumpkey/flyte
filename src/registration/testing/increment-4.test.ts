@@ -65,7 +65,8 @@ async function runTests() {
     });
 
     assertEqual(result.outcome, 'ALREADY_REGISTERED', 'outcome');
-    stripe.assertCalled('paymentIntents.cancel');
+    stripe.assertNotCalled('paymentIntents.cancel');
+    stripe.assertNotCalled('paymentIntents.create');
   });
 
   await test('4-3: event not found returns NOT_FOUND', async () => {

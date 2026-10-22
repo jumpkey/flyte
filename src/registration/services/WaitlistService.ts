@@ -16,16 +16,12 @@ function mapRow(row: Record<string, unknown>): WaitlistEntry {
 
 export class WaitlistService implements IWaitlistService {
   async addToWaitlist(formData: WaitlistFormData): Promise<WaitlistEntry> {
-    const existing = await sql`
-      SELECT * FROM waitlist_entries WHERE event_id = ${formData.eventId}::UUID AND email = ${formData.email}
+    const result = await sql<Array<{result_code: string; waitlist_entry_id: string | null}>>`
+      SELECT * FROM sp_add_to_waitlist(${formData.eventId}::UUID, ${formData.email},
+        ${formData.firstName}, ${formData.lastName}, ${formData.phone ?? null})
     `;
-    if (existing.length > 0) return mapRow(existing[0] as Record<string, unknown>);
-
-    const rows = await sql`
-      INSERT INTO waitlist_entries (event_id, email, first_name, last_name, phone)
-      VALUES (${formData.eventId}::UUID, ${formData.email}, ${formData.firstName}, ${formData.lastName}, ${formData.phone ?? null})
-      RETURNING *
-    `;
+    if (!result[0]?.waitlist_entry_id) throw new Error(result[0]?.result_code ?? 'WAITLIST_CLOSED');
+    const rows = await sql`SELECT * FROM waitlist_entries WHERE waitlist_entry_id = ${result[0].waitlist_entry_id}::UUID`;
     return mapRow(rows[0] as Record<string, unknown>);
   }
 

@@ -12,6 +12,8 @@
   <script src="/public/js/app.js" defer></script>
 </head>
 <body>
+  <a href="#admin-main" class="skip-link admin-skip-link">Skip to content</a>
+  <% if (isTestbed()) { %><div class="alert alert-warning py-2 mb-0 rounded-0 text-center small" role="status">Testbed — Stripe test mode; no real charges.</div><% } %>
   <div class="admin-shell">
     <aside class="admin-sidebar">
       <a class="admin-brand" href="/admin">Flyte<span class="brand-dot">.</span> Admin</a>
@@ -33,9 +35,10 @@
         </form>
       </div>
     </aside>
-    <main class="admin-content">
+    <main class="admin-content" id="admin-main">
       <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>
-        <div class="alert alert-flyte mb-3" role="alert"><%= flashMessage %></div>
+        <% var _flashError = /failed|unavailable|declined|not cancelled|invalid|exceeds|cannot|can't|no refund|could not|already resolved|already cancelled|no longer|only confirmed|must be greater/i.test(String(flashMessage)); %>
+        <div class="alert alert-flyte <%= _flashError ? 'alert-flyte-error' : '' %> mb-3" role="<%= _flashError ? 'alert' : 'status' %>" aria-live="<%= _flashError ? 'assertive' : 'polite' %>" aria-atomic="true"><%= flashMessage %></div>
       <% } %>
       <%- body %>
     </main>

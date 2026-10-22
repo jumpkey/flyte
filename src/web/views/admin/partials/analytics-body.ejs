@@ -8,26 +8,36 @@
       <% if (sub) { %><div class="text-secondary small"><%= sub %></div><% } %>
     </div></div>
   <% } %>
-  <%- kpi('Gross revenue', money(kpis.grossCents), kpis.grossDeltaPct === null ? '' : (kpis.grossDeltaPct >= 0 ? '▲ ' : '▼ ') + Math.abs(kpis.grossDeltaPct) + '% vs prior') %>
-  <%- kpi('Net (after refunds)', money(kpis.netCents), '') %>
-  <%- kpi('Avg order', money(kpis.aovCents), kpis.confirmedCount + ' confirmed') %>
-  <%- kpi('Refund rate', kpis.refundRatePct + '%', money(kpis.refundedCents) + ' refunded') %>
+  <%- kpi('Gross sales', money(kpis.grossCents), 'Confirmed in selected range' + (kpis.grossDeltaPct === null ? '' : ' · ' + (kpis.grossDeltaPct >= 0 ? '▲ ' : '▼ ') + Math.abs(kpis.grossDeltaPct) + '% vs prior range')) %>
+  <%- kpi('Net sales after refunds', money(kpis.netCents), 'Confirmed in selected range') %>
+  <%- kpi('Average order', money(kpis.aovCents), kpis.confirmedCount + ' confirmed in range') %>
+  <%- kpi('Refund rate', kpis.refundRatePct + '%', money(kpis.refundedCents) + ' refunded for these sales') %>
 </div>
 
 <div class="row g-4 mb-4 align-items-stretch">
   <div class="col-12 col-lg-6">
     <div class="panel h-100">
-      <p class="caption-label mb-2">Daily net revenue</p>
+      <p class="caption-label mb-2">Daily net revenue · sales confirmation date</p>
       <%# Bars only (the overlaid line read as noise, #6); right-side $ scale and
           a "Days" x-axis caption so the chart is readable on its own. %>
       <%- barChart(dailyRevenue.map(function (c) { return c / 100; }), { scale: true, yUnit: '$', xLabel: 'Days (oldest → newest)' }) %>
-      <p class="text-secondary small mb-0 mt-1">Net <%= money(kpis.netCents) %> over <%= rangeDays %> days.</p>
+      <p class="text-secondary small mb-0 mt-1">Net <%= money(kpis.netCents) %> from sales confirmed in the selected <%= rangeDays %>-day range; all refunds against those sales are included.</p>
+      <details class="small mt-2"><summary>View daily values</summary>
+        <div class="table-responsive mt-2"><table class="table table-sm mb-0"><caption class="visually-hidden">Net sales by confirmation date</caption><thead><tr><th scope="col">Confirmation date</th><th scope="col" class="text-end">Net sales</th></tr></thead><tbody>
+          <% dailyRevenue.forEach(function (amount, i) { %><tr><th scope="row"><%= dailyLabels[i] %></th><td class="text-end money"><%= money(amount) %></td></tr><% }); %>
+        </tbody></table></div>
+      </details>
     </div>
   </div>
   <div class="col-12 col-lg-6">
     <div class="panel h-100">
       <p class="caption-label mb-2">Payment funnel</p>
       <%- funnel(paymentFunnel.stages) %>
+      <details class="small mt-2"><summary>View funnel counts</summary>
+        <div class="table-responsive mt-2"><table class="table table-sm mb-0"><caption class="visually-hidden">Payment funnel stage counts</caption><thead><tr><th scope="col">Stage</th><th scope="col" class="text-end">Count</th></tr></thead><tbody>
+          <% paymentFunnel.stages.forEach(function (stage) { %><tr><th scope="row"><%= stage.label %></th><td class="text-end"><%= stage.count %></td></tr><% }); %>
+        </tbody></table></div>
+      </details>
       <p class="text-secondary small mb-0 mt-2">
         <% paymentFunnel.conversions.forEach(function (pct, i) { %><% if (i > 0) { %> · <% } %><%= paymentFunnel.stages[i].label %>→<%= paymentFunnel.stages[i + 1].label %> <%= pct %>%<% }); %>
       </p>
@@ -40,7 +50,7 @@
 
 <div class="row g-4">
   <div class="col-12 col-lg-7">
-    <h2 class="h5 mb-2">Events</h2>
+    <h2 class="h5 mb-2">Events · lifetime</h2>
     <% if (perEvent.length === 0) { %><p class="text-secondary">No events yet.</p><% } else { %>
     <%# CSP-safe client-side status filter (#16). Checkboxes for the statuses that
         actually appear; all checked by default so with JS off every row shows.
@@ -74,14 +84,14 @@
     <% } %>
   </div>
   <div class="col-12 col-lg-5">
-    <h2 class="h5 mb-2">Customers</h2>
+    <h2 class="h5 mb-2">Customers · lifetime</h2>
     <div class="panel mb-3">
       <div class="d-flex justify-content-between"><span class="text-secondary">New buyers</span><span><%= customers.newBuyers %></span></div>
       <div class="d-flex justify-content-between"><span class="text-secondary">Returning</span><span><%= customers.returningBuyers %> (<%= customers.repeatRatePct %>%)</span></div>
       <div class="d-flex justify-content-between"><span class="text-secondary">Activated buyers (shadow→active)</span><span><%= customers.activationRatePct %>%</span></div>
     </div>
     <% if (customers.top.length > 0) { %>
-    <p class="caption-label mb-1">Top customers</p>
+    <p class="caption-label mb-1">Top customers · lifetime net after refunds</p>
     <ul class="list-unstyled mb-0">
       <% customers.top.forEach(function (t) { %><li class="d-flex justify-content-between"><span class="small"><%= t.email %></span><span class="money small"><%= money(t.lifetime_net) %></span></li><% }); %>
     </ul>

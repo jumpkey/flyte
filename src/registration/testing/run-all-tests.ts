@@ -19,6 +19,8 @@ const TEST_FILES = [
   'increment-14-webhook-http.test.ts',
   'increment-15-concurrent.test.ts',
   'review-fixes.test.ts',
+  'registration-stabilization.test.ts',
+  'refund-stabilization.test.ts',
 ];
 
 async function runFile(file: string): Promise<{ file: string; passed: boolean; output: string }> {

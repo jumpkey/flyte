@@ -3,13 +3,42 @@ document.addEventListener('click', function (e) {
   const back = e.target.closest('[data-back]');
   if (back) { e.preventDefault(); history.back(); }
 });
+
+// Authenticated storefront navigation collapses on narrow screens. Without JS
+// the links remain visible; with JS, the button and aria state stay in sync.
+(function () {
+  const toggle = document.querySelector('[data-nav-toggle]');
+  const menu = toggle && document.getElementById(toggle.getAttribute('aria-controls'));
+  if (!toggle || !menu) return;
+  function setExpanded(expanded) {
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-label', expanded ? 'Close navigation menu' : 'Open navigation menu');
+    menu.hidden = !expanded;
+  }
+  function syncBreakpoint() {
+    if (window.matchMedia('(min-width: 768px)').matches) {
+      menu.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      setExpanded(false);
+    }
+  }
+  toggle.addEventListener('click', function () {
+    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+  });
+  window.addEventListener('resize', syncBreakpoint);
+  syncBreakpoint();
+})();
 // Event-card image fallback (D2 / AC-I2 ③): error events don't bubble, so we
 // listen in the capture phase. A broken or unreachable event image is removed
 // so the gradient + initials fallback shows through — never a broken-image icon.
 document.addEventListener('error', function (e) {
   const img = e.target;
   if (img && img.tagName === 'IMG' && img.closest('.event-media')) {
-    img.remove();
+    // Keep the admin preview element available for a later selection and keep
+    // the styled fallback underneath broken remote/current event images.
+    img.style.display = 'none';
+    img.removeAttribute('src');
   }
 }, true);
 
@@ -35,13 +64,16 @@ document.addEventListener('click', function (e) {
   const preview = document.getElementById('event-preview');
   if (!preview) return;
   const $ = function (sel) { return preview.querySelector('[data-preview="' + sel + '"]'); };
+  const timeZone = preview.dataset.timeZone || 'UTC';
   const nameEl = document.getElementById('name');
   const feeEl = document.getElementById('feeDollars');
   const dateEl = document.getElementById('eventDate');
   const locEl = document.getElementById('location');
   const imgEl = document.getElementById('imageUrl');
   const fileEl = document.getElementById('imageFile');
+  const removeEl = document.getElementById('removeImage');
   let objectUrl = null; // revoked before each new selection to avoid leaks
+  const savedImage = preview.dataset.savedImage || '';
 
   function initials(name) {
     return (name || 'EV').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() || 'EV';
@@ -53,11 +85,12 @@ document.addEventListener('click', function (e) {
     const fee = feeEl ? parseFloat(feeEl.value) : NaN;
     $('price').textContent = '$' + (isNaN(fee) ? '0.00' : fee.toFixed(2));
     if (dateEl && dateEl.value) {
-      const d = new Date(dateEl.value);
+      const wall = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(dateEl.value);
+      const d = wall ? new Date(Date.UTC(Number(wall[1]), Number(wall[2]) - 1, Number(wall[3]), Number(wall[4]), Number(wall[5]))) : new Date(NaN);
       if (!isNaN(d.getTime())) {
-        const badge = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+        const badge = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase();
         $('badge').textContent = badge;
-        $('meta').textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + (locEl && locEl.value ? ' · ' + locEl.value : '');
+        $('meta').textContent = d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) + ' (' + timeZone + ')' + (locEl && locEl.value ? ' · ' + locEl.value : '');
       }
     } else {
       $('meta').textContent = locEl && locEl.value ? locEl.value : '';
@@ -70,6 +103,8 @@ document.addEventListener('click', function (e) {
       if (objectUrl) { URL.revokeObjectURL(objectUrl); }
       objectUrl = URL.createObjectURL(file);
       img.src = objectUrl; img.style.display = 'block';
+    } else if (savedImage && !(removeEl && removeEl.checked)) {
+      img.src = savedImage; img.style.display = 'block';
     } else if (imgEl && /^https:\/\//i.test(imgEl.value)) {
       img.src = imgEl.value; img.style.display = 'block';
     } else {
@@ -78,6 +113,7 @@ document.addEventListener('click', function (e) {
   }
   [nameEl, feeEl, dateEl, locEl, imgEl].forEach(function (el) { if (el) el.addEventListener('input', render); });
   if (fileEl) fileEl.addEventListener('change', render);
+  if (removeEl) removeEl.addEventListener('change', render);
   render();
 })();
 

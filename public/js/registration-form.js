@@ -6,6 +6,7 @@
   let elements;
   let clientSecret;
   let paymentIntentId;
+  let activeCheckoutParticipant = null;
 
   const step1 = document.getElementById('registration-step-1');
   const step2 = document.getElementById('registration-step-2');
@@ -52,6 +53,26 @@
       phone: document.getElementById('phone').value || undefined,
     };
 
+    // Going Back must not create a second PI or lose the only in-memory
+    // capability to finish the existing checkout. The server deliberately
+    // will not disclose a client secret based on an email address alone.
+    if (clientSecret && activeCheckoutParticipant) {
+      const sameParticipant = ['firstName', 'lastName', 'email', 'phone'].every((key) =>
+        (formData[key] || '').trim().toLowerCase() === (activeCheckoutParticipant[key] || '').trim().toLowerCase()
+      );
+      if (!sameParticipant) {
+        showFormError('This checkout is already bound to the participant details you submitted. Return to the original details to continue, or finish this checkout before starting another.');
+        continueBtn.disabled = false;
+        continueBtn.textContent = continueLabel;
+        return;
+      }
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+      continueBtn.disabled = false;
+      continueBtn.textContent = continueLabel;
+      return;
+    }
+
     try {
       const resp = await fetch(window.location.pathname, {
         method: 'POST',
@@ -63,18 +84,30 @@
       if (!resp.ok) {
         var friendly = {
           email_mismatch: 'The email addresses do not match.',
-          already_registered: "You're already registered for this event — check your email for the confirmation.",
+          already_registered: 'A checkout or registration already exists for this email. Return to the checkout page you already opened; a new checkout cannot be started until this attempt is resolved.',
           payment_setup_failed: 'Payment is temporarily unavailable. Please try again in a moment.',
+          event_closed: 'This event is no longer accepting registrations.',
+          event_full: 'This event just filled up. Join the waitlist instead.',
         }[data.error] || 'We could not start your registration. Please try again.';
         showFormError(friendly);
         continueBtn.disabled = false;
         continueBtn.textContent = continueLabel;
         return;
       }
+      if (data.redirectUrl) {
+        window.location.assign(data.redirectUrl);
+        return;
+      }
       clearFormError();
 
       clientSecret = data.clientSecret;
       paymentIntentId = data.paymentIntentId;
+      activeCheckoutParticipant = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+      };
 
       elements = stripe.elements({ clientSecret });
       // Belt-and-suspenders with the card-only PaymentIntent: no wallets/Link UI,
@@ -125,14 +158,9 @@
         method: 'POST',
         headers: { 'X-CSRF-Token': document.querySelector('[name="_csrf"]').value },
       });
-
-      if (confirmResp.redirected) {
-        window.location.href = confirmResp.url;
-      } else if (confirmResp.ok) {
-        // Controller returns redirects (302) for success/waitlist and renders
-        // HTML views for pending/error states. fetch follows redirects
-        // transparently, so a 200 here means we received a rendered page.
-        window.location.reload();
+      const result = await confirmResp.json();
+      if (result.redirectUrl) {
+        window.location.assign(result.redirectUrl);
       } else {
         const status = confirmResp.status;
         showError(status >= 500

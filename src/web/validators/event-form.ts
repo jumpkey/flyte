@@ -5,6 +5,9 @@
  * errors keyed by field name for inline display.
  */
 
+import { config } from '../../config.js';
+import { wallTimeToInstant } from '../../services/event-time.js';
+
 export interface EventFormValues {
   name: string;
   eventDate: Date;
@@ -31,7 +34,7 @@ function str(v: unknown): string {
 
 export function validateEventForm(
   input: Record<string, unknown>,
-  opts: { minCapacity?: number } = {},
+  opts: { minCapacity?: number; timeZone?: string } = {},
 ): EventFormResult {
   const errors: Record<string, string> = {};
 
@@ -44,8 +47,16 @@ export function validateEventForm(
   if (!eventDateRaw) {
     errors.eventDate = 'Date and time are required.';
   } else {
-    eventDate = new Date(eventDateRaw);
-    if (Number.isNaN(eventDate.getTime())) errors.eventDate = 'Enter a valid date and time.';
+    const converted = wallTimeToInstant(eventDateRaw, opts.timeZone ?? config.eventTimeZone);
+    if (!converted.ok) {
+      errors.eventDate = converted.reason === 'nonexistent'
+        ? 'This local time does not exist because the clocks move forward. Choose another time.'
+        : converted.reason === 'ambiguous'
+          ? 'This local time occurs twice because the clocks move back. Choose a time outside the repeated hour.'
+          : 'Enter a valid date and time.';
+    } else {
+      eventDate = converted.date;
+    }
   }
 
   const location = str(input.location);

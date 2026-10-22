@@ -10,6 +10,9 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://flyte:flyte@localhost:5432/flyte',
   sessionSecret: process.env.SESSION_SECRET ?? 'dev-secret-change-me',
   appDomain: process.env.APP_DOMAIN ?? 'http://localhost:3000',
+  // Event datetimes entered in the admin form are interpreted in this IANA
+  // timezone. UTC preserves the existing deployment's stored interpretation.
+  eventTimeZone: process.env.EVENT_TIME_ZONE ?? 'UTC',
   smtp: {
     host: process.env.SMTP_HOST ?? 'localhost',
     port: parseInt(process.env.SMTP_PORT ?? '1025', 10),
@@ -41,3 +44,9 @@ export const config = {
   registrationTtlMinutes: parseInt(process.env.REGISTRATION_TTL_MINUTES ?? '30', 10),
   captureMaxRetries: parseInt(process.env.CAPTURE_MAX_RETRIES ?? '5', 10),
 };
+
+try {
+  new Intl.DateTimeFormat('en-US', { timeZone: config.eventTimeZone });
+} catch {
+  throw new Error(`EVENT_TIME_ZONE must be a valid IANA timezone (received "${config.eventTimeZone}")`);
+}

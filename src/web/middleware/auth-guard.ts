@@ -8,7 +8,7 @@ export const authGuard = createMiddleware(async (c, next) => {
     return c.redirect('/login');
   }
   const user = await userService.findById(session.userId);
-  if (!user || user.isLocked) {
+  if (!user || user.isLocked || user.isAdminSuspended) {
     return c.redirect('/login');
   }
   c.set('user', user);

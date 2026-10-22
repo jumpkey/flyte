@@ -4,7 +4,6 @@ import { adminUsersService } from '../../../services/admin-users-service.js';
 import { resolveSort } from '../../utils/table-sort.js';
 import { userService } from '../../../services/user-service.js';
 import { eventService } from '../../../services/event-service.js';
-import { destroyUserSessions } from '../../middleware/session.js';
 import { getClientIp } from '../../utils/get-client-ip.js';
 import type { User } from '../../../services/user-service.js';
 
@@ -72,8 +71,7 @@ export const adminUsersController = {
     const target = await userService.findById(id);
     if (!target) return c.notFound();
 
-    await userService.lockAccount(id);
-    await destroyUserSessions(id);   // revoke live sessions immediately
+    await userService.lockAccount(id); // atomically suspend, revoke recovery tokens and sessions
     try { await eventService.logAction({ userId: admin.id, action: 'user_locked', resource: back, metadata: { target: id }, ipAddress: getClientIp(c) }); } catch (_) { /* best effort */ }
     flash(c, `${target.email} has been locked and signed out.`);
     return c.redirect(back);
