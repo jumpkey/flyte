@@ -4,7 +4,7 @@ Flyte is a full-stack TypeScript web application that implements a complete user
 
 ## Review and operational handoff
 
-Start with the [review, stabilization, and resilience summary](REVIEW-AND-RESILIENCE-SUMMARY.md) for the 22 October 2026 assessment, completed changes, live-testbed state, performance evidence, and remaining work. Deployment safeguards are in [STABILIZATION.md](STABILIZATION.md).
+Start with the [review, stabilization, and resilience summary](REVIEW-AND-RESILIENCE-SUMMARY.md) for the 22 October 2026 assessment, completed changes, live-testbed state, performance evidence, and remaining work. Deployment safeguards are in [STABILIZATION.md](STABILIZATION.md). The [site-solution audit](site-solution-audit.md) maps current workflows and ranks functional and operational gaps.
 
 ---
 
