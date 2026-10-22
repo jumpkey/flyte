@@ -67,7 +67,7 @@ After sustained checkout, read tests ran with about 491 synthetic events and 14,
 | Default 90-day analytics | 10 | 100 | 3,841 ms | 100 × 200 |
 | Ten-year analytics | 5 | 50 | 18,806 ms | 49 × 200; **1 × 502** |
 
-That 502 is a real observed application/deployment failure under the tested workload. Its precise cause was not isolated. Low-rate mixed catalog/detail/analytics probes during checkout returned HTTP 200, but those probes do not establish good interactive latency under heavy reporting.
+That 502 is a real observed end-to-end HTTP failure under the tested workload. Its precise application, proxy, or network cause was not isolated. Low-rate mixed catalog/detail/analytics probes during checkout returned HTTP 200, but those probes do not establish good interactive latency under heavy reporting.
 
 The first performance-simulator soak stopped after 999 of 1,000 confirmations because the load generator's connection through the Fly proxy to the simulator disconnected. This was outside Flyte's application HTTP path. Its unpaid intent was canceled and its exact synthetic registration expired. The corrected driver retries only this simulator browser-confirm step, with at most three retries after the initial attempt, preserving every retry in raw results. The completed rerun logged **22 simulator transport retries**, zero exhausted retries, and no retried Flyte application requests. The failed run remains in the evidence rather than being discarded.
 
@@ -81,4 +81,4 @@ Original secret names and digests match the pre-test snapshot, all four machines
 
 **Focused next experiment:** repeat the same sustained workload with a performance CPU for Flyte's web process while holding the database, processor, and workload fixed. Separately test a lower request scaling threshold or two continuously running web machines. Change one factor per comparison. For the ten-year report, measure bounded report concurrency or short-lived caching against the observed 502 and checkout latency before adopting either. The current evidence does not justify a numerical sustained-capacity promise or an unmeasured configuration change.
 
-Structured results: `FLY_STRESS_RESULTS_2026-10-22.json`. Sanitized raw evidence is retained with the Codex task deliverables.
+Structured results: [FLY_STRESS_RESULTS_2026-10-22.json](FLY_STRESS_RESULTS_2026-10-22.json). [Sanitized raw evidence](evidence/2026-10-22-fly.zip) is preserved in this repository. The [consolidated handoff](../REVIEW-AND-RESILIENCE-SUMMARY.md) adds the CPU-allocation calculation, hotel-network qualification, resilience assessment, and decision to defer architecture changes.

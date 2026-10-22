@@ -2,6 +2,10 @@
 
 Flyte is a full-stack TypeScript web application that implements a complete user-account lifecycle. It is designed as a production-ready starting point for any project that needs secure user authentication out of the box.
 
+## Review and operational handoff
+
+Start with the [review, stabilization, and resilience summary](REVIEW-AND-RESILIENCE-SUMMARY.md) for the 22 October 2026 assessment, completed changes, live-testbed state, performance evidence, and remaining work. Deployment safeguards are in [STABILIZATION.md](STABILIZATION.md).
+
 ---
 
 ## What Flyte does
