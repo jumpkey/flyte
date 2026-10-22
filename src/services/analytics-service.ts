@@ -19,6 +19,7 @@ export interface SalesDashboard {
   rangeDays: number;
   kpis: SalesKpis;
   dailyRevenue: number[];           // net cents per day
+  dailyLabels: string[];            // calendar dates matching dailyRevenue
   paymentFunnel: { stages: Array<{ label: string; count: number }>; conversions: number[]; lostExpiredCents: number; lostFailedCents: number };
   perEvent: Array<Record<string, unknown>>;
   customers: { newBuyers: number; returningBuyers: number; repeatRatePct: number; activationRatePct: number; top: Array<Record<string, unknown>> };
@@ -38,8 +39,8 @@ async function periodTotals(fromDays: number, toDays: number): Promise<{ gross: 
            COUNT(*)::int AS count
     FROM registrations
     WHERE confirmed_at IS NOT NULL
-      AND confirmed_at >= now() - (${toDays}||' days')::interval
-      AND confirmed_at <  now() - (${fromDays}||' days')::interval`;
+      AND confirmed_at >= CURRENT_DATE - ((${toDays} - 1)||' days')::interval
+      AND confirmed_at <  CURRENT_DATE + ((1 - ${fromDays})||' days')::interval`;
   const r = rows[0];
   return { gross: +(r?.gross ?? 0), refunded: +(r?.refunded ?? 0), count: r?.count ?? 0 };
 }
@@ -87,29 +88,26 @@ export const analyticsService = {
       grossDeltaPct: prev.gross > 0 ? Math.round(((cur.gross - prev.gross) / prev.gross) * 1000) / 10 : null,
     };
 
-    // W19 — Daily net revenue series, oldest → newest, gap-filled. Net per day =
-    // confirmed-or-was-confirmed gross captured that day minus refunds dated that
-    // day (refund_log.amount_cents on that calendar day).
-    const dailyRows = await sql<{ net: string }[]>`
-      SELECT (COALESCE(g.gross, 0) - COALESCE(rl.refunded, 0))::text AS net
+    // Net sales cohort: group each confirmed sale and all refunds against it on
+    // its confirmation date. This makes every daily point and the headline use
+    // the same cohort and refund definition.
+    const dailyRows = await sql<{ day: string; net: string }[]>`
+      WITH daily_totals AS (
+        SELECT date_trunc('day', confirmed_at) AS day,
+               SUM(gross_amount_cents) AS gross, SUM(refunded_amount_cents) AS refunded
+        FROM registrations
+        WHERE confirmed_at >= date_trunc('day', now()) - (${rangeDays - 1}||' days')::interval
+          AND confirmed_at < date_trunc('day', now()) + interval '1 day'
+        GROUP BY 1
+      )
+      SELECT series.day::date::text AS day,
+             (COALESCE(r.gross, 0) - COALESCE(r.refunded, 0))::text AS net
       FROM generate_series(date_trunc('day', now()) - (${rangeDays - 1}||' days')::interval,
                            date_trunc('day', now()), '1 day') AS series(day)
-      LEFT JOIN LATERAL (
-        SELECT date_trunc('day', r.confirmed_at) AS day, SUM(r.gross_amount_cents) AS gross
-        FROM registrations r
-        WHERE r.confirmed_at IS NOT NULL
-          AND (r.status = 'CONFIRMED' OR r.confirmed_at IS NOT NULL)
-          AND date_trunc('day', r.confirmed_at) = series.day
-        GROUP BY 1
-      ) g ON TRUE
-      LEFT JOIN LATERAL (
-        SELECT date_trunc('day', l.created_at) AS day, SUM(l.amount_cents) AS refunded
-        FROM refund_log l
-        WHERE date_trunc('day', l.created_at) = series.day
-        GROUP BY 1
-      ) rl ON TRUE
+      LEFT JOIN daily_totals r USING (day)
       ORDER BY series.day ASC`;
     const dailyRevenue = dailyRows.map((r) => +r.net);
+    const dailyLabels = dailyRows.map((r) => r.day);
 
     // W19 — Payment funnel (registrations created in range) + a top Views stage.
     const views = await this.viewsInRange(rangeDays);
@@ -154,22 +152,30 @@ export const analyticsService = {
       GROUP BY e.event_id ORDER BY e.event_date DESC LIMIT 50`;
 
     // A4 customers.
-    const buyerRows = await sql<{ user_id: string; n: number; net: string; account_status: string }[]>`
-      SELECT r.user_id, count(*)::int AS n, COALESCE(SUM(r.net_amount_cents),0)::text AS net, u.account_status
-      FROM registrations r JOIN users u ON u.id = r.user_id
-      WHERE r.status='CONFIRMED' AND r.user_id IS NOT NULL
-      GROUP BY r.user_id, u.account_status`;
-    const totalBuyers = buyerRows.length;
-    const returningBuyers = buyerRows.filter((b) => b.n > 1).length;
-    const activeBuyers = buyerRows.filter((b) => b.account_status === 'active').length;
+    const buyerRows = await sql<{ total: number; returning: number; active: number }[]>`
+      WITH buyers AS (
+        SELECT count(*) AS purchases, u.account_status
+        FROM registrations r JOIN users u ON u.id = r.user_id
+        WHERE r.status='CONFIRMED'
+        GROUP BY r.user_id, u.account_status
+      )
+      SELECT count(*)::int AS total,
+             count(*) FILTER (WHERE purchases > 1)::int AS returning,
+             count(*) FILTER (WHERE account_status='active')::int AS active
+      FROM buyers`;
+    const totalBuyers = buyerRows[0]?.total ?? 0;
+    const returningBuyers = buyerRows[0]?.returning ?? 0;
+    const activeBuyers = buyerRows[0]?.active ?? 0;
     const top = await sql`
-      SELECT u.email, u.account_status, COALESCE(SUM(r.net_amount_cents),0)::int AS lifetime_net, count(*)::int AS purchases
+      SELECT u.email, u.account_status,
+             COALESCE(SUM(GREATEST(r.gross_amount_cents - r.refunded_amount_cents, 0)),0)::int AS lifetime_net,
+             count(*)::int AS purchases
       FROM registrations r JOIN users u ON u.id = r.user_id
       WHERE r.status='CONFIRMED' AND r.user_id IS NOT NULL
       GROUP BY u.id ORDER BY lifetime_net DESC LIMIT 5`;
 
     return {
-      rangeDays, kpis, dailyRevenue, paymentFunnel,
+      rangeDays, kpis, dailyRevenue, dailyLabels, paymentFunnel,
       perEvent: perEvent as unknown as Array<Record<string, unknown>>,
       customers: {
         newBuyers: totalBuyers - returningBuyers,

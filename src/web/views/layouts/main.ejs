@@ -23,6 +23,7 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
   <a href="#main" class="skip-link">Skip to content</a>
+  <% if (isTestbed()) { %><div class="alert alert-warning py-2 mb-0 rounded-0 text-center small" role="status">Testbed — Stripe test mode; no real charges.</div><% } %>
   <%- include('../partials/nav', { user: user, csrfToken: csrfToken }) %>
 
   <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>

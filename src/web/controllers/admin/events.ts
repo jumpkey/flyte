@@ -8,6 +8,7 @@ import { RefundService } from '../../../registration/services/RefundService.js';
 import { NotificationService } from '../../../registration/services/NotificationService.js';
 import { getStripe } from '../../../registration/stripe-factory.js';
 import { eventService } from '../../../services/event-service.js';
+import { instantToWallTime } from '../../../services/event-time.js';
 import { validateImageUpload, MAX_IMAGE_BYTES } from '../../../services/image-upload.js';
 import { getClientIp } from '../../utils/get-client-ip.js';
 import { toCsv, csvResponse } from '../../utils/csv.js';
@@ -135,7 +136,7 @@ export const adminEventsController = {
       hasImageBlob: event.has_image,
       values: {
         name: event.name,
-        eventDateRaw: toLocalInput(event.event_date),
+        eventDateRaw: instantToWallTime(event.event_date),
         location: event.location,
         description: event.description,
         totalCapacity: event.total_capacity,
@@ -160,7 +161,7 @@ export const adminEventsController = {
     // Status transition validation (CANCELLED never comes through here).
     const requestedStatus = String(body['status'] ?? event.status);
     const errors = result.ok ? {} : { ...result.errors };
-    if (requestedStatus !== 'CANCELLED' && !isAllowedTransition(event.status, requestedStatus)) {
+    if (requestedStatus === 'CANCELLED' || requestedStatus === 'CANCELLING' || !isAllowedTransition(event.status, requestedStatus)) {
       errors.status = `Cannot change status from ${event.status} to ${requestedStatus}.`;
     }
     if (upload.kind === 'error') errors.imageFile = upload.error;
@@ -173,7 +174,7 @@ export const adminEventsController = {
         confirmedCount: event.confirmed_count,
         hasImageBlob: event.has_image,
         values: result.ok
-          ? { ...result.values, feeDollars: centsToDollars(result.values.registrationFeeCents), eventDateRaw: toLocalInput(result.values.eventDate) }
+          ? { ...result.values, feeDollars: centsToDollars(result.values.registrationFeeCents), eventDateRaw: instantToWallTime(result.values.eventDate) }
           : result.values,
       }, { layout: 'admin' });
     }
@@ -249,7 +250,7 @@ export const adminEventsController = {
       headers: {
         'Content-Type': img.mime,
         'X-Content-Type-Options': 'nosniff',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'no-cache',
         'Content-Length': String(img.blob.length),
       },
     });
@@ -300,11 +301,11 @@ export const adminEventsController = {
       return c.redirect(`/admin/events/${eventId}`);
     }
 
-    // Nothing to refund → cancel directly without requiring Stripe. An empty or
-    // draft event can be cancelled even when payments aren't configured, and the
-    // bulk-refund path (which needs Stripe) only runs when money is actually owed.
-    const confirmed = await eventAdminService.countConfirmedRegistrations(eventId);
-    if (confirmed === 0) {
+    // Freeze admissions before checking for an empty event; no later acquisition
+    // can race the empty-event shortcut.
+    await eventAdminService.setStatus(eventId, 'CANCELLING');
+    const unsettled = await eventAdminService.countUnsettledRegistrations(eventId);
+    if (unsettled === 0) {
       await eventAdminService.setStatus(eventId, 'CANCELLED');
       flash(c, 'Event cancelled.');
       return c.redirect(`/admin/events/${eventId}`);
@@ -312,21 +313,14 @@ export const adminEventsController = {
 
     let svc: RefundService;
     try { svc = await getRefundService(); }
-    catch (_) { flash(c, 'Payment service unavailable — event not cancelled.'); return c.redirect(`/admin/events/${eventId}`); }
+    catch (_) { flash(c, 'Payment service unavailable — admissions stopped; cancellation will resume when payments are available.'); return c.redirect(`/admin/events/${eventId}`); }
 
     const result = await svc.refundEvent({ eventId, refundType: 'FULL', reason: 'event_cancelled' });
     if (result.totalFailed > 0) {
-      flash(c, `Cancel failed: ${result.totalFailed} of ${result.totalProcessed} refunds did not go through. The event was NOT cancelled — review and retry.`);
+      flash(c, `Cancellation is in progress: ${result.totalFailed} payment(s) still require settlement. New registrations are stopped; recovery will retry.`);
     } else {
       flash(c, `Event cancelled. ${result.totalSucceeded} registration${result.totalSucceeded === 1 ? '' : 's'} refunded.`);
     }
     return c.redirect(`/admin/events/${eventId}`);
   },
 };
-
-/** Format a timestamptz for an <input type="datetime-local"> (YYYY-MM-DDTHH:mm). */
-function toLocalInput(date: Date): string {
-  const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}

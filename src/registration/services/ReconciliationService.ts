@@ -1,10 +1,12 @@
 import { sql } from '../../services/db.js';
+import Stripe from 'stripe';
 import type { StripeClient, IReconciliationService, IRegistrationService, INotificationService } from '../interfaces.js';
 import type { ReconciliationResult } from '../types.js';
 
 function isTransientStripeError(err: unknown): boolean {
-  const e = err as Record<string, unknown>;
-  return e['type'] === 'api_error' || e['code'] === 'rate_limit' || e['code'] === 'api_connection_error';
+  return err instanceof Stripe.errors.StripeConnectionError ||
+    err instanceof Stripe.errors.StripeAPIError ||
+    err instanceof Stripe.errors.StripeRateLimitError;
 }
 
 // Stable 32-bit hash for use as a postgres advisory lock key. The runner uses
@@ -86,6 +88,7 @@ export class ReconciliationService implements IReconciliationService {
         // deadlock because the inner SP would wait on our lock forever.
         let recoverPiId: string | null = null;
         let recoverAmount = 0;
+        let recoverCaptured = false;
 
         await sql.begin(async (tx) => {
           const locked = await tx<Array<{
@@ -123,13 +126,9 @@ export class ReconciliationService implements IReconciliationService {
             }
 
             if (piStatus === 'succeeded') {
-              // PI has been captured by some path that bypassed our DB.
-              // Refuse to expire this row; flag for human investigation.
-              console.error(
-                `[reconciliation] anomaly: registration ${row.registration_id} is PENDING_PAYMENT ` +
-                `but PI ${row.payment_intent_id} is 'succeeded'. Skipping; please reconcile manually.`
-              );
-              result.errorCount++;
+              recoverPiId = row.payment_intent_id;
+              recoverAmount = row.gross_amount_cents;
+              recoverCaptured = true;
               return;
             }
 
@@ -150,7 +149,9 @@ export class ReconciliationService implements IReconciliationService {
         // Now the transaction is committed and the row lock is released.
         // Safe to call handlePaymentAuthorized which takes its own locks.
         if (recoverPiId) {
-          await this.recoverAuthorized(recoverPiId, recoverAmount, result);
+          if (recoverCaptured) {
+            await this.recoverAuthorized(recoverPiId, recoverAmount, result, true);
+          } else await this.recoverAuthorized(recoverPiId, recoverAmount, result, recoverCaptured);
         }
       } catch (err) {
         console.error('[ReconciliationService] Error in scan 1:', err);
@@ -165,9 +166,10 @@ export class ReconciliationService implements IReconciliationService {
   private async recoverAuthorized(
     paymentIntentId: string,
     grossAmountCents: number,
-    result: ReconciliationResult
+    result: ReconciliationResult,
+    alreadyCaptured = false
   ): Promise<void> {
-    const res = await this.registrationService.handlePaymentAuthorized(paymentIntentId, grossAmountCents);
+    const res = await this.registrationService.handlePaymentAuthorized(paymentIntentId, grossAmountCents, alreadyCaptured);
     if (res.outcome === 'SUCCESS' || res.outcome === 'IDEMPOTENT_REPLAY') {
       result.webhookRecoveredCount++;
     } else {
@@ -213,15 +215,43 @@ export class ReconciliationService implements IReconciliationService {
             return;
           }
 
+          let currentPi: Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>>;
+          try {
+            currentPi = await this.stripe.paymentIntents.retrieve(row.payment_intent_id);
+          } catch (_) {
+            // The processor state is unknown, so keep the reservation.
+            result.errorCount++;
+            return;
+          }
+          if (currentPi.status === 'succeeded') {
+            const net = currentPi.latest_charge?.amount_captured ?? currentPi.amount_received ?? row.gross_amount_cents;
+            const finalized = await tx<Array<{result_code: string}>>`
+              SELECT * FROM sp_finalize_registration(${row.payment_intent_id}, ${net})
+            `;
+            if (finalized[0].result_code === 'SUCCESS') {
+              result.webhookRecoveredCount++;
+              setImmediate(() => { void this.sendConfirmationEmail(row.registration_id); });
+            } else if (finalized[0].result_code !== 'IDEMPOTENT_REPLAY') result.errorCount++;
+            return;
+          }
+          if (currentPi.status === 'canceled') {
+            await tx`SELECT * FROM sp_restore_slot_on_capture_failure(${row.payment_intent_id})`;
+            result.captureRestoredCount++;
+            result.restoredRegistrationIds.push(row.registration_id);
+            return;
+          }
+
           const ageMs = now.getTime() - new Date(row.created_at).getTime();
           const ageDays = ageMs / (1000 * 60 * 60 * 24);
           const giveUp = ageDays > 6 || row.capture_attempt_count >= this.options.captureMaxRetries;
 
           if (giveUp) {
+            // Do not release a slot until Stripe confirms cancellation. A
+            // timeout here may conceal an already completed capture.
+            let canceled = false;
+            try { canceled = (await this.stripe.paymentIntents.cancel(row.payment_intent_id)).status === 'canceled'; } catch (_) { /* retry next sweep */ }
+            if (!canceled) return;
             await tx`SELECT * FROM sp_restore_slot_on_capture_failure(${row.payment_intent_id})`;
-            // Release the customer's card authorization (best effort, OK if
-            // already cancelled or expired).
-            try { await this.stripe.paymentIntents.cancel(row.payment_intent_id); } catch (_) { /* best effort */ }
             result.captureRestoredCount++;
             result.restoredRegistrationIds.push(row.registration_id);
             return;
@@ -235,13 +265,37 @@ export class ReconciliationService implements IReconciliationService {
 
           await tx`SELECT sp_increment_capture_attempt(${row.registration_id}::UUID)`;
 
+          let captured: Awaited<ReturnType<StripeClient['paymentIntents']['capture']>>;
           try {
-            const captured = await this.stripe.paymentIntents.capture(row.payment_intent_id);
-            const netAmount = captured.latest_charge?.amount_captured ?? captured.amount_received ?? row.gross_amount_cents;
+            captured = await this.stripe.paymentIntents.capture(row.payment_intent_id);
+          } catch (captureErr: unknown) {
+            let current: Awaited<ReturnType<StripeClient['paymentIntents']['retrieve']>> | null = null;
+            try { current = await this.stripe.paymentIntents.retrieve(row.payment_intent_id); } catch (_) { /* retain slot */ }
+            if (current?.status === 'succeeded') {
+              const netAmount = current.latest_charge?.amount_captured ?? current.amount_received ?? row.gross_amount_cents;
+              const finalRows = await tx<Array<{result_code: string}>>`
+                SELECT * FROM sp_finalize_registration(${row.payment_intent_id}, ${netAmount})
+              `;
+              if (finalRows[0].result_code === 'SUCCESS') {
+                result.captureRetriedCount++;
+                setImmediate(() => { void this.sendConfirmationEmail(row.registration_id); });
+              }
+              return;
+            }
+            if (!current || current.status !== 'requires_capture' || isTransientStripeError(captureErr) || !(captureErr instanceof Stripe.errors.StripeCardError)) return;
+            let canceled = false;
+            try { canceled = (await this.stripe.paymentIntents.cancel(row.payment_intent_id)).status === 'canceled'; } catch (_) { /* leave pending */ }
+            if (!canceled) return;
+            await tx`SELECT * FROM sp_restore_slot_on_capture_failure(${row.payment_intent_id})`;
+            result.captureRestoredCount++;
+            result.restoredRegistrationIds.push(row.registration_id);
+            return;
+          }
 
-            const finalRows = await tx<Array<{result_code: string; registration_id: string | null}>>`
-              SELECT * FROM sp_finalize_registration(${row.payment_intent_id}, ${netAmount})
-            `;
+          const netAmount = captured.latest_charge?.amount_captured ?? captured.amount_received ?? row.gross_amount_cents;
+          const finalRows = await tx<Array<{result_code: string; registration_id: string | null}>>`
+            SELECT * FROM sp_finalize_registration(${row.payment_intent_id}, ${netAmount})
+          `;
 
             if (finalRows[0].result_code === 'SUCCESS') {
               result.captureRetriedCount++;
@@ -251,16 +305,6 @@ export class ReconciliationService implements IReconciliationService {
               });
             }
             // IDEMPOTENT_REPLAY / NOT_FOUND / INVALID_STATE are not counted as retries.
-          } catch (captureErr: unknown) {
-            if (isTransientStripeError(captureErr)) {
-              // Transient: leave as PENDING_CAPTURE; backoff handles next attempt.
-              return;
-            }
-            await tx`SELECT * FROM sp_restore_slot_on_capture_failure(${row.payment_intent_id})`;
-            try { await this.stripe.paymentIntents.cancel(row.payment_intent_id); } catch (_) { /* best effort */ }
-            result.captureRestoredCount++;
-            result.restoredRegistrationIds.push(row.registration_id);
-          }
         });
       } catch (err) {
         console.error('[ReconciliationService] Error in scan 2:', err);

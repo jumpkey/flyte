@@ -1,8 +1,8 @@
 <div class="container py-4">
   <div class="panel checkout-panel">
     <h1 class="h3 mb-4">Edit profile</h1>
-    <div id="profile-feedback"></div>
-    <form hx-post="/profile" hx-target="#profile-feedback" hx-swap="innerHTML">
+    <div id="profile-feedback" class="<%= typeof profileError !== 'undefined' && profileError ? 'text-danger' : 'text-success' %>" role="status"><%= typeof profileFeedback !== 'undefined' ? profileFeedback : '' %></div>
+    <form method="post" action="/profile" hx-post="/profile" hx-target="#profile-feedback" hx-swap="innerHTML">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <p class="caption-label">Account info</p>
       <div class="mb-3">

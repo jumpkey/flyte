@@ -94,7 +94,9 @@ async function runTests() {
     await deleteUser('activate@example.com');
     const shadow = await userService.findOrCreateShadowUser('activate@example.com', 'Guest');
     const newHash = await authService.hashPassword('brand-new-pw');
-    await userService.resetPassword(shadow.id, newHash);
+    const token = authService.generateToken();
+    await userService.setPasswordResetToken(shadow.id, token.hashed, new Date(Date.now() + 3600_000));
+    await userService.resetPassword(token.hashed, newHash);
     const after = await userService.findById(shadow.id);
     assertEqual(after!.accountStatus, 'active', 'now active');
     assertEqual(after!.isVerified, true, 'now verified');
@@ -120,7 +122,7 @@ async function runTests() {
     await deleteUser('shadowreset@example.com');
   });
 
-  await test('forgot-password refuses a LOCKED shadow account (no token)', async () => {
+  await test('forgot-password permits recovery from a failed-login lock', async () => {
     await deleteUser('lockedshadow@example.com');
     const shadow = await userService.findOrCreateShadowUser('lockedshadow@example.com', 'Guest');
     await testSql`UPDATE users SET is_locked = TRUE WHERE id = ${shadow.id}`;
@@ -132,8 +134,23 @@ async function runTests() {
       body: new URLSearchParams({ email: 'lockedshadow@example.com', _csrf: csrf }).toString(),
     });
     const row = await testSql`SELECT password_reset_token FROM users WHERE id = ${shadow.id}`;
-    assertEqual(row[0].password_reset_token, null, 'no token for locked account');
+    assert(row[0].password_reset_token !== null, 'normal login lock remains recoverable');
     await deleteUser('lockedshadow@example.com');
+  });
+
+  await test('administrative suspension invalidates an outstanding reset token and blocks reset completion', async () => {
+    await deleteUser('suspended-reset@example.com');
+    const user = await userService.findOrCreateShadowUser('suspended-reset@example.com', 'Guest');
+    const token = authService.generateToken();
+    await userService.setPasswordResetToken(user.id, token.hashed, new Date(Date.now() + 3600_000));
+    await userService.lockAccount(user.id);
+    assertEqual(await userService.findByPasswordResetToken(token.hashed), null, 'suspended token cannot be looked up');
+    const changed = await userService.resetPassword(token.hashed, await authService.hashPassword('new-password'));
+    assertEqual(changed, null, 'atomic reset rejects token after suspension');
+    const after = await userService.findById(user.id);
+    assertEqual(after!.isAdminSuspended, true, 'suspension persists');
+    assertEqual(after!.passwordHash, null, 'password was not set');
+    await deleteUser('suspended-reset@example.com');
   });
 
   // ── Full J3 chain at the DB/HTTP layer (AC-I3 ④ payoff) ──

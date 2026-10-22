@@ -79,7 +79,7 @@ LAST_NAMES = [
 
 def _random_email(idx: int) -> str:
     random_suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
-    return f"loadtest_{idx}_{random_suffix}@example.com"
+    return f"loadtest_{idx}_{random_suffix}@example.invalid"
 
 
 def _random_name() -> tuple[str, str]:
@@ -105,6 +105,72 @@ class RequestResult:
     error: str | None = None
     registration_id: str | None = None
     pi_id: str | None = None
+
+
+@dataclass
+class SimulatorConfirmRetry:
+    status_code: int
+    latency_ms: float
+    error: str
+
+
+SIMULATOR_CONFIRM_MAX_RETRIES = 3
+SIMULATOR_CONFIRM_BACKOFF_SECONDS = (0.1, 0.2, 0.3)
+
+
+async def confirm_simulator_payment_intent(
+    session: aiohttp.ClientSession,
+    simulator_url: str,
+    pi_id: str,
+    timeout: aiohttp.ClientTimeout,
+    api_key: str | None,
+    *,
+    max_retries: int = SIMULATOR_CONFIRM_MAX_RETRIES,
+) -> tuple[int, str | None, list[SimulatorConfirmRetry], float]:
+    """Confirm a simulated PI, retrying only safe, idempotent transport failures.
+
+    The result status/error describes the final attempt. ``retries`` contains
+    every failed attempt that was followed by another attempt; callers can
+    report each one without obscuring an exhausted final failure.
+    """
+    url = f"{simulator_url.rstrip('/')}/v1/payment_intents/{pi_id}/confirm"
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    retry_rows: list[SimulatorConfirmRetry] = []
+    total_started = time.monotonic()
+    status_code = 0
+    final_error: str | None = None
+
+    for attempt_index in range(max_retries + 1):
+        attempt_started = time.monotonic()
+        retryable = False
+        try:
+            async with session.post(url, headers=headers, timeout=timeout) as response:
+                status_code = response.status
+                if status_code in (200, 201):
+                    await response.read()
+                    return status_code, None, retry_rows, (time.monotonic() - total_started) * 1000
+                body = await response.text()
+                final_error = f"simulator confirm failed: {body[:200]}"
+                retryable = status_code == 429 or 500 <= status_code <= 599
+        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+            status_code = 0
+            final_error = f"simulator confirm transport error: {type(exc).__name__}: {exc}"
+            retryable = True
+        except Exception as exc:
+            status_code = 0
+            final_error = f"simulator confirm error: {type(exc).__name__}: {exc}"
+            retryable = False
+
+        latency_ms = (time.monotonic() - attempt_started) * 1000
+        if retryable and attempt_index < max_retries:
+            retry_rows.append(SimulatorConfirmRetry(status_code, latency_ms, final_error or "retryable failure"))
+            delay_index = min(attempt_index, len(SIMULATOR_CONFIRM_BACKOFF_SECONDS) - 1)
+            await asyncio.sleep(SIMULATOR_CONFIRM_BACKOFF_SECONDS[delay_index])
+            continue
+        return status_code, final_error, retry_rows, (time.monotonic() - total_started) * 1000
+
+    # The range always returns, but retain a defensive return for type checkers.
+    return status_code, final_error or "simulator confirm failed", retry_rows, (time.monotonic() - total_started) * 1000
 
 
 @dataclass
@@ -241,6 +307,7 @@ class RegistrationWorker:
 
         payload: dict[str, Any] = {
             "email": email,
+            "emailConfirm": email,
             "firstName": first,
             "lastName": last,
         }
@@ -279,6 +346,7 @@ class RegistrationWorker:
                     outcome=outcome,
                     pi_id=pi_id,
                     registration_id=registration_id,
+                    error=str(body.get("error")) if body.get("error") else None,
                 ))
         except asyncio.TimeoutError:
             results.append(RequestResult(
@@ -310,32 +378,33 @@ class RegistrationWorker:
             # endpoint. This transitions the PI from requires_payment_method →
             # requires_capture so that the Flyte confirm endpoint can proceed.
             if self.simulator_url:
-                try:
-                    async with self.session.post(
-                        f"{self.simulator_url}/v1/payment_intents/{pi_id}/confirm",
-                        timeout=self.timeout,
-                    ) as sim_resp:
-                        if sim_resp.status not in (200, 201):
-                            sim_body = await sim_resp.text()
-                            results.append(RequestResult(
-                                worker_id=self.worker_id,
-                                attempt=attempt,
-                                phase="sim_confirm",
-                                status_code=sim_resp.status,
-                                latency_ms=0,
-                                outcome="ERROR",
-                                error=f"simulator confirm failed: {sim_body[:200]}",
-                            ))
-                            return results
-                except Exception as e:
+                sim_status, sim_error, retries, sim_latency = await confirm_simulator_payment_intent(
+                    self.session, self.simulator_url, pi_id, self.timeout,
+                    os.environ.get("STRIPE_SIM_API_KEY"),
+                )
+                for retry in retries:
+                    results.append(RequestResult(
+                        worker_id=self.worker_id,
+                        attempt=attempt,
+                        phase="sim_retry",
+                        status_code=retry.status_code,
+                        latency_ms=retry.latency_ms,
+                        outcome="SIMULATOR_TRANSPORT_RETRY",
+                        error=retry.error,
+                        registration_id=registration_id,
+                        pi_id=pi_id,
+                    ))
+                if sim_status not in (200, 201):
                     results.append(RequestResult(
                         worker_id=self.worker_id,
                         attempt=attempt,
                         phase="sim_confirm",
-                        status_code=0,
-                        latency_ms=0,
-                        outcome="NETWORK_ERROR",
-                        error=f"simulator confirm error: {e}",
+                        status_code=sim_status,
+                        latency_ms=sim_latency,
+                        outcome="NETWORK_ERROR" if sim_status == 0 else "ERROR",
+                        error=sim_error,
+                        registration_id=registration_id,
+                        pi_id=pi_id,
                     ))
                     return results
             confirm_url = f"{self.base_url}/registration/confirm/{pi_id}"
@@ -396,6 +465,8 @@ def _classify_phase1(status: int, body: dict[str, Any]) -> str:
         if err == "already_registered":
             return "ALREADY_REGISTERED"
         return "VALIDATION_ERROR"
+    if status == 409:
+        return "FULL" if body.get("error") == "event_full" else "EVENT_CLOSED"
     if status == 429:
         return "RATE_LIMITED"
     if status == 503:
@@ -410,18 +481,20 @@ def _classify_phase1(status: int, body: dict[str, Any]) -> str:
 
 
 def _classify_phase3(status: int, location: str, body: dict[str, Any]) -> str:
-    if status in (301, 302, 303, 307, 308):
-        if "/confirmed" in location:
-            return "SUCCESS"
-        if "waitlist" in location:
-            return "FULL"
-        return "REDIRECT"
+    # Current API returns HTTP 200 for several business states. A transport
+    # success alone does not prove that a seat/payment was confirmed.
     if status == 429:
         return "RATE_LIMITED"
     if status == 403:
         return "CSRF_REJECTED"
     if 200 <= status < 300:
-        return "SUCCESS"
+        state = body.get("status")
+        if state == "CONFIRMED": return "SUCCESS"
+        if state in ("PENDING_CAPTURE", "PENDING_PAYMENT"): return "PENDING"
+        if state in ("PAYMENT_FAILED", "EXPIRED", "CANCELLED"): return state
+        return "UNVERIFIED"
+    if status in (301, 302, 303, 307, 308):
+        return "FULL" if "waitlist" in location else "UNVERIFIED_REDIRECT"
     return "ERROR"
 
 
@@ -440,12 +513,6 @@ async def run_load_test(
     simulator_url: str | None = None,
 ) -> RunStats:
     stats = RunStats()
-
-    # Semaphore to cap concurrency
-    sem = asyncio.Semaphore(concurrency)
-    # Counter for atomic attempt numbering
-    attempt_counter = 0
-    lock = asyncio.Lock()
 
     connector = aiohttp.TCPConnector(limit=concurrency + 10, limit_per_host=concurrency + 10)
 
@@ -471,42 +538,28 @@ async def run_load_test(
         )
 
     try:
-        async def do_attempt(worker: RegistrationWorker, attempt_num: int) -> None:
-            async with sem:
-                results = await worker.run_one(attempt_num)
-                for r in results:
-                    stats.add(r)
-
-        # Build the task list — distribute attempts round-robin across workers
-        tasks: list[asyncio.Task[None]] = []
-        for i in range(total):
-            worker = workers[i % concurrency]
-            task = asyncio.create_task(do_attempt(worker, i))
-            tasks.append(task)
-            if ramp_up > 0 and i < concurrency:
-                await asyncio.sleep(ramp_up / concurrency)
-
+        # Bootstrap every worker before selling any seats. Otherwise a worker
+        # starting after sell-out cannot obtain the registration-page CSRF token.
+        await asyncio.gather(*(worker._acquire_session() for worker in workers))
+        stats.start_time = time.monotonic()
+        attempts = iter(range(total))
         with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeElapsedColumn(),
-            console=console,
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+            BarColumn(), TaskProgressColumn(), TimeElapsedColumn(), console=console,
         ) as progress:
-            prog_task = progress.add_task(
-                f"Running {total} requests × {concurrency} workers …", total=total
-            )
-
-            done_count = 0
-            for coro in asyncio.as_completed(tasks):
-                await coro
-                done_count += 1
-                progress.update(prog_task, completed=done_count)
+            prog_task = progress.add_task(f"Running {total} attempts × {concurrency} workers …", total=total)
+            async def run_worker(worker: RegistrationWorker) -> None:
+                # Exactly one in-flight attempt per worker/cookie jar. A global
+                # semaphore with round-robin tasks can overlap the same worker.
+                for attempt in attempts:
+                    for result in await worker.run_one(attempt):
+                        stats.add(result)
+                    progress.advance(prog_task)
+            await asyncio.gather(*(run_worker(worker) for worker in workers))
     finally:
         for sess in sessions:
             await sess.close()
-        connector.close()
+        await connector.close()
 
     stats.end_time = time.monotonic()
 
@@ -701,8 +754,8 @@ def main(
     console.print(f"\n[dim]Full results written to [bold]{output}[/bold][/dim]")
 
     # Exit with non-zero if any requests failed unexpectedly
-    p1_outcomes = stats.outcome_distribution("phase1")
-    error_count = p1_outcomes.get("ERROR", 0) + p1_outcomes.get("NETWORK_ERROR", 0)
+    unexpected = {"ERROR", "NETWORK_ERROR", "CSRF_REJECTED", "VALIDATION_ERROR", "UNVERIFIED", "UNVERIFIED_REDIRECT"}
+    error_count = sum(r.outcome in unexpected for r in stats.results)
     if error_count > 0:
         console.print(f"[red]{error_count} unexpected errors — check results.json[/red]")
         sys.exit(2)

@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import type { SendMailOptions } from 'nodemailer';
 import pino from 'pino';
 import { config } from '../../config.js';
 import type { INotificationService } from '../interfaces.js';
@@ -19,7 +20,7 @@ const mailer = nodemailer.createTransport({
  * a paid registration is never invisible to ops. Call sites keep their
  * best-effort `catch` — the difference is the failure now leaves a trail.
  */
-async function sendMail(message: nodemailer.SendMailOptions): Promise<void> {
+async function sendMail(message: SendMailOptions): Promise<void> {
   try {
     await mailer.sendMail(message);
   } catch (err) {
@@ -78,13 +79,13 @@ export class NotificationService implements INotificationService {
     const bodyHtml = `
       <p style="${P}">Dear ${escapeHtml(entry.firstName)} ${escapeHtml(entry.lastName)},</p>
       <p style="${P}">You are <strong>#${position}</strong> on the waitlist for <strong>${escapeHtml(eventName)}</strong>.</p>
-      <p style="${P}">If a spot opens up we'll email you. No payment is required at this time.</p>`;
+      <p style="${P}">Joining the waitlist does not reserve a place. Contact the organizer about availability; promotion is handled manually. No payment is required at this time.</p>`;
     await sendMail({
       from: config.smtp.from,
       to: entry.email,
       subject: `You're on the waitlist: ${eventName}`,
       html: wrapEmail({ heading: "You're on the waitlist", bodyHtml, cta: { label: 'Check your live position', url } }),
-      text: `You're on the Waitlist\n\nDear ${entry.firstName} ${entry.lastName},\n\nYou are #${position} on the waitlist for ${eventName}.\n\nIf a spot opens up, we will contact you. No payment is required at this time.\n\nCheck your live position: ${url}`,
+      text: `You're on the Waitlist\n\nDear ${entry.firstName} ${entry.lastName},\n\nYou are #${position} on the waitlist for ${eventName}.\n\nJoining the waitlist does not reserve a place. Contact the organizer about availability; promotion is handled manually. No payment is required at this time.\n\nCheck your live position: ${url}`,
     });
   }
 

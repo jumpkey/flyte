@@ -6,6 +6,8 @@
  * makes it testable — see src/web/testing/status-pill.test.ts.
  */
 
+import { config } from '../config.js';
+
 export type PillVariant = 'success' | 'info' | 'warning' | 'danger' | 'neutral';
 
 // WK §2.3 / §5 status → pill variant mapping. Every registration, event, and
@@ -17,7 +19,7 @@ const PILL_VARIANT: Record<string, PillVariant> = {
   // info
   PENDING_CAPTURE: 'info', REFUNDED: 'info', FULL: 'info', APPROVED: 'info',
   // warning
-  PENDING_PAYMENT: 'warning', CLOSED: 'warning', SHADOW: 'warning', REQUESTED: 'warning',
+  PENDING_PAYMENT: 'warning', CLOSED: 'warning', CANCELLING: 'warning', SHADOW: 'warning', REQUESTED: 'warning',
   // danger
   PAYMENT_FAILED: 'danger', CANCELLED: 'danger', DENIED: 'danger', LOCKED: 'danger',
   // neutral
@@ -32,6 +34,7 @@ const PILL_LABEL: Record<string, string> = {
   SHADOW: 'Shadow',
   LOCKED: 'Locked',
   FULL: 'Sold out',
+  CANCELLING: 'Cancelling',
 };
 
 function titleCase(status: string): string {
@@ -74,6 +77,11 @@ export function money(cents: number | null | undefined): string {
   return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/** True when this process is configured with Stripe's test-mode publishable key. */
+export function isTestbed(): boolean {
+  return config.stripe.publishableKey.startsWith('pk_test_');
+}
+
 // ── Event card / storefront helpers (I2) ───────────────────────────────────
 
 export interface CardEvent {
@@ -109,7 +117,7 @@ export function eventCardState(ev: CardEvent): EventCardInfo {
   const capacity = ev.total_capacity > 0 ? ev.total_capacity : 0;
   const fraction = capacity > 0 ? Math.max(0, Math.min(1, ev.available_slots / capacity)) : 0;
   const soldOut = ev.status === 'FULL' || ev.available_slots <= 0;
-  const closed = ev.status === 'CLOSED' || ev.status === 'CANCELLED';
+  const closed = ev.status === 'CLOSED' || ev.status === 'CANCELLING' || ev.status === 'CANCELLED';
 
   let state: CardState;
   if (closed) state = 'closed';
@@ -141,17 +149,22 @@ export function eventInitials(name: string): string {
 /** Short date badge, e.g. "JUN 17". */
 export function dateBadge(date: Date | string): string {
   return new Date(date)
-    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: config.eventTimeZone })
     .toUpperCase();
 }
 
-/** Longer card meta date, e.g. "Tue, Jun 17". */
+/** Longer event date and time with the event's configured IANA time zone. */
 export function dateLong(date: Date | string): string {
-  return new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const formatted = new Date(date).toLocaleString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZone: config.eventTimeZone,
+  });
+  return `${formatted} (${config.eventTimeZone})`;
 }
 
 /** The bundle injected into every template's locals. */
 export const viewHelpers = {
-  statusPill, displayStatus, money,
+  statusPill, displayStatus, money, isTestbed,
   eventCardState, eventInitials, dateBadge, dateLong,
+  eventTimeZone: config.eventTimeZone,
 };

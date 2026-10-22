@@ -13,7 +13,7 @@ import 'dotenv/config';
 import ejs from 'ejs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { statusPill, displayStatus, money, viewHelpers } from '../view-helpers.js';
+import { statusPill, displayStatus, eventCardState, money, viewHelpers } from '../view-helpers.js';
 import type { PillVariant } from '../view-helpers.js';
 import { assert, assertEqual } from '../../registration/testing/test-helpers.js';
 
@@ -29,7 +29,7 @@ const EXPECTED: Record<string, PillVariant> = {
   // info
   PENDING_CAPTURE: 'info', REFUNDED: 'info', FULL: 'info', APPROVED: 'info',
   // warning
-  PENDING_PAYMENT: 'warning', CLOSED: 'warning', shadow: 'warning', REQUESTED: 'warning',
+  PENDING_PAYMENT: 'warning', CLOSED: 'warning', CANCELLING: 'warning', shadow: 'warning', REQUESTED: 'warning',
   // danger
   PAYMENT_FAILED: 'danger', CANCELLED: 'danger', DENIED: 'danger', LOCKED: 'danger',
   // neutral
@@ -79,6 +79,13 @@ async function runTests() {
     assertEqual(statusPill('SOMETHING_NEW').variant, 'neutral', 'unknown → neutral');
     assertEqual(statusPill('').label, 'Unknown', 'empty → Unknown label');
     assertEqual(statusPill(null).variant, 'neutral', 'null → neutral');
+  });
+
+  await test('CANCELLING events are closed to storefront registration', () => {
+    const state = eventCardState({ status: 'CANCELLING', available_slots: 5, total_capacity: 10 });
+    assertEqual(state.state, 'closed', 'cancellation pending is closed');
+    assertEqual(state.noCta, true, 'no registration CTA');
+    assertEqual(state.waitlistOpen, false, 'waitlist disabled');
   });
 
   // ── money() ──

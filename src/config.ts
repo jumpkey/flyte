@@ -4,12 +4,23 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable must be set in production');
 }
 
+// A simulator credential must never fall back to Stripe's public API. Conversely,
+// do not send an actual Stripe credential to a configurable simulator endpoint.
+const simulatorHost = process.env.STRIPE_SIMULATOR_HOST;
+const simulatorKey = /^sk_test_(simulator_|loadtest_)/.test(process.env.STRIPE_SECRET_KEY ?? '');
+if (Boolean(simulatorHost) !== simulatorKey) {
+  throw new Error('Stripe simulation requires both STRIPE_SIMULATOR_HOST and a sk_test_simulator_ dummy key');
+}
+
 export const config = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3000', 10),
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://flyte:flyte@localhost:5432/flyte',
   sessionSecret: process.env.SESSION_SECRET ?? 'dev-secret-change-me',
   appDomain: process.env.APP_DOMAIN ?? 'http://localhost:3000',
+  // Event datetimes entered in the admin form are interpreted in this IANA
+  // timezone. UTC preserves the existing deployment's stored interpretation.
+  eventTimeZone: process.env.EVENT_TIME_ZONE ?? 'UTC',
   smtp: {
     host: process.env.SMTP_HOST ?? 'localhost',
     port: parseInt(process.env.SMTP_PORT ?? '1025', 10),
@@ -41,3 +52,9 @@ export const config = {
   registrationTtlMinutes: parseInt(process.env.REGISTRATION_TTL_MINUTES ?? '30', 10),
   captureMaxRetries: parseInt(process.env.CAPTURE_MAX_RETRIES ?? '5', 10),
 };
+
+try {
+  new Intl.DateTimeFormat('en-US', { timeZone: config.eventTimeZone });
+} catch {
+  throw new Error(`EVENT_TIME_ZONE must be a valid IANA timezone (received "${config.eventTimeZone}")`);
+}

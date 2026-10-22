@@ -10,6 +10,7 @@ export interface User {
   isVerified: boolean;
   isAdmin: boolean;
   isLocked: boolean;
+  isAdminSuspended: boolean;
   failedLoginCount: number;
   verificationToken: string | null;
   verificationTokenExpiresAt: Date | null;
@@ -30,6 +31,7 @@ function mapUser(row: Record<string, unknown>): User {
     isVerified: row.is_verified as boolean,
     isAdmin: row.is_admin as boolean,
     isLocked: row.is_locked as boolean,
+    isAdminSuspended: (row.is_admin_suspended as boolean | undefined) ?? false,
     failedLoginCount: row.failed_login_count as number,
     verificationToken: row.verification_token as string | null,
     verificationTokenExpiresAt: row.verification_token_expires_at as Date | null,
@@ -93,7 +95,7 @@ export const userService = {
   },
 
   async findByPasswordResetToken(tokenHash: string): Promise<User | null> {
-    const rows = await sql`SELECT * FROM users WHERE password_reset_token = ${tokenHash} AND password_reset_token_expires_at > NOW()`;
+    const rows = await sql`SELECT * FROM users WHERE password_reset_token = ${tokenHash} AND password_reset_token_expires_at > NOW() AND is_admin_suspended = FALSE`;
     if (rows.length === 0) return null;
     return mapUser(rows[0] as Record<string, unknown>);
   },
@@ -115,14 +117,15 @@ export const userService = {
   },
 
   async setPasswordResetToken(id: string, tokenHash: string, expiresAt: Date): Promise<void> {
-    await sql`UPDATE users SET password_reset_token = ${tokenHash}, password_reset_token_expires_at = ${expiresAt} WHERE id = ${id}`;
+    await sql`UPDATE users SET password_reset_token = ${tokenHash}, password_reset_token_expires_at = ${expiresAt}
+      WHERE id = ${id} AND is_admin_suspended = FALSE`;
   },
 
-  async resetPassword(id: string, newPasswordHash: string): Promise<void> {
+  async resetPassword(tokenHash: string, newPasswordHash: string): Promise<User | null> {
     // Completing a reset doubles as shadow-account activation (J3): set the
     // password and flip account_status→active + is_verified→true (the emailed
     // link proves mailbox control). Harmless for an already-active user.
-    await sql`
+    const rows = await sql`
       UPDATE users
       SET password_hash = ${newPasswordHash},
           password_reset_token = NULL,
@@ -131,8 +134,12 @@ export const userService = {
           failed_login_count = 0,
           account_status = 'active',
           is_verified = TRUE
-      WHERE id = ${id}
+      WHERE password_reset_token = ${tokenHash}
+        AND password_reset_token_expires_at > NOW()
+        AND is_admin_suspended = FALSE
+      RETURNING *
     `;
+    return rows.length ? mapUser(rows[0] as Record<string, unknown>) : null;
   },
 
   async updateLastLogin(id: string): Promise<void> {
@@ -148,11 +155,21 @@ export const userService = {
   },
 
   async lockAccount(id: string): Promise<void> {
-    await sql`UPDATE users SET is_locked = TRUE WHERE id = ${id}`;
+    await sql.begin(async (tx) => {
+      await tx`UPDATE users SET is_locked = TRUE, is_admin_suspended = TRUE,
+        password_reset_token = NULL, password_reset_token_expires_at = NULL,
+        verification_token = NULL, verification_token_expires_at = NULL
+        WHERE id = ${id}`;
+      await tx`DELETE FROM sessions WHERE user_id = ${id}`;
+    });
+  },
+
+  async lockForFailedLogins(id: string): Promise<void> {
+    await sql`UPDATE users SET is_locked = TRUE WHERE id = ${id} AND is_admin_suspended = FALSE`;
   },
 
   async unlockAccount(id: string): Promise<void> {
-    await sql`UPDATE users SET is_locked = FALSE, failed_login_count = 0 WHERE id = ${id}`;
+    await sql`UPDATE users SET is_locked = FALSE, is_admin_suspended = FALSE, failed_login_count = 0 WHERE id = ${id}`;
   },
 
   async isEmailTaken(email: string): Promise<boolean> {

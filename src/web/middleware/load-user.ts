@@ -16,7 +16,7 @@ export const loadUser = createMiddleware(async (c, next) => {
   const session = c.get('session') as SessionData | undefined;
   if (session?.userId && !c.get('user')) {
     const user = await userService.findById(session.userId);
-    if (user && !user.isLocked) {
+    if (user && !user.isLocked && !user.isAdminSuspended) {
       c.set('user', user);
     }
   }

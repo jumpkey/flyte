@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Lint, typecheck & test
+    name: Build, typecheck & test
     runs-on: ubuntu-latest
 
     services:
@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -49,6 +49,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Production build
+        run: npm run build
 
       - name: Test (registration + web suites)
         run: npm test

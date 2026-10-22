@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { Context } from 'hono';
 import { renderView, renderFragment } from '../../render.js';
 import { adminRegistrationsService } from '../../../services/admin-registrations-service.js';
@@ -100,6 +101,7 @@ export const adminRegistrationsController = {
       title: 'Payment detail', activeNav: 'registrations',
       reg, refundLog: detail.refundLog,
       remainingCents: remaining,
+      refundOperationId: crypto.randomUUID(),
       refundable: reg.status === 'CONFIRMED' && remaining > 0,
       stripeUrl: reg.payment_intent_id ? stripePaymentUrl(reg.payment_intent_id as string) : null,
     }, { layout: 'admin' });
@@ -146,7 +148,9 @@ export const adminRegistrationsController = {
     try { svc = await getRefundService(); }
     catch (_) { flash(c, 'Payment service unavailable — no refund issued.'); return c.redirect(back); }
 
-    const result = await svc.refundRegistration({ registrationId: id, refundType, partialAmountCents, reason });
+    const operationId = String(body['operationId'] ?? '');
+    if (!UUID_RE.test(operationId)) { flash(c, 'Reload the payment detail before issuing a refund.'); return c.redirect(back); }
+    const result = await svc.refundRegistration({ registrationId: id, refundType, partialAmountCents, reason, operationId });
 
     const admin = c.get('user') as User | undefined;
     switch (result.outcome) {
@@ -163,7 +167,7 @@ export const adminRegistrationsController = {
         break;
       }
       case 'STRIPE_ERROR':
-        flash(c, 'Stripe declined the refund — nothing was recorded. Try again or check the Stripe dashboard.');
+        flash(c, 'Refund outcome is unresolved. Recovery will retry the same operation; check the Stripe dashboard before taking another action.');
         break;
       case 'AMOUNT_EXCEEDS_BALANCE':
         flash(c, 'Refund exceeds the remaining balance.');

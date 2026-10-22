@@ -6,6 +6,9 @@
     <% if (position !== null && typeof position !== 'undefined') { %>
       <p class="mb-1">Your current position</p>
       <p class="display-6 mb-3"><span class="pill pill-info">#<%= position %></span></p>
+    <% } else if (eventStatus === 'CLOSED' || eventStatus === 'CANCELLED' || eventStatus === 'CANCELLING') { %>
+      <p class="text-muted">This event is no longer accepting registrations. Contact the organizer if you have questions about your waitlist entry.</p>
+      <a class="btn btn-outline-secondary mt-2" href="/events/<%= eventId %>">Back to event</a>
     <% } else { %>
       <p class="text-muted mb-3">You're no longer on this waitlist.</p>
     <% } %>
@@ -14,7 +17,7 @@
       <div class="alert alert-flyte" role="status">A spot may have opened up.</div>
       <a class="btn btn-cta" href="/events/<%= eventId %>/register">Register now</a>
     <% } else { %>
-      <p class="text-muted">This event is still full. We'll email you if a spot opens up — no need to check back.</p>
+      <p class="text-muted">This event is still full. The organizer handles openings manually, and Flyte will not send an availability notification. Please check this page for updates or contact the organizer.</p>
       <a class="btn btn-outline-secondary mt-2" href="/events/<%= eventId %>">Back to event</a>
     <% } %>
   </div>

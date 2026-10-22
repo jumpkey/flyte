@@ -159,11 +159,11 @@ async function runTests() {
 
     const result = await svc.refundRegistration({ registrationId: regId, refundType: 'FULL', reason: 'test' });
     assertEqual(result.outcome, 'REFUND_ISSUED', 'refund should succeed');
-    // Stripe should be called WITHOUT an amount param (refund net automatically)
+    // Persist and send the exact remaining captured amount for a stable operation.
     const cancelCall = stripe.calls.find(c => c.method === 'refunds.create');
     assert(cancelCall != null, 'refunds.create should be called');
     const refundParams = cancelCall!.args[0] as Record<string, unknown>;
-    assert(!('amount' in refundParams), 'Full refund should NOT pass amount param to Stripe');
+    assertEqual(refundParams.amount, 4900, 'Full refund passes the remaining captured balance');
     // DB should track 4900, not 5000
     assertEqual(result.refundedAmountCents, 4900, 'refundedAmountCents should be net=4900');
   });
@@ -243,7 +243,7 @@ async function runTests() {
     assert(call != null, 'refunds.create should be called');
     const opts = call!.args[1] as Record<string, unknown> | undefined;
     assert(!!opts, 'an options object (with the idempotency key) is passed as the 2nd arg');
-    assertEqual(opts!.idempotencyKey, `refund-${regId}-0-1000`, 'key = refund-<id>-<priorRefunded>-<amount>');
+    assertEqual(opts!.idempotencyKey, `refund-${regId}-0-PARTIAL-1000`, 'key includes registration, prior balance, mode, and amount');
   });
 
   await test('W13: two equal sequential partials get distinct keys and both issue', async () => {
@@ -263,8 +263,8 @@ async function runTests() {
     assertEqual(a.outcome, 'PARTIAL_REFUND_ISSUED', 'first partial issued');
     assertEqual(b.outcome, 'PARTIAL_REFUND_ISSUED', 'second equal partial also issued (not deduped)');
     const keys = stripe.calls.filter(c => c.method === 'refunds.create').map(c => (c.args[1] as Record<string, unknown>).idempotencyKey);
-    assertEqual(keys[0], `refund-${regId}-0-1000`, 'first key uses prior balance 0');
-    assertEqual(keys[1], `refund-${regId}-1000-1000`, 'second key uses prior balance 1000');
+    assertEqual(keys[0], `refund-${regId}-0-PARTIAL-1000`, 'first key uses prior balance 0');
+    assertEqual(keys[1], `refund-${regId}-1000-PARTIAL-1000`, 'second key uses prior balance 1000');
     const rows = await testSql`SELECT refunded_amount_cents FROM registrations WHERE registration_id = ${regId}::UUID`;
     assertEqual(rows[0].refunded_amount_cents, 2000, 'both partials applied: refunded=2000');
   });
@@ -346,11 +346,11 @@ async function runTests() {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Fix #11 — Anomalous 'succeeded' PI is logged, not expired
+  // Fix #11 — Reconciliation completes already-succeeded intents
   // ─────────────────────────────────────────────────────────────────────────────
-  console.log('--- Fix #11: Anomalous succeeded PI is logged, not expired ---');
+  console.log('--- Fix #11: Already-succeeded PI is finalized ---');
 
-  await test('11-1: PENDING_PAYMENT with succeeded PI is NOT expired; errorCount increments', async () => {
+  await test('11-1: PENDING_PAYMENT with succeeded PI acquires one slot and is confirmed', async () => {
     await truncateTables();
     await createTestEvent({ registrationFeeCents: 10000 });
 
@@ -366,20 +366,15 @@ async function runTests() {
     const regSvc = new RegistrationService(stripe as any, notif as any);
     const recon = new ReconciliationService(stripe as any, regSvc, notif as any, { captureMaxRetries: 5 });
 
-    const errors: string[] = [];
-    const origError = console.error.bind(console);
-    console.error = (...args: unknown[]) => { errors.push(args.join(' ')); origError(...args); };
-    try {
-      const result = await recon.reconcilePendingRegistrations(30);
-      assert(result.errorCount >= 1, `Expected errorCount >= 1, got ${result.errorCount}`);
-      assertEqual(result.expiredCount, 0, 'Row should NOT have been expired');
-      assert(errors.some(e => e.includes('anomaly')), 'Should log an anomaly message');
-    } finally {
-      console.error = origError;
-    }
+    const result = await recon.reconcilePendingRegistrations(30);
+    assert(result.webhookRecoveredCount >= 1, 'Succeeded PI should be recovered');
+    assertEqual(result.expiredCount, 0, 'Row should NOT have been expired');
 
     const rows = await testSql`SELECT status FROM registrations WHERE payment_intent_id = 'pi_succeeded_anomaly'`;
-    assertEqual(rows[0].status, 'PENDING_PAYMENT', 'Status should remain PENDING_PAYMENT');
+    assertEqual(rows[0].status, 'CONFIRMED', 'Status should be confirmed');
+    const event = await testSql`SELECT confirmed_count, available_slots FROM events WHERE event_id=${TEST_EVENT_ID}`;
+    assertEqual(event[0].confirmed_count, 1, 'slot reserved during recovery');
+    assertEqual(event[0].available_slots, 9, 'one slot consumed during recovery');
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import { sql } from '../../services/db.js';
 import type { Context } from 'hono';
 import { renderView } from '../render.js';
 import { adminDashboardService } from '../../services/admin-dashboard-service.js';
@@ -11,6 +12,8 @@ import { adminDashboardService } from '../../services/admin-dashboard-service.js
 export const adminController = {
   async index(c: Context): Promise<Response> {
     const data = await adminDashboardService.getDashboard();
-    return renderView(c, 'admin/dashboard', { title: 'Dashboard', activeNav: 'dashboard', ...data }, { layout: 'admin' });
+    const recovery = (await sql`SELECT *, finished_at IS NULL OR finished_at < now()-interval '15 minutes' AS stale FROM recovery_status WHERE name='payments'`)[0] ?? null;
+    const pendingRefunds = await sql`SELECT registration_id, operation_id, created_at FROM refund_operations WHERE status='PENDING' ORDER BY created_at LIMIT 20`;
+    return renderView(c, 'admin/dashboard', { title: 'Dashboard', activeNav: 'dashboard', ...data, recovery, pendingRefunds }, { layout: 'admin' });
   },
 };

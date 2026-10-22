@@ -7,7 +7,7 @@
     <div class="receipt text-start mb-4">
       <% if (event) { %>
       <div class="row-line"><span class="k">Event</span><span class="v"><%= event.name %></span></div>
-      <div class="row-line"><span class="k">When</span><span class="v"><%= new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) %></span></div>
+      <div class="row-line"><span class="k">When</span><span class="v"><%= dateLong(event.event_date) %></span></div>
       <% if (event.location) { %>
       <div class="row-line"><span class="k">Where</span><span class="v"><%= event.location %></span></div>
       <% } %>

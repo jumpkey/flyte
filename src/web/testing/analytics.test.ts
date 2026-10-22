@@ -73,6 +73,21 @@ async function runTests() {
     assert(bookingCurve({ cumulative: [1, 3, 6], capacity: 10, projection: [6, 10] }).includes('<polyline'), 'curve');
     assert(sparkline([1, 2, 1, 3]).includes('<svg'), 'sparkline');
   });
+  await test('money bars use a signed domain and zero baseline for refund days', () => {
+    const chart = barChart([120, -80, -25], { scale: true, yUnit: '$' });
+    const heights = [...chart.matchAll(/height="([\d.]+)"/g)].map((m) => Number(m[1])).filter((n) => n < 100);
+    assert(heights.length === 3 && heights.every((n) => n > 0), 'all bars have positive SVG heights');
+    assert(chart.includes('−$80'), 'negative axis tick is labeled');
+    assert(chart.includes('stroke-width="1.2"'), 'zero baseline is drawn');
+  });
+  await test('booking projection shares the historical x-domain', () => {
+    const chart = bookingCurve({ cumulative: [2, 4, 7], capacity: 20, projection: [7, 11, 15, 18] });
+    const projectionPoints = chart.match(/stroke="#C2410C"[^>]*points="([^"]+)"/)?.[1];
+    assert(typeof projectionPoints === 'string', 'projection polyline exists');
+    const xs = projectionPoints!.split(' ').map((point) => Number(point.split(',')[0]));
+    assert(xs.every((x) => x >= 0 && x <= 520), `projected x values fit viewBox: ${xs.join(',')}`);
+    assert(xs[xs.length - 1] === 492, 'forecast reaches right edge inside chart');
+  });
 
   // ── HTTP: dashboard + performance ──
   await truncateTables();
@@ -98,12 +113,14 @@ async function runTests() {
     assert(body.includes('$50.00'), 'gross = 2×$25 = $50.00');
     assert(body.includes('Payment funnel') && body.includes('Initiated'), 'funnel rendered');
     assert(body.includes('shadow→active') || body.includes('Activated buyers'), 'activation metric (A4)');
+    assert(body.includes('Events · lifetime') && body.includes('Customers · lifetime'), 'lifetime panels are labeled');
+    assert(body.includes('View daily values') && body.includes('View funnel counts'), 'chart data has text equivalents');
   });
 
   await test('dashboard range swap returns a bare HTMX fragment', async () => {
     const frag = await get('/admin/analytics?range=30', adminCookie, { 'HX-Request': 'true' });
     const body = await frag.text();
-    assert(!body.includes('<html') && body.includes('Gross revenue'), 'fragment without layout');
+    assert(!body.includes('<html') && body.includes('Gross sales'), 'fragment without layout');
   });
 
   await test('event performance renders the projection headline; 404 for unknown', async () => {
@@ -139,6 +156,29 @@ async function runTests() {
     // 3 confirmed-in-period sales × $25 gross = $75; refunded $25 → net $50.
     assertEqual(d.kpis.grossCents, 7500, 'gross over same population');
     assertEqual(d.kpis.netCents, 5000, 'net = gross − refunded');
+  });
+
+  // A partial refund must reduce lifetime customer net, and refunds against an
+  // older sale must not move into a current sales-confirmation cohort.
+  await testSql`UPDATE registrations SET refunded_amount_cents=500 WHERE payment_intent_id='pi_a1'`;
+  await testSql`INSERT INTO refund_log (registration_id,event_id,stripe_refund_id,refund_type,amount_cents,reason,created_at)
+    SELECT registration_id,event_id,'re_partial_i10','PARTIAL',500,'test_partial',now()
+    FROM registrations WHERE payment_intent_id='pi_a1'`;
+  const oldRegId = (await testSql`INSERT INTO registrations (event_id,email,first_name,last_name,gross_amount_cents,net_amount_cents,refunded_amount_cents,payment_intent_id,status,confirmed_at)
+    VALUES (${ev},'old-i10@example.com','Old','Sale',1000,950,0,'pi_old_i10','CONFIRMED',now()-interval '40 days') RETURNING registration_id`)[0].registration_id as string;
+  await testSql`UPDATE registrations SET refunded_amount_cents=400 WHERE registration_id=${oldRegId}`;
+  await testSql`INSERT INTO refund_log (registration_id,event_id,stripe_refund_id,refund_type,amount_cents,reason,created_at)
+    VALUES (${oldRegId},${ev},'re_old_i10','PARTIAL',400,'test_old_refund',now())`;
+
+  await test('partial and late refunds follow the sales-cohort definition', async () => {
+    const d = await analyticsService.getSalesDashboard(30);
+    const dailyNet = d.dailyRevenue.reduce((sum, value) => sum + value, 0);
+    assertEqual(dailyNet, d.kpis.netCents, 'daily sales cohort reconciles to net KPI');
+    assert(d.dailyLabels.length === d.dailyRevenue.length, 'dates align with daily values');
+    const customer = d.customers.top.find((row) => row.email === 'buyer-i10-1@example.com');
+    assert(!!customer, 'partial-refund customer is listed');
+    assertEqual(customer!.lifetime_net, 2000, 'lifetime net subtracts partial refund');
+    assertEqual(d.kpis.netCents, 4500, 'late refund of an older sale is outside current sales cohort');
   });
 
   // ── W19 — A1 funnel (5 stages + views) + truly-net daily revenue ──
@@ -179,6 +219,36 @@ async function runTests() {
     assert(body.includes('<svg'), 'sparkline svg present');
     assert(body.includes(`/admin/events/${ev}/performance`), 'Performance link');
     assert(body.includes(perf!.projection.headline), 'projection headline text');
+  });
+
+  await test('daily buckets preserve boundaries and empty days for every supported range', async () => {
+    for (const days of [30, 90, 365, 3650]) {
+      const id = (await testSql`INSERT INTO events(name,event_date,total_capacity,available_slots,registration_fee_cents,status)
+        VALUES ('Boundary fixture',now()+interval '10 days',10,10,0,'DRAFT') RETURNING event_id`)[0].event_id;
+      await testSql`INSERT INTO registrations(event_id,email,first_name,last_name,gross_amount_cents,refunded_amount_cents,status,confirmed_at)
+        VALUES (${id},'start@example.invalid','B','Start',111,11,'CONFIRMED',CURRENT_DATE - ((${days}-1)||' days')::interval),
+               (${id},'before@example.invalid','B','Before',222,0,'CONFIRMED',CURRENT_DATE - ((${days}-1)||' days')::interval - interval '1 microsecond'),
+               (${id},'end@example.invalid','B','End',333,0,'CONFIRMED',CURRENT_DATE + interval '1 day'),
+               (${id},'none@example.invalid','B','None',444,0,'PENDING_PAYMENT',NULL)`;
+      const d = await analyticsService.getSalesDashboard(days);
+      assertEqual(d.dailyRevenue.length, days, 'one bucket per calendar day');
+      assertEqual(d.dailyRevenue[0], 100, 'first midnight included, prior microsecond excluded');
+      assertEqual(d.dailyRevenue[1], 0, 'empty day zero-filled');
+      assertEqual(d.dailyRevenue.reduce((a,b)=>a+b,0), d.kpis.netCents, 'daily totals reconcile');
+      await testSql`DELETE FROM registrations WHERE event_id=${id}`;
+      await testSql`DELETE FROM events WHERE event_id=${id}`;
+    }
+  });
+  await test('buyer aggregates retain distinct returning and activated buyer counts', async () => {
+    const extra = (await testSql`INSERT INTO events(name,event_date,total_capacity,available_slots,registration_fee_cents,status)
+      VALUES ('Repeat buyer fixture',now()+interval '10 days',10,10,0,'DRAFT') RETURNING event_id`)[0].event_id;
+    await testSql`INSERT INTO registrations(event_id,user_id,email,first_name,last_name,gross_amount_cents,status,confirmed_at)
+      VALUES (${extra},${b1},'buyer-i10-1@example.com','B','One',100,'CONFIRMED',now())`;
+    const d = await analyticsService.getSalesDashboard(90);
+    assertEqual(d.customers.newBuyers, 1, 'one single-purchase buyer');
+    assertEqual(d.customers.returningBuyers, 1, 'one returning buyer');
+    assertEqual(d.customers.repeatRatePct, 50, 'returning percentage');
+    assertEqual(d.customers.activationRatePct, 50, 'activated percentage');
   });
 
   await truncateTables();

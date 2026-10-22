@@ -1,7 +1,10 @@
-<nav class="navbar navbar-expand navbar-flyte">
+<nav class="navbar navbar-expand-md navbar-flyte" aria-label="Main navigation">
   <div class="container">
     <a class="navbar-brand" href="/">Flyte<span class="brand-dot">.</span></a>
-    <div class="navbar-nav ms-auto align-items-center gap-2">
+    <button class="navbar-toggler d-md-none" type="button" data-nav-toggle aria-controls="primary-nav-links" aria-expanded="false" aria-label="Open navigation menu">
+      <span aria-hidden="true">☰</span>
+    </button>
+    <div class="navbar-nav navbar-links ms-auto align-items-center gap-2" id="primary-nav-links">
       <% if (typeof user !== 'undefined' && user) { %>
         <% if (user.isAdmin) { %><a class="nav-link fw-semibold" href="/admin">Admin</a><% } %>
         <a class="nav-link" href="/dashboard">Dashboard</a>

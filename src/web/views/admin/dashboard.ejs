@@ -1,5 +1,17 @@
 <h1 class="h3 mb-4">Dashboard</h1>
 
+<div class="panel mb-4">
+  <h2 class="h6">Payment recovery</h2>
+  <% if (!recovery || recovery.stale) { %>
+    <p class="text-danger mb-1" role="alert">No recent completed recovery run. Check the Fly worker before relying on automatic payment recovery.</p>
+  <% } else { %>
+    <p class="mb-1">Last completed: <%= dateLong(recovery.finished_at) %> · <%= recovery.error_count %> unresolved item(s).</p>
+  <% } %>
+  <% if (pendingRefunds.length) { %><p class="small mb-1">Refunds awaiting verification. Do not create another refund in Stripe before reconciling these operations.</p>
+    <ul><% pendingRefunds.forEach(function(op) { %><li><a href="/admin/registrations/<%= op.registration_id %>">Review payment</a> · <%= dateLong(op.created_at) %></li><% }); %></ul>
+  <% } %>
+</div>
+
 <%# Attention panel (A5) — a prioritized, deep-linked trigger list. Calm when
     there's nothing to do, which is what makes it land when something appears. %>
 <% if (attention && attention.length > 0) { %>

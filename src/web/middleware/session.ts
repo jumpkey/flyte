@@ -66,6 +66,27 @@ export async function destroyUserSessions(userId: string): Promise<void> {
   await sql`DELETE FROM sessions WHERE user_id = ${userId}`;
 }
 
+export async function changePasswordAndRotateUserSession(
+  userId: string,
+  passwordHash: string,
+  data: SessionData,
+  displayName?: string,
+): Promise<{ signedSid: string; sid: string }> {
+  const sid = crypto.randomUUID();
+  const expire = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await sql.begin(async (tx) => {
+    if (displayName === undefined) {
+      await tx`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId}`;
+    } else {
+      await tx`UPDATE users SET password_hash = ${passwordHash}, display_name = ${displayName} WHERE id = ${userId}`;
+    }
+    await tx`DELETE FROM sessions WHERE user_id = ${userId}`;
+    await tx`INSERT INTO sessions (sid, sess, expire, user_id) VALUES (${sid}, ${tx.json(data as any)}, ${expire}, ${userId})`;
+  });
+  return { signedSid: signSessionId(sid), sid };
+}
+
 function buildCookieString(value: string, isProduction: boolean): string {
   const parts = [
     `sid=${encodeURIComponent(value)}`,

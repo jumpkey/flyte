@@ -37,13 +37,13 @@ async function getRefundService(): Promise<RefundService> {
 export const adminRefundsController = {
   /** GET /admin/refund-requests — the queue (WF-15). Tabs: open / resolved. HTMX-paginated. */
   async queue(c: Context): Promise<Response> {
-    const tab = c.req.query('tab') === 'resolved' ? 'resolved' : 'open';
+    const tab = c.req.query('tab') === 'resolved' ? 'resolved' : c.req.query('tab') === 'history' ? 'history' : 'open';
     const page = parseInt(c.req.query('page') ?? '1', 10) || 1;
     // Open tab = the customer-request queue; resolved tab = the full refund
     // ledger (every executed refund, including direct admin refunds).
     const result = tab === 'resolved'
       ? await refundRequestsService.listRefundLedger(page, 25)
-      : await refundRequestsService.listQueue('open', page, 25);
+      : await refundRequestsService.listQueue(tab === 'history' ? 'resolved' : 'open', page, 25);
     const data = {
       title: 'Refund requests', activeNav: 'refunds', tab,
       ...result,
@@ -100,6 +100,7 @@ export const adminRefundsController = {
       refundType: 'FULL',
       partialAmountCents,
       reason: 'refund_request_approved',
+      operationId: `request-${id}`,
     });
 
     const admin = c.get('user') as User | undefined;
@@ -121,7 +122,7 @@ export const adminRefundsController = {
         flash(c, 'That amount is more than the refundable balance — the request is still open.');
         break;
       case 'STRIPE_ERROR':
-        flash(c, 'Stripe declined the refund — the request is still open. Try again or refund from the payment detail.');
+        flash(c, 'Refund outcome is unresolved — the request remains open. Recovery will retry the same operation; check Stripe before taking another action.');
         break;
       default:
         flash(c, 'Could not complete the refund — the request is still open.');

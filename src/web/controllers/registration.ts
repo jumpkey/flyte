@@ -82,12 +82,16 @@ export const registrationController = {
       return c.redirect(`/events/${eventId}/waitlist`);
     }
 
-    const eventRows = await sql<{name: string; event_date: Date; location: string | null; registration_fee_cents: number}[]>`
-      SELECT name, event_date, location, registration_fee_cents FROM events WHERE event_id = ${eventId}::UUID
+    const eventRows = await sql<{name: string; event_date: Date; location: string | null; registration_fee_cents: number; status: string}[]>`
+      SELECT name, event_date, location, registration_fee_cents, status FROM events WHERE event_id = ${eventId}::UUID
     `;
 
     if (eventRows.length === 0) return c.text('Event not found', 404);
     const event = eventRows[0];
+    if (event.status !== 'OPEN' || new Date(event.event_date).getTime() <= Date.now()) {
+      if (event.status === 'FULL' && availability.availableSlots <= 0) return c.redirect(`/events/${eventId}/waitlist`);
+      return c.text('This event is not accepting registrations.', 410);
+    }
 
     return renderView(c, 'registration-form', {
       title: `Register: ${event.name}`,
@@ -150,6 +154,9 @@ export const registrationController = {
     });
 
     if (result.outcome === 'SUCCESS') {
+      if (!result.paymentIntentId) {
+        return c.json({ registrationId: result.registrationId, redirectUrl: `/registration/${result.registrationId}/confirmed` });
+      }
       // Bind the purchase to the user (migration 007's user_id). The row is
       // PENDING_PAYMENT and not yet meaningful, so a post-insert stamp is safe.
       await sql`UPDATE registrations SET user_id = ${userId} WHERE registration_id = ${result.registrationId!}::UUID`;
@@ -159,6 +166,8 @@ export const registrationController = {
     if (result.outcome === 'STRIPE_TIMEOUT') return c.json({ error: 'payment_setup_failed' }, 503);
     if (result.outcome === 'STRIPE_ERROR') return c.json({ error: 'payment_setup_failed' }, 503);
     if (result.outcome === 'NOT_FOUND') return c.json({ error: 'event_not_found' }, 404);
+    if (result.outcome === 'INVALID_STATE') return c.json({ error: 'event_closed' }, 409);
+    if (result.outcome === 'AVAILABILITY_EXHAUSTED') return c.json({ error: 'event_full' }, 409);
     return c.json({ error: 'internal_error' }, 500);
   },
 
@@ -172,18 +181,13 @@ export const registrationController = {
 
     const result = await svc.confirmRegistrationFromClient(paymentIntentId);
 
-    if (result.outcome === 'SUCCESS' || result.outcome === 'IDEMPOTENT_REPLAY') {
-      return c.redirect(`/registration/${result.registrationId}/confirmed`);
+    const reg = await svc.getRegistrationByPaymentIntent(paymentIntentId);
+    const redirectUrl = reg ? `/registration/${reg.registrationId}/confirmed` : undefined;
+    if (result.outcome === 'SUCCESS' || result.outcome === 'IDEMPOTENT_REPLAY' || result.outcome === 'CAPTURE_FAILED') {
+      return c.json({ status: reg?.status ?? 'PENDING_CAPTURE', redirectUrl });
     }
-    if (result.outcome === 'AVAILABILITY_EXHAUSTED') {
-      const reg = await svc.getRegistrationByPaymentIntent(paymentIntentId);
-      const eventId = reg?.eventId ?? '';
-      return c.redirect(`/events/${eventId}/waitlist?reason=full`);
-    }
-    if (result.outcome === 'CAPTURE_FAILED') {
-      return renderView(c, 'registration-capture-pending', { title: 'Finalizing Registration' });
-    }
-    return renderView(c, 'registration-payment-failed', { title: 'Payment Failed' });
+    if (result.outcome === 'AVAILABILITY_EXHAUSTED') return c.json({ status: 'PAYMENT_FAILED', redirectUrl });
+    return c.json({ status: reg?.status ?? 'PAYMENT_FAILED', redirectUrl });
   },
 
   async showConfirmed(c: Context): Promise<Response> {
@@ -196,6 +200,13 @@ export const registrationController = {
 
     const reg = await svc.getRegistration(registrationId);
     if (!reg) return c.text('Registration not found', 404);
+
+    if (reg.status === 'PENDING_PAYMENT' || reg.status === 'PENDING_CAPTURE') {
+      return renderView(c, 'registration-capture-pending', { title: 'Registration pending', registration: reg });
+    }
+    if (reg.status !== 'CONFIRMED') {
+      return renderView(c, 'registration-payment-failed', { title: 'Registration not completed', message: 'Your payment was not captured and your registration is not confirmed. You can return to the event to try again.' });
+    }
 
     const eventRows = await sql<{name: string; event_date: Date; location: string | null}[]>`
       SELECT name, event_date, location FROM events WHERE event_id = ${reg.eventId}::UUID
@@ -251,13 +262,13 @@ export const registrationController = {
     if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const reason = c.req.query('reason');
 
-    const eventRows = await sql<{name: string; waitlist_enabled: boolean}[]>`
-      SELECT name, waitlist_enabled FROM events WHERE event_id = ${eventId}::UUID
+    const eventRows = await sql<{name: string; waitlist_enabled: boolean; status: string; event_date: Date}[]>`
+      SELECT name, waitlist_enabled, status, event_date FROM events WHERE event_id = ${eventId}::UUID
     `;
     if (eventRows.length === 0) return c.text('Event not found', 404);
     // D6: the waitlist is gated by the admin's per-event flag. When closed the
     // form is unavailable (existing entries remain admin-visible).
-    if (!eventRows[0].waitlist_enabled) {
+    if (!eventRows[0].waitlist_enabled || !['OPEN', 'FULL'].includes(eventRows[0].status) || new Date(eventRows[0].event_date).getTime() <= Date.now()) {
       return renderView(c, 'waitlist-closed', { title: 'Waitlist closed', event: { eventId, name: eventRows[0].name } });
     }
 
@@ -273,11 +284,11 @@ export const registrationController = {
     if (!eventId || !UUID_RE.test(eventId)) return c.text('Event not found', 404);
     const body = (c.get('parsedBody') as Record<string, string | File> | undefined) ?? {};
 
-    const eventRows = await sql<{name: string; waitlist_enabled: boolean}[]>`
-      SELECT name, waitlist_enabled FROM events WHERE event_id = ${eventId}::UUID
+    const eventRows = await sql<{name: string; waitlist_enabled: boolean; status: string; event_date: Date}[]>`
+      SELECT name, waitlist_enabled, status, event_date FROM events WHERE event_id = ${eventId}::UUID
     `;
     if (eventRows.length === 0) return c.text('Event not found', 404);
-    if (!eventRows[0].waitlist_enabled) {
+    if (!eventRows[0].waitlist_enabled || !['OPEN', 'FULL'].includes(eventRows[0].status) || new Date(eventRows[0].event_date).getTime() <= Date.now()) {
       return renderView(c, 'waitlist-closed', { title: 'Waitlist closed', event: { eventId, name: eventRows[0].name } });
     }
     const eventName = eventRows[0].name;
@@ -318,12 +329,20 @@ export const registrationController = {
     const before = await waitlistService.getWaitlistPosition(eventId, email);
     const alreadyOnList = before !== null;
 
-    const entry = await waitlistService.addToWaitlist({
-      eventId, email,
-      firstName: cleaned.firstName,
-      lastName: cleaned.lastName,
-      phone: cleaned.phone,
-    });
+    let entry;
+    try {
+      entry = await waitlistService.addToWaitlist({
+        eventId, email,
+        firstName: cleaned.firstName,
+        lastName: cleaned.lastName,
+        phone: cleaned.phone,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'WAITLIST_CLOSED') {
+        return renderView(c, 'waitlist-closed', { title: 'Waitlist closed', event: { eventId, name: eventName } });
+      }
+      throw err;
+    }
     await sql`UPDATE waitlist_entries SET user_id = ${userId} WHERE waitlist_entry_id = ${entry.waitlistEntryId}::UUID`;
 
     const position = await waitlistService.getWaitlistPosition(eventId, email);
@@ -371,7 +390,7 @@ export const registrationController = {
       eventId: row.event_id,
       position,
       eventStatus: row.status,
-      spotsOpen: row.status !== 'FULL' && row.available_slots > 0,
+      spotsOpen: ['OPEN', 'FULL'].includes(row.status) && row.available_slots > 0,
     });
   },
 };

@@ -23,6 +23,12 @@
       <p class="caption-label mb-2">Booking curve</p>
       <%- bookingCurve({ cumulative: cumulative, capacity: event.total_capacity, projection: projSeries }) %>
       <p class="text-secondary small mb-0 mt-1">Cumulative confirmations vs the <%= event.total_capacity %>-seat ceiling (dashed); dotted line projects current pace.</p>
+      <details class="small mt-2"><summary>View booking curve data</summary>
+        <div class="table-responsive mt-2"><table class="table table-sm mb-0"><caption class="visually-hidden">Cumulative bookings and projection</caption><thead><tr><th scope="col">Day after opening</th><th scope="col" class="text-end">Cumulative bookings</th></tr></thead><tbody>
+          <% cumulative.forEach(function (value, i) { %><tr><th scope="row"><%= i + 1 %></th><td class="text-end"><%= value %></td></tr><% }); %>
+          <tr><th scope="row">Current projection</th><td class="text-end"><%= projection.projectedFill %></td></tr>
+        </tbody></table></div>
+      </details>
     </div>
   </div>
   <div class="col-12 col-lg-5">
@@ -30,6 +36,11 @@
       <p class="caption-label mb-2">Daily bookings &amp; 7-day average</p>
       <%- barChart(dailyBookings, { line: movingAvg }) %>
       <p class="text-secondary small mb-0 mt-1">Current velocity <strong><%= (Math.round(currentVelocity * 10) / 10) %></strong> registrations/day.</p>
+      <details class="small mt-2"><summary>View daily booking data</summary>
+        <div class="table-responsive mt-2"><table class="table table-sm mb-0"><caption class="visually-hidden">Daily bookings and seven-day average</caption><thead><tr><th scope="col">Day after opening</th><th scope="col" class="text-end">Bookings</th><th scope="col" class="text-end">7-day average</th></tr></thead><tbody>
+          <% dailyBookings.forEach(function (value, i) { %><tr><th scope="row"><%= i + 1 %></th><td class="text-end"><%= value %></td><td class="text-end"><%= Math.round(movingAvg[i] * 10) / 10 %></td></tr><% }); %>
+        </tbody></table></div>
+      </details>
     </div>
   </div>
 </div>
@@ -47,7 +58,7 @@
 
 <%# Event revenue (A2) — gross/refunded/net, net ≥ 0 (W21). %>
 <div class="panel">
-  <p class="caption-label mb-2">Revenue</p>
+  <p class="caption-label mb-2">Revenue · lifetime</p>
   <div class="row g-3">
     <div class="col-4"><div class="caption-label">Gross</div><div class="fs-5 money"><%= money(revenue.grossCents) %></div></div>
     <div class="col-4"><div class="caption-label">Refunded</div><div class="fs-5 money"><%= money(revenue.refundedCents) %></div></div>

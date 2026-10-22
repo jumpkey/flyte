@@ -1,3 +1,6 @@
+import crypto from 'node:crypto';
+import Stripe from 'stripe';
+
 export type StripePaymentIntentStatus =
   | 'requires_payment_method'
   | 'requires_confirmation'
@@ -28,6 +31,7 @@ export class MockStripeClient {
   // Idempotency key cache — mirrors real Stripe behaviour: a second call with
   // the same idempotency key returns the exact same PaymentIntent object.
   private _idempotencyCache = new Map<string, Record<string, unknown>>();
+  private _paymentIntentStatus = new Map<string, StripePaymentIntentStatus>();
 
   constructor(options: MockStripeOptions = {}) {
     this.options = options;
@@ -47,13 +51,13 @@ export class MockStripeClient {
       if (this.options.createShouldTimeout) {
         await new Promise<never>((_, reject) =>
           setTimeout(
-            () => reject(Object.assign(new Error('Request timeout'), { type: 'api_error' })),
+            () => reject(new Stripe.errors.StripeConnectionError({ message: 'Request timeout' })),
             this.options.createDelayMs ?? 10001
           )
         );
       }
       if (this.options.createShouldError) {
-        throw Object.assign(new Error('Stripe API error (mock)'), { type: 'api_error' });
+        throw new Stripe.errors.StripeAPIError({ message: 'Stripe API error (mock)' });
       }
 
       // Honour idempotency keys exactly as the real Stripe API does: repeated
@@ -76,6 +80,7 @@ export class MockStripeClient {
       if (idempotencyKey) {
         this._idempotencyCache.set(idempotencyKey, intent);
       }
+      this._paymentIntentStatus.set(id, 'requires_payment_method');
 
       return intent;
     },
@@ -85,7 +90,7 @@ export class MockStripeClient {
       const net = this.options.retrieveNetAmountCents ?? 9700;
       return {
         id,
-        status:          this.options.retrieveStatus ?? 'requires_capture',
+        status:          this.options.retrieveStatus ?? this._paymentIntentStatus.get(id) ?? 'requires_capture',
         amount_received: net,
         latest_charge:   { amount_captured: net },
       };
@@ -95,17 +100,12 @@ export class MockStripeClient {
       this.calls.push({ method: 'paymentIntents.capture', args: [id] });
       const errType = this.options.captureErrorType ?? 'none';
       if (errType === 'transient') {
-        throw Object.assign(
-          new Error('Connection error (mock)'),
-          { type: 'api_error', code: 'api_connection_error' }
-        );
+        throw new Stripe.errors.StripeConnectionError({ message: 'Connection error (mock)' });
       }
       if (errType === 'permanent') {
-        throw Object.assign(
-          new Error('Your card was declined (mock)'),
-          { type: 'card_error', code: 'card_declined', decline_code: 'generic_decline' }
-        );
+        throw new Stripe.errors.StripeCardError({ message: 'Your card was declined (mock)', code: 'card_declined', decline_code: 'generic_decline' });
       }
+      this._paymentIntentStatus.set(id, 'succeeded');
       const net = this.options.captureNetAmountCents ?? 9700;
       return {
         id,
@@ -120,6 +120,7 @@ export class MockStripeClient {
       if (this.options.cancelShouldError) {
         throw Object.assign(new Error('Cancel error (mock)'), { type: 'api_error' });
       }
+      this._paymentIntentStatus.set(id, 'canceled');
       return { id, status: 'canceled' as StripePaymentIntentStatus };
     },
   };
@@ -137,7 +138,7 @@ export class MockStripeClient {
         throw Object.assign(new Error('Refund error (mock)'), { type: 'api_error' });
       }
       const refund = {
-        id:     `re_mock_${Date.now()}`,
+        id:     `re_mock_${crypto.randomUUID()}`,
         amount: params['amount'] ?? params['payment_intent'],
         status: 'succeeded',
       };
@@ -164,5 +165,5 @@ export class MockStripeClient {
     }
   }
 
-  reset(): void { this.calls = []; this._idempotencyCache.clear(); }
+  reset(): void { this.calls = []; this._idempotencyCache.clear(); this._paymentIntentStatus.clear(); }
 }

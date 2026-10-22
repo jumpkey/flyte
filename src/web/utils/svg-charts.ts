@@ -7,7 +7,7 @@
 
 const NAVY = '#1F3A5F';
 const FLARE = '#C2410C';
-const MUTED = '#94A3B8';
+const MUTED = '#475569';
 const GRID = '#E2E8F0';
 const SUCCESS = '#2F9E44';
 
@@ -40,7 +40,12 @@ export function barChart(values: number[], opts: { width?: number; height?: numb
   const innerW = w - padL - padR;
   const innerH = h - padT - padB;
   const baseY = padT + innerH;
-  const max = Math.max(...values, ...(opts.line ?? []), 1);
+  const allValues = [...values, ...(opts.line ?? []), 0];
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
+  const span = Math.max(max - min, 1);
+  const y = (v: number) => baseY - ((v - min) / span) * innerH;
+  const zeroY = y(0);
   const n = values.length || 1;
   const slot = innerW / n;
   const bw = slot * 0.7;
@@ -48,29 +53,30 @@ export function barChart(values: number[], opts: { width?: number; height?: numb
   // Right-side scale: 0 / mid / max with faint gridlines.
   let scale = '';
   if (opts.scale) {
-    const fmt = (val: number) => (opts.yUnit ?? '') + Math.round(val).toLocaleString();
-    scale = [0, max / 2, max].map((t) => {
-      const y = baseY - (t / max) * innerH;
-      return `<line x1="${padL}" y1="${px(y)}" x2="${px(padL + innerW)}" y2="${px(y)}" stroke="${GRID}" opacity="0.6"/>` +
-        `<text x="${px(padL + innerW + 6)}" y="${px(y + 3)}" font-size="10" fill="${MUTED}">${fmt(t)}</text>`;
+    const fmt = (val: number) => (val < 0 ? '−' : '') + (opts.yUnit ?? '') + Math.round(Math.abs(val)).toLocaleString();
+    scale = [min, min + (max - min) / 2, max].map((t) => {
+      const tickY = y(t);
+      return `<line x1="${padL}" y1="${px(tickY)}" x2="${px(padL + innerW)}" y2="${px(tickY)}" stroke="${GRID}" opacity="0.8"/>` +
+        `<text x="${px(padL + innerW + 6)}" y="${px(tickY + 3)}" font-size="10" fill="${MUTED}">${fmt(t)}</text>`;
     }).join('');
   }
 
   const bars = values.map((v, i) => {
-    const bh = (v / max) * innerH;
     const x = padL + i * slot + (slot - bw) / 2;
-    const y = baseY - bh;
-    return `<rect x="${px(x)}" y="${px(y)}" width="${px(bw)}" height="${px(bh)}" fill="${NAVY}" opacity="0.85" rx="1"/>`;
+    const valueY = y(v);
+    const rectY = Math.min(zeroY, valueY);
+    const bh = Math.abs(zeroY - valueY);
+    return `<rect x="${px(x)}" y="${px(rectY)}" width="${px(bw)}" height="${px(Math.max(bh, 0.5))}" fill="${NAVY}" opacity="0.85" rx="1"/>`;
   }).join('');
 
   let line = '';
   if (opts.line && opts.line.length > 1) {
     const step = innerW / (opts.line.length - 1);
-    const pts = opts.line.map((v, i) => `${px(padL + i * step)},${px(baseY - (v / max) * innerH)}`).join(' ');
+    const pts = opts.line.map((v, i) => `${px(padL + i * step)},${px(y(v))}`).join(' ');
     line = `<polyline fill="none" stroke="${FLARE}" stroke-width="2" points="${pts}"/>`;
   }
 
-  const baseline = `<line x1="${padL}" y1="${px(baseY)}" x2="${px(padL + innerW)}" y2="${px(baseY)}" stroke="${GRID}"/>`;
+  const baseline = `<line x1="${padL}" y1="${px(zeroY)}" x2="${px(padL + innerW)}" y2="${px(zeroY)}" stroke="${MUTED}" stroke-width="1.2"/>`;
   const xLabel = opts.xLabel
     ? `<text x="${px(padL + innerW / 2)}" y="${h - 6}" font-size="11" fill="${MUTED}" text-anchor="middle">${escapeXml(opts.xLabel)}</text>`
     : '';
@@ -85,7 +91,9 @@ export function bookingCurve(opts: {
   const innerW = w - pad * 2; const innerH = h - pad * 2;
   const maxY = Math.max(opts.capacity, ...opts.cumulative, ...(opts.projection ?? []), 1);
   const series = opts.cumulative;
-  const stepX = series.length > 1 ? innerW / (series.length - 1) : 0;
+  const projection = opts.projection ?? [];
+  const lastPointIndex = Math.max(series.length + Math.max(projection.length - 1, 0) - 1, 1);
+  const stepX = innerW / lastPointIndex;
   const y = (v: number) => pad + innerH - (v / maxY) * innerH;
   const x = (i: number) => pad + i * stepX;
 
@@ -94,17 +102,16 @@ export function bookingCurve(opts: {
   const curve = series.length > 0
     ? `<polyline fill="none" stroke="${SUCCESS}" stroke-width="2.5" points="${series.map((v, i) => `${px(x(i))},${px(y(v))}`).join(' ')}"/>`
     : '';
-  let projection = '';
-  if (opts.projection && opts.projection.length > 1 && series.length > 0) {
+  let projectionLine = '';
+  if (projection.length > 1 && series.length > 0) {
     const startI = series.length - 1;
-    const pStep = innerW / (series.length + opts.projection.length - 2 || 1);
-    const pts = opts.projection.map((v, i) => `${px(pad + (startI + i) * stepX)},${px(y(v))}`).join(' ');
-    projection = `<polyline fill="none" stroke="${FLARE}" stroke-width="2" stroke-dasharray="2 3" points="${pts}"/>`;
+    const pts = projection.map((v, i) => `${px(pad + (startI + i) * stepX)},${px(y(v))}`).join(' ');
+    projectionLine = `<polyline fill="none" stroke="${FLARE}" stroke-width="2" stroke-dasharray="2 3" points="${pts}"/>`;
   }
   const todayX = x(series.length - 1);
   const todayMarker = series.length > 0 ? `<line x1="${px(todayX)}" y1="${pad}" x2="${px(todayX)}" y2="${pad + innerH}" stroke="${FLARE}" stroke-width="1" opacity="0.5"/>` : '';
   const baseline = `<line x1="${pad}" y1="${pad + innerH}" x2="${w - pad}" y2="${pad + innerH}" stroke="${GRID}"/>`;
-  return `<svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-hidden="true">${baseline}${ceiling}${todayMarker}${curve}${projection}</svg>`;
+  return `<svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-hidden="true">${baseline}${ceiling}${todayMarker}${curve}${projectionLine}</svg>`;
 }
 
 /** Horizontal funnel: each stage a bar scaled to the first stage. */
