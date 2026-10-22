@@ -4,6 +4,14 @@ if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable must be set in production');
 }
 
+// A simulator credential must never fall back to Stripe's public API. Conversely,
+// do not send an actual Stripe credential to a configurable simulator endpoint.
+const simulatorHost = process.env.STRIPE_SIMULATOR_HOST;
+const simulatorKey = /^sk_test_(simulator_|loadtest_)/.test(process.env.STRIPE_SECRET_KEY ?? '');
+if (Boolean(simulatorHost) !== simulatorKey) {
+  throw new Error('Stripe simulation requires both STRIPE_SIMULATOR_HOST and a sk_test_simulator_ dummy key');
+}
+
 export const config = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3000', 10),

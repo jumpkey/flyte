@@ -221,6 +221,36 @@ async function runTests() {
     assert(body.includes(perf!.projection.headline), 'projection headline text');
   });
 
+  await test('daily buckets preserve boundaries and empty days for every supported range', async () => {
+    for (const days of [30, 90, 365, 3650]) {
+      const id = (await testSql`INSERT INTO events(name,event_date,total_capacity,available_slots,registration_fee_cents,status)
+        VALUES ('Boundary fixture',now()+interval '10 days',10,10,0,'DRAFT') RETURNING event_id`)[0].event_id;
+      await testSql`INSERT INTO registrations(event_id,email,first_name,last_name,gross_amount_cents,refunded_amount_cents,status,confirmed_at)
+        VALUES (${id},'start@example.invalid','B','Start',111,11,'CONFIRMED',CURRENT_DATE - ((${days}-1)||' days')::interval),
+               (${id},'before@example.invalid','B','Before',222,0,'CONFIRMED',CURRENT_DATE - ((${days}-1)||' days')::interval - interval '1 microsecond'),
+               (${id},'end@example.invalid','B','End',333,0,'CONFIRMED',CURRENT_DATE + interval '1 day'),
+               (${id},'none@example.invalid','B','None',444,0,'PENDING_PAYMENT',NULL)`;
+      const d = await analyticsService.getSalesDashboard(days);
+      assertEqual(d.dailyRevenue.length, days, 'one bucket per calendar day');
+      assertEqual(d.dailyRevenue[0], 100, 'first midnight included, prior microsecond excluded');
+      assertEqual(d.dailyRevenue[1], 0, 'empty day zero-filled');
+      assertEqual(d.dailyRevenue.reduce((a,b)=>a+b,0), d.kpis.netCents, 'daily totals reconcile');
+      await testSql`DELETE FROM registrations WHERE event_id=${id}`;
+      await testSql`DELETE FROM events WHERE event_id=${id}`;
+    }
+  });
+  await test('buyer aggregates retain distinct returning and activated buyer counts', async () => {
+    const extra = (await testSql`INSERT INTO events(name,event_date,total_capacity,available_slots,registration_fee_cents,status)
+      VALUES ('Repeat buyer fixture',now()+interval '10 days',10,10,0,'DRAFT') RETURNING event_id`)[0].event_id;
+    await testSql`INSERT INTO registrations(event_id,user_id,email,first_name,last_name,gross_amount_cents,status,confirmed_at)
+      VALUES (${extra},${b1},'buyer-i10-1@example.com','B','One',100,'CONFIRMED',now())`;
+    const d = await analyticsService.getSalesDashboard(90);
+    assertEqual(d.customers.newBuyers, 1, 'one single-purchase buyer');
+    assertEqual(d.customers.returningBuyers, 1, 'one returning buyer');
+    assertEqual(d.customers.repeatRatePct, 50, 'returning percentage');
+    assertEqual(d.customers.activationRatePct, 50, 'activated percentage');
+  });
+
   await truncateTables();
   await cleanup();
   console.log(`\n=== Analytics: ${passed} passed, ${failed} failed ===`);

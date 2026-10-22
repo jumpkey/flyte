@@ -92,16 +92,19 @@ export const analyticsService = {
     // its confirmation date. This makes every daily point and the headline use
     // the same cohort and refund definition.
     const dailyRows = await sql<{ day: string; net: string }[]>`
+      WITH daily_totals AS (
+        SELECT date_trunc('day', confirmed_at) AS day,
+               SUM(gross_amount_cents) AS gross, SUM(refunded_amount_cents) AS refunded
+        FROM registrations
+        WHERE confirmed_at >= date_trunc('day', now()) - (${rangeDays - 1}||' days')::interval
+          AND confirmed_at < date_trunc('day', now()) + interval '1 day'
+        GROUP BY 1
+      )
       SELECT series.day::date::text AS day,
              (COALESCE(r.gross, 0) - COALESCE(r.refunded, 0))::text AS net
       FROM generate_series(date_trunc('day', now()) - (${rangeDays - 1}||' days')::interval,
                            date_trunc('day', now()), '1 day') AS series(day)
-      LEFT JOIN LATERAL (
-        SELECT SUM(gross_amount_cents) AS gross, SUM(refunded_amount_cents) AS refunded
-        FROM registrations
-        WHERE confirmed_at IS NOT NULL
-          AND confirmed_at >= series.day AND confirmed_at < series.day + interval '1 day'
-      ) r ON TRUE
+      LEFT JOIN daily_totals r USING (day)
       ORDER BY series.day ASC`;
     const dailyRevenue = dailyRows.map((r) => +r.net);
     const dailyLabels = dailyRows.map((r) => r.day);
@@ -149,14 +152,20 @@ export const analyticsService = {
       GROUP BY e.event_id ORDER BY e.event_date DESC LIMIT 50`;
 
     // A4 customers.
-    const buyerRows = await sql<{ user_id: string; n: number; net: string; account_status: string }[]>`
-      SELECT r.user_id, count(*)::int AS n, COALESCE(SUM(r.net_amount_cents),0)::text AS net, u.account_status
-      FROM registrations r JOIN users u ON u.id = r.user_id
-      WHERE r.status='CONFIRMED' AND r.user_id IS NOT NULL
-      GROUP BY r.user_id, u.account_status`;
-    const totalBuyers = buyerRows.length;
-    const returningBuyers = buyerRows.filter((b) => b.n > 1).length;
-    const activeBuyers = buyerRows.filter((b) => b.account_status === 'active').length;
+    const buyerRows = await sql<{ total: number; returning: number; active: number }[]>`
+      WITH buyers AS (
+        SELECT count(*) AS purchases, u.account_status
+        FROM registrations r JOIN users u ON u.id = r.user_id
+        WHERE r.status='CONFIRMED'
+        GROUP BY r.user_id, u.account_status
+      )
+      SELECT count(*)::int AS total,
+             count(*) FILTER (WHERE purchases > 1)::int AS returning,
+             count(*) FILTER (WHERE account_status='active')::int AS active
+      FROM buyers`;
+    const totalBuyers = buyerRows[0]?.total ?? 0;
+    const returningBuyers = buyerRows[0]?.returning ?? 0;
+    const activeBuyers = buyerRows[0]?.active ?? 0;
     const top = await sql`
       SELECT u.email, u.account_status,
              COALESCE(SUM(GREATEST(r.gross_amount_cents - r.refunded_amount_cents, 0)),0)::int AS lifetime_net,
